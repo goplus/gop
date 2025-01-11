@@ -190,8 +190,8 @@ func SourceEx(src []byte, class bool, filename ...string) (formatted []byte, err
 		return
 	}
 	src, err = RearrangeFuncs(src, filename...)
-	if err != nil {
-		return
+	if err == nil {
+		formatted, err = format.Source(src, class, filename...)
 	}
-	return format.Source(src, class, filename...)
+	return
 }

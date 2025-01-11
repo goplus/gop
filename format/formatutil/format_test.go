@@ -29,6 +29,22 @@ import (
 	"github.com/goplus/gop/token"
 )
 
+func TestSeekAfter(t *testing.T) {
+	if seekAfter(nil, 0, 0) != nil {
+		t.Fatal("seekAfter failed")
+	}
+}
+
+func TestTokOf(t *testing.T) {
+	words := []aWord{{tok: token.COMMENT}}
+	if tok, _ := tokOf(words); token.COMMENT != tok {
+		t.Fatal("tokOf failed:", tok)
+	}
+	if startWith(words, token.VAR) {
+		t.Fatal("startWith failed")
+	}
+}
+
 func doSplitStmts(src []byte) (ret []string) {
 	fset := token.NewFileSet()
 	base := fset.Base()
