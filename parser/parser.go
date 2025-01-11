@@ -700,8 +700,7 @@ func (p *parser) parseExprList(lhs, allowCmd bool) (list []ast.Expr) {
 		defer un(trace(p, "ExpressionList"))
 	}
 
-	x, _ := p.parseExprEx(lhs, false, allowCmd, false)
-	list = append(list, p.checkExpr(x))
+	list = append(list, p.checkExpr(p.parseExpr(lhs, allowCmd, false)))
 	for p.tok == token.COMMA {
 		p.next()
 		list = append(list, p.checkExpr(p.parseExpr(lhs, false, false)))
