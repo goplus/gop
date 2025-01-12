@@ -80,7 +80,7 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 
 	noChdir := *flagNoChdir
-	conf, err := gop.NewDefaultConf(".", gop.ConfFlagNoTestFiles)
+	conf, err := gop.NewDefaultConf(".", gop.ConfFlagNoTestFiles, pass.Tags())
 	if err != nil {
 		log.Panicln("gop.NewDefaultConf:", err)
 	}
