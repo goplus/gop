@@ -17,14 +17,21 @@
 package strx
 
 import (
-	"strings"
+	"unicode"
+	"unicode/utf8"
+
+	"github.com/qiniu/x/stringutil"
 )
 
 // Capitalize returns a copy of the string str with the first letter mapped to
 // its upper case.
 func Capitalize(str string) string {
-	if str == "" {
-		return ""
+	c, nc := utf8.DecodeRuneInString(str)
+	if c == utf8.RuneError || unicode.IsUpper(c) {
+		return str
 	}
-	return strings.ToUpper(str[0:1]) + str[1:]
+	ret := make([]byte, len(str))
+	nr := utf8.EncodeRune(ret, unicode.ToUpper(c))
+	ret = append(ret[:nr], str[nc:]...)
+	return stringutil.String(ret)
 }
