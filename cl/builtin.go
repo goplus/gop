@@ -81,7 +81,7 @@ func newBuiltinDefault(pkg *gogen.Package, conf *gogen.Config) *types.Package {
 	buil := pkg.TryImport("github.com/goplus/gop/builtin")
 	ng := pkg.TryImport("github.com/goplus/gop/builtin/ng")
 	iox := pkg.TryImport("github.com/goplus/gop/builtin/iox")
-	strx := pkg.TryImport("github.com/goplus/gop/builtin/strx")
+	strx := pkg.TryImport("github.com/qiniu/x/stringutil")
 	stringslice := pkg.TryImport("github.com/goplus/gop/builtin/stringslice")
 	pkg.TryImport("strconv")
 	pkg.TryImport("strings")

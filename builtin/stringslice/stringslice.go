@@ -17,14 +17,14 @@
 package stringslice
 
 import (
-	"github.com/goplus/gop/builtin/strx"
+	"github.com/qiniu/x/stringutil"
 )
 
 // Capitalize capitalizes the first letter of each string in the slice.
 func Capitalize(a []string) []string {
 	r := make([]string, len(a))
 	for i, v := range a {
-		r[i] = strx.Capitalize(v)
+		r[i] = stringutil.Capitalize(v)
 	}
 	return r
 }
