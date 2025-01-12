@@ -23,7 +23,7 @@ import (
 )
 
 func TestTestgop(t *testing.T) {
-	cltest.FromDir(t, "cap", "./_testgop")
+	cltest.FromDir(t, "", "./_testgop")
 }
 
 func TestTestc(t *testing.T) {
