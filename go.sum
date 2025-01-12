@@ -4,8 +4,8 @@ github.com/goplus/gogen v1.16.6-0.20250112115237-4fcb9989182e h1:MBO1Xfq+dDRZPF2
 github.com/goplus/gogen v1.16.6-0.20250112115237-4fcb9989182e/go.mod h1:6TQYbabXDF9LCdDkOOzHmfg1R4ENfXQ3XpHa9RhTSD8=
 github.com/goplus/llgo v0.9.9 h1:sCM8ehOtuAEY/NQbJ4xAMRZhxEdDgilouWZpoaLiYrM=
 github.com/goplus/llgo v0.9.9/go.mod h1:udcq+s6tGOdhJq7I8fXPTv4qT2j17/KrlvtcJrMZAoM=
-github.com/goplus/mod v0.13.13 h1:rvwXCCQciTz4NjB3GLAZ2cskw035B64F7KzRAyMYUCw=
-github.com/goplus/mod v0.13.13/go.mod h1:invR72Rz2+qpOOsXqxz830MX8/aR2GDR2EAow/WgfHI=
+github.com/goplus/mod v0.13.15 h1:IyneSjwm1VpwvHGz6hSHnFxZCuO6ULHcu74IAZcW9nw=
+github.com/goplus/mod v0.13.15/go.mod h1:invR72Rz2+qpOOsXqxz830MX8/aR2GDR2EAow/WgfHI=
 github.com/qiniu/x v1.13.10 h1:J4Z3XugYzAq85SlyAfqlKVrbf05glMbAOh+QncsDQpE=
 github.com/qiniu/x v1.13.10/go.mod h1:INZ2TSWSJVWO/RuELQROERcslBwVgFG7MkTfEdaQz9E=
 golang.org/x/mod v0.20.0 h1:utOm6MM3R3dnawAiJgn0y+xvuYRsm1RKM/4giyfDgV0=

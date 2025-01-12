@@ -39,9 +39,9 @@ var Cmd = &base.Command{
 }
 
 var (
+	flag       = &Cmd.Flag
 	flagDebug  = flag.Bool("debug", false, "print debug information")
 	flagOutput = flag.String("o", "", "gop build output file")
-	flag       = &Cmd.Flag
 )
 
 func init() {
@@ -74,7 +74,7 @@ func runCmd(cmd *base.Command, args []string) {
 		log.Panicln("too many arguments:", args)
 	}
 
-	conf, err := gop.NewDefaultConf(".", gop.ConfFlagNoTestFiles)
+	conf, err := gop.NewDefaultConf(".", gop.ConfFlagNoTestFiles, pass.Tags())
 	if err != nil {
 		log.Panicln("gop.NewDefaultConf:", err)
 	}

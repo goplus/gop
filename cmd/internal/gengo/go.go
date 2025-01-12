@@ -44,6 +44,7 @@ var (
 	flagSingleMode       = flag.Bool("s", false, "run in single file mode for package")
 	flagIgnoreNotatedErr = flag.Bool(
 		"ignore-notated-error", false, "ignore notated errors, only available together with -t (check mode)")
+	flagTags = flag.String("tags", "", "a comma-separated list of additional build tags to consider satisfied")
 )
 
 func init() {
@@ -71,7 +72,7 @@ func runCmd(cmd *base.Command, args []string) {
 		cl.SetDisableRecover(true)
 	}
 
-	conf, err := gop.NewDefaultConf(".", 0)
+	conf, err := gop.NewDefaultConf(".", 0, *flagTags)
 	if err != nil {
 		log.Panicln("gop.NewDefaultConf:", err)
 	}

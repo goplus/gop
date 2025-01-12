@@ -145,7 +145,7 @@ const (
 )
 
 // NewDefaultConf creates a dfault configuration for common cases.
-func NewDefaultConf(dir string, flags ConfFlags) (conf *Config, err error) {
+func NewDefaultConf(dir string, flags ConfFlags, tags ...string) (conf *Config, err error) {
 	mod, err := LoadMod(dir)
 	if err != nil {
 		return
@@ -153,6 +153,9 @@ func NewDefaultConf(dir string, flags ConfFlags) (conf *Config, err error) {
 	gop := gopenv.Get()
 	fset := token.NewFileSet()
 	imp := NewImporter(mod, gop, fset)
+	if len(tags) > 0 {
+		imp.SetTags(strings.Join(tags, ","))
+	}
 	conf = &Config{
 		Gop: gop, Fset: fset, Mod: mod, Importer: imp,
 		IgnoreNotatedError: flags&ConfFlagIgnoreNotatedError != 0,
