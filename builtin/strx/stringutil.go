@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2025 The GoPlus Authors (goplus.org). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,17 @@
  * limitations under the License.
  */
 
-package cl_test
+package strx
 
 import (
-	"testing"
-
-	"github.com/goplus/gop/cl/cltest"
+	"strings"
 )
 
-func TestTestgop(t *testing.T) {
-	cltest.FromDir(t, "cap", "./_testgop")
-}
-
-func TestTestc(t *testing.T) {
-	cltest.FromDir(t, "", "./_testc")
-}
-
-func TestTestpy(t *testing.T) {
-	cltest.FromDir(t, "", "./_testpy")
+// Capitalize returns a copy of the string str with the first letter mapped to
+// its upper case.
+func Capitalize(str string) string {
+	if str == "" {
+		return ""
+	}
+	return strings.ToUpper(str[0:1]) + str[1:]
 }

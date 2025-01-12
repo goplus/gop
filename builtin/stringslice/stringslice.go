@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2025 The GoPlus Authors (goplus.org). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,17 @@
  * limitations under the License.
  */
 
-package cl_test
+package stringslice
 
 import (
-	"testing"
-
-	"github.com/goplus/gop/cl/cltest"
+	"github.com/goplus/gop/builtin/strx"
 )
 
-func TestTestgop(t *testing.T) {
-	cltest.FromDir(t, "cap", "./_testgop")
-}
-
-func TestTestc(t *testing.T) {
-	cltest.FromDir(t, "", "./_testc")
-}
-
-func TestTestpy(t *testing.T) {
-	cltest.FromDir(t, "", "./_testpy")
+// Capitalize capitalizes the first letter of each string in the slice.
+func Capitalize(a []string) []string {
+	r := make([]string, len(a))
+	for i, v := range a {
+		r[i] = strx.Capitalize(v)
+	}
+	return r
 }
