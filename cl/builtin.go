@@ -81,6 +81,8 @@ func newBuiltinDefault(pkg *gogen.Package, conf *gogen.Config) *types.Package {
 	buil := pkg.TryImport("github.com/goplus/gop/builtin")
 	ng := pkg.TryImport("github.com/goplus/gop/builtin/ng")
 	iox := pkg.TryImport("github.com/goplus/gop/builtin/iox")
+	strx := pkg.TryImport("github.com/goplus/gop/builtin/strx")
+	stringslice := pkg.TryImport("github.com/goplus/gop/builtin/stringslice")
 	pkg.TryImport("strconv")
 	pkg.TryImport("strings")
 	if ng.Types != nil {
@@ -88,6 +90,14 @@ func newBuiltinDefault(pkg *gogen.Package, conf *gogen.Config) *types.Package {
 	}
 	initBuiltin(pkg, builtin, os, fmt, ng, iox, buil)
 	gogen.InitBuiltin(pkg, builtin, conf)
+	if strx.Types != nil {
+		ti := pkg.BuiltinTI(types.Typ[types.String])
+		ti.AddMethod("Capitalize", strx.Ref("Capitalize"))
+	}
+	if stringslice.Types != nil {
+		ti := pkg.BuiltinTI(types.NewSlice(types.Typ[types.String]))
+		ti.AddMethod("Capitalize", stringslice.Ref("Capitalize"))
+	}
 	return builtin
 }
 
