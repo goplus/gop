@@ -1,0 +1,19 @@
+coverage:
+  ignore:
+    - "builtin"
+    - "ast"
+    - "demo"
+    - "test"
+    - "scanner"
+    - "cmd"
+    - "cl/cltest"
+    - "x/jsonrpc2"
+    - "x/watcher"
+    - "x/langserver"
+    - "x/fsnotify"
+    - "x/fakenet"
+    - "load.go"
+    - "gengo.go"
+    - "outline.go"
+    - "imp.go"
+  
