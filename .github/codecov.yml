@@ -2,13 +2,9 @@ coverage:
   ignore:
     - "builtin"
     - "ast"
-    - "ast/fromgo"
-    - "ast/togo"
-    - "env"
     - "test"
     - "scanner"
     - "format"
-    - "format/formatutil"
     - "demo"
     - "demo/unit-test"
     - "cmd"
