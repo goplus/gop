@@ -26,13 +26,13 @@ import (
 	"testing"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/parser/fsx"
 	"github.com/goplus/gop/parser/fsx/memfs"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
+	"github.com/goplus/gop/tool"
 	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/modfile"
 )
@@ -47,7 +47,7 @@ func init() {
 	gogen.SetDebug(gogen.DbgFlagAll)
 	cl.SetDebug(cl.DbgFlagAll | cl.FlagNoMarkAutogen)
 	fset := token.NewFileSet()
-	imp := gop.NewImporter(nil, Gop, fset)
+	imp := tool.NewImporter(nil, Gop, fset)
 	Conf = &cl.Config{
 		Fset:          fset,
 		Importer:      imp,
