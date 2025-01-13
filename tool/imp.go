@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package gop
+package tool
 
 import (
 	"crypto/sha256"

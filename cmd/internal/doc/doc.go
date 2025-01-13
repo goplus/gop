@@ -26,10 +26,10 @@ import (
 	"strings"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cl/outline"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/tool"
 	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/gop/x/gopprojs"
 )
@@ -76,25 +76,25 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 
 	gopEnv := gopenv.Get()
-	conf := &gop.Config{Gop: gopEnv}
+	conf := &tool.Config{Gop: gopEnv}
 	outlinePkg(proj, conf)
 }
 
-func outlinePkg(proj gopprojs.Proj, conf *gop.Config) {
+func outlinePkg(proj gopprojs.Proj, conf *tool.Config) {
 	var obj string
 	var out outline.Package
 	var err error
 	switch v := proj.(type) {
 	case *gopprojs.DirProj:
 		obj = v.Dir
-		out, err = gop.Outline(obj, conf)
+		out, err = tool.Outline(obj, conf)
 	case *gopprojs.PkgPathProj:
 		obj = v.Path
-		out, err = gop.OutlinePkgPath("", obj, conf, true)
+		out, err = tool.OutlinePkgPath("", obj, conf, true)
 	default:
 		log.Panicln("`gop doc` doesn't support", reflect.TypeOf(v))
 	}
-	if gop.NotFound(err) {
+	if tool.NotFound(err) {
 		fmt.Fprintf(os.Stderr, "gop doc %v: not Go/Go+ files found\n", obj)
 	} else if err != nil {
 		fmt.Fprintln(os.Stderr, err)

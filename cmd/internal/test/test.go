@@ -24,9 +24,9 @@ import (
 	"reflect"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/tool"
 	"github.com/goplus/gop/x/gocmd"
 	"github.com/goplus/gop/x/gopprojs"
 )
@@ -69,9 +69,9 @@ func runCmd(cmd *base.Command, args []string) {
 		cl.SetDisableRecover(true)
 	}
 
-	conf, err := gop.NewDefaultConf(".", 0, pass.Tags())
+	conf, err := tool.NewDefaultConf(".", 0, pass.Tags())
 	if err != nil {
-		log.Panicln("gop.NewDefaultConf:", err)
+		log.Panicln("tool.NewDefaultConf:", err)
 	}
 	defer conf.UpdateCache()
 
@@ -82,23 +82,23 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 }
 
-func test(proj gopprojs.Proj, conf *gop.Config, test *gocmd.TestConfig) {
-	const flags = gop.GenFlagPrompt
+func test(proj gopprojs.Proj, conf *tool.Config, test *gocmd.TestConfig) {
+	const flags = tool.GenFlagPrompt
 	var obj string
 	var err error
 	switch v := proj.(type) {
 	case *gopprojs.DirProj:
 		obj = v.Dir
-		err = gop.TestDir(obj, conf, test, flags)
+		err = tool.TestDir(obj, conf, test, flags)
 	case *gopprojs.PkgPathProj:
 		obj = v.Path
-		err = gop.TestPkgPath("", v.Path, conf, test, flags)
+		err = tool.TestPkgPath("", v.Path, conf, test, flags)
 	case *gopprojs.FilesProj:
-		err = gop.TestFiles(v.Files, conf, test)
+		err = tool.TestFiles(v.Files, conf, test)
 	default:
 		log.Panicln("`gop test` doesn't support", reflect.TypeOf(v))
 	}
-	if gop.NotFound(err) {
+	if tool.NotFound(err) {
 		fmt.Fprintf(os.Stderr, "gop test %v: not found\n", obj)
 	} else if err != nil {
 		fmt.Fprintln(os.Stderr, err)

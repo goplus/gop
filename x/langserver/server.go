@@ -23,7 +23,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/goplus/gop"
+	"github.com/goplus/gop/tool"
 	"github.com/goplus/gop/x/gopprojs"
 	"github.com/goplus/gop/x/jsonrpc2"
 )
@@ -99,7 +99,7 @@ func (p *handler) runLoop() {
 			time.Sleep(duration)
 			continue
 		}
-		gop.GenGoEx(dir, nil, true, gop.GenFlagPrompt)
+		tool.GenGoEx(dir, nil, true, tool.GenFlagPrompt)
 	}
 }
 
@@ -138,19 +138,19 @@ func GenGo(pattern ...string) (err error) {
 	if err != nil {
 		return
 	}
-	conf, _ := gop.NewDefaultConf(".", 0)
+	conf, _ := tool.NewDefaultConf(".", 0)
 	if conf != nil {
 		defer conf.UpdateCache()
 	}
 	for _, proj := range projs {
 		switch v := proj.(type) {
 		case *gopprojs.DirProj:
-			gop.GenGoEx(v.Dir, conf, true, 0)
+			tool.GenGoEx(v.Dir, conf, true, 0)
 		case *gopprojs.PkgPathProj:
 			if v.Path == "builtin" {
 				continue
 			}
-			gop.GenGoPkgPathEx("", v.Path, conf, true, 0)
+			tool.GenGoPkgPathEx("", v.Path, conf, true, 0)
 		}
 	}
 	return

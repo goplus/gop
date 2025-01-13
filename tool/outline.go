@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package gop
+package tool
 
 import (
 	"fmt"
@@ -46,7 +46,7 @@ func Outline(dir string, conf *Config) (out outline.Package, err error) {
 	mod := conf.Mod
 	if mod == nil {
 		if mod, err = LoadMod(dir); err != nil {
-			err = errors.NewWith(err, `LoadMod(dir)`, -2, "gop.LoadMod", dir)
+			err = errors.NewWith(err, `LoadMod(dir)`, -2, "tool.LoadMod", dir)
 			return
 		}
 	}
@@ -119,7 +119,7 @@ func OutlinePkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (ou
 	mod := conf.Mod
 	if mod == nil {
 		if mod, err = LoadMod(workDir); err != nil {
-			err = errors.NewWith(err, `LoadMod(dir)`, -2, "gop.LoadMod", workDir)
+			err = errors.NewWith(err, `LoadMod(dir)`, -2, "tool.LoadMod", workDir)
 			return
 		}
 	}
