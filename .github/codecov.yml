@@ -23,5 +23,4 @@ coverage:
     - "x/fakenet"
     - "x/typesutil"
     - "x/gocmd"
-    - "."
   
