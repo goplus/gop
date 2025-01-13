@@ -30,8 +30,8 @@ import (
 
 	goformat "go/format"
 
-	"github.com/goplus/gop/tool"
 	"github.com/goplus/gop/format"
+	"github.com/goplus/gop/tool"
 )
 
 var (

@@ -26,10 +26,10 @@ import (
 	"strings"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop/tool"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cl/outline"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/tool"
 	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/gop/x/gopprojs"
 )

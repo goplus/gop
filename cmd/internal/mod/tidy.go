@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/goplus/gop/tool"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/tool"
 	"github.com/goplus/gop/x/gopenv"
 )
 

@@ -26,9 +26,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/goplus/gop/tool"
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/format"
+	"github.com/goplus/gop/tool"
 
 	goformat "go/format"
 	"go/parser"

@@ -21,8 +21,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/goplus/gop/tool"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/tool"
 	"github.com/goplus/mod/modcache"
 	"github.com/goplus/mod/modfetch"
 	"github.com/goplus/mod/modload"
