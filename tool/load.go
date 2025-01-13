@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package gop
+package tool
 
 import (
 	"fmt"
@@ -238,7 +238,7 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 	mod := conf.Mod
 	if mod == nil {
 		if mod, err = LoadMod(dir); err != nil {
-			err = errors.NewWith(err, `LoadMod(dir)`, -2, "gop.LoadMod", dir)
+			err = errors.NewWith(err, `LoadMod(dir)`, -2, "tool.LoadMod", dir)
 			return
 		}
 	}
@@ -358,7 +358,7 @@ func LoadFiles(dir string, files []string, conf *Config) (out *gogen.Package, er
 	mod := conf.Mod
 	if mod == nil {
 		if mod, err = LoadMod(dir); err != nil {
-			err = errors.NewWith(err, `LoadMod(dir)`, -2, "gop.LoadMod", dir)
+			err = errors.NewWith(err, `LoadMod(dir)`, -2, "tool.LoadMod", dir)
 			return
 		}
 	}

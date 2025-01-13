@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package gop
+package tool
 
 import (
 	"os"
@@ -35,7 +35,7 @@ func Tidy(dir string, gop *env.Gop) (err error) {
 	/*
 		depMods, err := GenDepMods(modObj, modRoot, true)
 		if err != nil {
-			return errors.NewWith(err, `GenDepMods(modObj, modRoot, true)`, -2, "gop.GenDepMods", modObj, modRoot, true)
+			return errors.NewWith(err, `GenDepMods(modObj, modRoot, true)`, -2, "tool.GenDepMods", modObj, modRoot, true)
 		}
 
 		old := modObj.DepMods()
@@ -63,7 +63,7 @@ func Tidy(dir string, gop *env.Gop) (err error) {
 	conf := &Config{Gop: gop}
 	err = genGoDir(modRoot, conf, true, true, 0)
 	if err != nil {
-		return errors.NewWith(err, `genGoDir(modRoot, conf, true, true)`, -2, "gop.genGoDir", modRoot, conf, true, true)
+		return errors.NewWith(err, `genGoDir(modRoot, conf, true, true)`, -2, "tool.genGoDir", modRoot, conf, true, true)
 	}
 
 	cmd := exec.Command("go", "mod", "tidy")

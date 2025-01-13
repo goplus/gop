@@ -20,7 +20,7 @@ import (
 	"log"
 	"path/filepath"
 
-	"github.com/goplus/gop"
+	"github.com/goplus/gop/tool"
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/x/fsnotify"
 	"github.com/goplus/gop/x/watcher"
@@ -70,7 +70,7 @@ func runCmd(cmd *base.Command, args []string) {
 	for {
 		dir := w.Fetch(true)
 		log.Println("GenGo", dir)
-		_, _, err := gop.GenGo(dir, nil, *genTestPkg)
+		_, _, err := tool.GenGo(dir, nil, *genTestPkg)
 		if err != nil {
 			log.Println(err)
 		}

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package gop
+package tool
 
 import (
 	"fmt"
@@ -154,7 +154,7 @@ func genGoSingleFile(file string, conf *Config, flags GenFlags) (err error) {
 	}
 	out, err := LoadFiles(".", []string{file}, conf)
 	if err != nil {
-		return errors.NewWith(err, `LoadFiles(files, conf)`, -2, "gop.LoadFiles", file)
+		return errors.NewWith(err, `LoadFiles(files, conf)`, -2, "tool.LoadFiles", file)
 	}
 	if flags&GenFlagCheckOnly != 0 {
 		return nil
@@ -171,7 +171,7 @@ func genGoIn(dir string, conf *Config, genTestPkg bool, flags GenFlags, gen ...*
 		if NotFound(err) { // no Go+ source files
 			return nil
 		}
-		return errors.NewWith(err, `LoadDir(dir, conf, genTestPkg)`, -5, "gop.LoadDir", dir, conf, genTestPkg)
+		return errors.NewWith(err, `LoadDir(dir, conf, genTestPkg)`, -5, "tool.LoadDir", dir, conf, genTestPkg)
 	}
 	if flags&GenFlagCheckOnly != 0 {
 		return nil
@@ -288,7 +288,7 @@ func GenGoFiles(autogen string, files []string, conf *Config) (outFiles []string
 	}
 	out, err := LoadFiles(".", files, conf)
 	if err != nil {
-		err = errors.NewWith(err, `LoadFiles(files, conf)`, -2, "gop.LoadFiles", files, conf)
+		err = errors.NewWith(err, `LoadFiles(files, conf)`, -2, "tool.LoadFiles", files, conf)
 		return
 	}
 	err = out.WriteFile(autogen)
