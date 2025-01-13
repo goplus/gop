@@ -27,4 +27,5 @@ coverage:
     - "x/typesutil"
     - "x/gocmd"
     - "x/gopenv"
+    - "tool"
   
