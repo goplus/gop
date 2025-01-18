@@ -1090,7 +1090,18 @@ origin := Point3D{}                            // zero value for Point3D
 line := Line{origin, Point3D{y: -4, z: 12.3}}  // zero value for line.q.x
 ```
 
-TODO
+[Taking the address](#address-operators) of a composite literal generates a pointer to a unique [variable](#variables) initialized with the literal's value.
+
+```go
+var pointer *Point3D = &Point3D{y: 1000}
+```
+
+A parsing ambiguity arises when a composite literal using the TypeName form of the LiteralType appears as an operand between the [keyword](#keywords) and the opening brace of the block of an "if", "for", or "switch" statement, and the composite literal is not enclosed in parentheses, square brackets, or curly braces. In this rare case, the opening brace of the literal is erroneously parsed as the one introducing the block of statements. To resolve the ambiguity, the composite literal must appear within parentheses.
+
+```go
+if x == (T{a,b,c}[i]) { … }
+if (x == T{a,b,c}[i]) { … }
+```
 
 ### Commands and calls
 
