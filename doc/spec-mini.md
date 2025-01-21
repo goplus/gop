@@ -1108,12 +1108,45 @@ if (x == T{a,b,c}[i]) { … }
 A function literal represents an anonymous [function](#function-declarations).
 
 ```go
-FunctionLit = "func" Signature FunctionBody . // TODO(xsw): Go+
+FunctionLit                 = [ AnonymousParameters ] "=>" AnonymousFunctionBody .
+AnonymousParameters         = SingleAnonymousParameter | MultipleAnonymousParameters .
+SingleAnonymousParameter    = identifier .
+MultipleAnonymousParameters = "(" AnonymousParameterList ")" .
+AnonymousParameterList      = identifier { "," identifier } .
+AnonymousFunctionBody       = Expression | FunctionBody .
 ```
 
+A anonymous function body can be a single expression.
+
 ```go
-(a, b, z) => { return a*b < int(z) }
+x => math.Sin(x)
+(x, y) => x*x + y*y
 ```
+
+It can also be the same as a normal function body. The above examples are equivalent to
+
+```go
+x => {
+	return math.Sin(x)
+}
+
+(x, y) => {
+	return x*x + y*y
+}
+```
+
+Anonymous functions are typically passed in as parameters for function calls.
+
+```go
+import "sort"
+
+a := [32, 100, 50, 6, 92]
+sort.Slice a, (i, j) => {
+	return a[i] < b[j]
+}
+```
+
+Note: Both the parameter types and return value types of anonymous functions are omitted. Go+ determines the parameter types and return value types of anonymous functions through type inference.
 
 Function literals are _closures_: they may refer to variables defined in a surrounding function. Those variables are then shared between the surrounding function and the function literal, and they survive as long as they are accessible.
 
