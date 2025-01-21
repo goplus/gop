@@ -1103,6 +1103,21 @@ if x == (T{a,b,c}[i]) { … }
 if (x == T{a,b,c}[i]) { … }
 ```
 
+### Function literals
+
+A function literal represents an anonymous [function](#function-declarations).
+
+```go
+FunctionLit = "func" Signature FunctionBody . // TODO(xsw): Go+
+```
+
+```go
+(a, b, z) => { return a*b < int(z) }
+```
+
+Function literals are _closures_: they may refer to variables defined in a surrounding function. Those variables are then shared between the surrounding function and the function literal, and they survive as long as they are accessible.
+
+
 ### Commands and calls
 
 TODO
