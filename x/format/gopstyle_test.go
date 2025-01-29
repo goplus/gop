@@ -478,3 +478,58 @@ func f() {
 }
 `)
 }
+
+func TestLambdaFromFuncLit(t *testing.T) {
+	testFormat(t, "funclit to lambda", `package main
+println(demo(func(n int) int {
+	return n+100
+}))
+println(demo(func(n int) int {
+	return n+100
+}),200)
+demo1(100, func(n int) {
+	println(n)
+})
+demo1(100, func(int) {
+	println(100)
+})
+demo2(300, func(n1, n2 int) int {
+	return(n1 + n2)
+})
+demo2(300, func(int, int) int {
+	return -600
+})
+demo3(100,func(n1,n2 int)(int) {
+	return n1+n2,n1-n2
+},100)
+demo3(100,func(n1,n2 int)(v int) {
+	return n1+n2,n1-n2
+},100)
+demo4(100,func(n1,n2 int)(a,b int) {
+	println(a,b)
+	return n1+n2,n1-n2
+},100)
+`, `println demo(n => n + 100)
+println demo(n => n + 100), 200
+demo1 100, n => {
+	println n
+}
+demo1 100, _ => {
+	println 100
+}
+demo2 300, (n1, n2) => (n1 + n2)
+
+demo2 300, (_, _) => -600
+
+demo3 100, (n1, n2) => {
+	return n1 + n2, n1 - n2
+}, 100
+demo3 100, func(n1, n2 int) (v int) {
+	return n1 + n2, n1 - n2
+}, 100
+demo4 100, func(n1, n2 int) (a, b int) {
+	println a, b
+	return n1 + n2, n1 - n2
+}, 100
+`)
+}
