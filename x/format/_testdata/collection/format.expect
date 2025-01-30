@@ -88,17 +88,11 @@ println Index(strs, "pear")
 
 println Include(strs, "grape")
 
-println Any(strs, func(v string) bool {
-	return strings.hasPrefix(v, "p")
-})
+println Any(strs, v => strings.hasPrefix(v, "p"))
 
-println All(strs, func(v string) bool {
-	return strings.hasPrefix(v, "p")
-})
+println All(strs, v => strings.hasPrefix(v, "p"))
 
-println Filter(strs, func(v string) bool {
-	return strings.contains(v, "e")
-})
+println Filter(strs, v => strings.contains(v, "e"))
 
 // The above examples all used anonymous functions,
 // but you can also use named functions of the correct
