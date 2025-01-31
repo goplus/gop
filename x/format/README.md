@@ -101,3 +101,31 @@ will be converted into:
 ```go
 println math.sin(math.Pi/3)
 ```
+
+### Funclit of params convert to lambda in fncall (skip named results)
+```go
+println(demo(func(n int) int {
+	return n+100
+}))
+
+println(demo(func(n int) (v int) {
+	return n+100
+}))
+
+onStart(func() {
+	println("start")
+})
+```
+
+will be converted into:
+```
+println demo(n => n + 100)
+
+println demo(func(n int) (v int) {
+	return n + 100
+})
+
+onStart => {
+	println "start"
+}
+```
