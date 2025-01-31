@@ -51,7 +51,7 @@ n, err := fmt.Println("Hello world")
 will be converted into:
 
 ```go
-n, err := println("Hello world")
+n, err := echo("Hello world")
 ```
 
 Note:
@@ -62,7 +62,7 @@ Note:
 * Convert `fmt.Fprintln => fprintln`
 * Convert `fmt.Print` => `print`
 * Convert `fmt.Printf` => `printf`
-* Convert `fmt.Println` => `println`
+* Convert `fmt.Println` => `echo`
 * Convert `fmt.Sprint => sprint`
 * Convert `fmt.Sprintf => sprintf`
 * Convert `fmt.Sprintln => sprintln`
@@ -79,8 +79,8 @@ fmt.Println(fmt.Println("Hello world"))
 will be converted into:
 
 ```go
-println
-println println("Hello world")
+echo
+echo echo("Hello world")
 ```
 
 Note:
