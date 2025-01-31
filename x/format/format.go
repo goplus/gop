@@ -40,7 +40,11 @@ func fmtToBuiltin(ctx *importCtx, sel *ast.Ident, ref *ast.Expr) bool {
 	if ctx.pkgPath == "fmt" {
 		for _, fns := range printFuncs {
 			if fns[0] == sel.Name || fns[1] == sel.Name {
-				*ref = &ast.Ident{NamePos: sel.NamePos, Name: fns[1]}
+				name := fns[1]
+				if name == "println" {
+					name = "echo"
+				}
+				*ref = &ast.Ident{NamePos: sel.NamePos, Name: name}
 				return true
 			}
 		}

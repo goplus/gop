@@ -84,17 +84,17 @@ func Map(vs []string, f func(string) string) []string {
 // Here we try out our various collection functions.
 var strs = []string{"peach", "apple", "pear", "plum"}
 
-println Index(strs, "pear")
+echo Index(strs, "pear")
 
-println Include(strs, "grape")
+echo Include(strs, "grape")
 
-println Any(strs, v => strings.hasPrefix(v, "p"))
+echo Any(strs, v => strings.hasPrefix(v, "p"))
 
-println All(strs, v => strings.hasPrefix(v, "p"))
+echo All(strs, v => strings.hasPrefix(v, "p"))
 
-println Filter(strs, v => strings.contains(v, "e"))
+echo Filter(strs, v => strings.contains(v, "e"))
 
 // The above examples all used anonymous functions,
 // but you can also use named functions of the correct
 // type.
-println Map(strs, strings.ToUpper)
+echo Map(strs, strings.ToUpper)
