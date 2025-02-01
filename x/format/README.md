@@ -85,7 +85,7 @@ echo echo("Hello world")
 
 Note:
 
-* Only the outermost function call statement is converted into command style. So `fmt.Println(fmt.Println("Hello world"))` is converted into `println println("Hello world")`, not `println println "Hello world"`.
+* Only the outermost function call statement is converted into command style. So `fmt.Println(fmt.Println("Hello world"))` is converted into `echo echo("Hello world")`, not `echo echo "Hello world"`.
 
 
 ### pkg.Fncall starting with lowercase
@@ -93,39 +93,40 @@ Note:
 ```go
 import "math"
 
-println math.Sin(math.Pi/3)
+echo math.Sin(math.Pi/3)
 ```
 
 will be converted into:
 
 ```go
-println math.sin(math.Pi/3)
+echo math.sin(math.Pi/3)
 ```
 
 ### Funclit of params convert to lambda in fncall (skip named results)
+
 ```go
-println(demo(func(n int) int {
+echo(demo(func(n int) int {
 	return n+100
 }))
 
-println(demo(func(n int) (v int) {
+echo(demo(func(n int) (v int) {
 	return n+100
 }))
 
 onStart(func() {
-	println("start")
+	echo("start")
 })
 ```
 
 will be converted into:
 ```
-println demo(n => n + 100)
+echo demo(n => n + 100)
 
-println demo(func(n int) (v int) {
+echo demo(func(n int) (v int) {
 	return n + 100
 })
 
 onStart => {
-	println "start"
+	echo "start"
 }
 ```

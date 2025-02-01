@@ -87,7 +87,7 @@ func funcLitToLambdaExpr(v *ast.FuncLit, ret *ast.Expr) {
 			lsh = append(lsh, p.Names...)
 		}
 	}
-	if len(lsh) > 0 && len(v.Body.List) == 1 {
+	if len(v.Body.List) == 1 {
 		if stmt, ok := v.Body.List[0].(*ast.ReturnStmt); ok && len(stmt.Results) == nres {
 			*ret = &ast.LambdaExpr{First: v.Pos(), Last: v.Pos(), Lhs: lsh, Rhs: stmt.Results, LhsHasParen: len(lsh) > 1, RhsHasParen: len(stmt.Results) > 1}
 			return
