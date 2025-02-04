@@ -1,0 +1,39 @@
+import (
+	"gop/scanner"
+	"gop/token"
+	"os"
+)
+
+func calc(expr string) string {
+	var vals []float64
+	s := scanner.new(expr, nil, 0)
+	for {
+		pos, tok, lit := s.scan()
+		switch tok {
+		case token.INT, token.FLOAT:
+			vals = append(vals, lit.float!)
+		case token.ADD, token.SUB, token.MUL, token.QUO:
+			x := len(vals) - 1
+			switch tok {
+			case token.ADD:
+				vals[x-1] += vals[x]
+			case token.SUB:
+				vals[x-1] -= vals[x]
+			case token.MUL:
+				vals[x-1] *= vals[x]
+			case token.QUO:
+				vals[x-1] /= vals[x]
+			}
+			vals = vals[:x]
+		case token.EOF, token.SEMICOLON:
+			return vals[0].string
+		default:
+			return "${pos}: invalid token ${tok}"
+		}
+	}
+}
+
+print "> "
+for line <- lines(os.Stdin) {
+	print "${calc(line)}\n> "
+}
