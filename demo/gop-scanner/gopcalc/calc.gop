@@ -1,0 +1,74 @@
+import (
+	"gop/scanner"
+	"gop/token"
+	"os"
+)
+
+func calc(expr string) string {
+	var (
+		ops  []token.Token
+		vals []float64
+	)
+	prec := {
+		token.ADD: 1,
+		token.SUB: 1,
+		token.MUL: 2,
+		token.QUO: 2,
+	}
+	s := scanner.new(expr, nil, 0)
+	n := 0 // op count
+	rv := true // require value
+	neg := false // negative number
+	for {
+		pos, tok, lit := s.scan()
+		switch tok {
+		case token.INT, token.FLOAT:
+			if !rv {
+				return "${pos}: require operator"
+			}
+			v := lit.float!
+			if neg {
+				v = -v
+				neg = false
+			}
+			vals = append(vals, v)
+			rv = false
+		case token.ADD, token.SUB, token.MUL, token.QUO, token.SEMICOLON:
+			if rv {
+				if tok == token.SUB {
+					neg = !neg // toggle negative flag
+					continue
+				}
+				return "${pos}: require value"
+			}
+			for n > 0 && prec[ops[n-1]] >= prec[tok] {
+				x := len(vals) - 1
+				switch ops[n-1] {
+				case token.ADD:
+					vals[x-1] += vals[x]
+				case token.SUB:
+					vals[x-1] -= vals[x]
+				case token.MUL:
+					vals[x-1] *= vals[x]
+				case token.QUO:
+					vals[x-1] /= vals[x]
+				}
+				vals = vals[:x]
+				n--
+			}
+			if tok == token.SEMICOLON {
+				return vals[0].string
+			}
+			ops = append(ops[:n], tok)
+			rv = true
+			n++
+		default:
+			return "${pos}: invalid token ${tok}"
+		}
+	}
+}
+
+print "> "
+for line <- lines(os.Stdin) {
+	print "${calc(line)}\n> "
+}
