@@ -19,7 +19,12 @@ package scanner
 import (
 	"go/scanner"
 	"io"
+
+	"github.com/goplus/gop/token"
+	"github.com/qiniu/x/byteutil"
 )
+
+// -----------------------------------------------------------------------------
 
 // Error is an alias of go/scanner.Error
 type Error = scanner.Error
@@ -33,3 +38,21 @@ type ErrorList = scanner.ErrorList
 func PrintError(w io.Writer, err error) {
 	scanner.PrintError(w, err)
 }
+
+// -----------------------------------------------------------------------------
+
+// New creates a scanner to tokenize the text src.
+//
+// Calls to Scan will invoke the error handler err if they encounter a
+// syntax error and err is not nil. Also, for each error encountered,
+// the Scanner field ErrorCount is incremented by one. The mode parameter
+// determines how comments are handled.
+func New(src string, err ErrorHandler, mode Mode) *Scanner {
+	fset := token.NewFileSet()
+	file := fset.AddFile("", fset.Base(), len(src))
+	scanner := new(Scanner)
+	scanner.Init(file, byteutil.Bytes(src), err, mode)
+	return scanner
+}
+
+// -----------------------------------------------------------------------------

@@ -1,0 +1,7 @@
+import "gop/scanner"
+
+s := scanner.new("10 + 3.2", nil, 0)
+_, _, lit1 := s.scan()
+_, tok2, _ := s.scan()
+_, _, lit3 := s.scan()
+echo lit1, tok2, lit3
