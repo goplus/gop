@@ -4,7 +4,7 @@ import (
 	"os"
 )
 
-func calc(expr string) float64 {
+func calc(expr string) string {
 	var (
 		ops  []token.Token
 		vals []float64
@@ -24,7 +24,7 @@ func calc(expr string) float64 {
 		switch tok {
 		case token.INT, token.FLOAT:
 			if !rv {
-				panic("${pos}: require operator")
+				return "${pos}: require operator"
 			}
 			v := lit.float!
 			if neg {
@@ -35,11 +35,11 @@ func calc(expr string) float64 {
 			rv = false
 		case token.ADD, token.SUB, token.MUL, token.QUO, token.SEMICOLON:
 			if rv {
-				if tok == token.SUB { // negative number
-					neg = true
+				if tok == token.SUB {
+					neg = !neg // toggle negative flag
 					continue
 				}
-				panic("${pos}: require value")
+				return "${pos}: require value"
 			}
 			for n > 0 && prec[ops[n-1]] >= prec[tok] {
 				x := len(vals) - 1
@@ -57,13 +57,13 @@ func calc(expr string) float64 {
 				n--
 			}
 			if tok == token.SEMICOLON {
-				return vals[0]
+				return vals[0].string
 			}
 			ops = append(ops[:n], tok)
 			rv = true
 			n++
 		default:
-			panic("${pos}: invalid token ${tok}")
+			return "${pos}: invalid token ${tok}"
 		}
 	}
 }
