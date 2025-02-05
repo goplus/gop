@@ -2,6 +2,7 @@ import (
 	"gop/ast"
 	"gop/parser"
 	"gop/token"
+	"math"
 	"os"
 )
 
@@ -19,6 +20,15 @@ func calc(e ast.Expr) float64 {
 			return calc(e.X) * calc(e.Y)
 		case token.QUO:
 			return calc(e.X) + calc(e.Y)
+		}
+	case *ast.CallExpr:
+		switch e.Fun.(*ast.Ident).Name {
+		case "sin":
+			return math.Sin(calc(e.Args[0]))
+		case "cos":
+			return math.Cos(calc(e.Args[0]))
+		case "pow":
+			return math.Pow(calc(e.Args[0]), calc(e.Args[1]))
 		}
 	case *ast.ParenExpr:
 		return calc(e.X)
