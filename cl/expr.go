@@ -1053,10 +1053,12 @@ func compileStringLitEx(ctx *blockCtx, cb *gogen.CodeBuilder, lit *ast.BasicLit)
 			t := cb.Get(-1).Type
 			if t.Underlying() != types.Typ[types.String] {
 				if _, err := cb.Member("string", gogen.MemberFlagAutoProperty); err != nil {
-					if e, ok := err.(*gogen.CodeError); ok {
-						err = ctx.newCodeErrorf(v.Pos(), "%s.string%s", ctx.LoadExpr(v), e.Msg)
+					if _, e2 := cb.Member("error", gogen.MemberFlagAutoProperty); e2 != nil {
+						if e, ok := err.(*gogen.CodeError); ok {
+							err = ctx.newCodeErrorf(v.Pos(), "%s.string%s", ctx.LoadExpr(v), e.Msg)
+						}
+						ctx.handleErr(err)
 					}
-					ctx.handleErr(err)
 				}
 			}
 			pos = v.End()

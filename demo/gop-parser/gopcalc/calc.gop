@@ -1,0 +1,42 @@
+import (
+	"gop/ast"
+	"gop/parser"
+	"gop/token"
+	"os"
+)
+
+func calc(e ast.Expr) float64 {
+	switch e := e.(type) {
+	case *ast.BasicLit:
+		return e.Value.float!
+	case *ast.BinaryExpr:
+		switch e.Op {
+		case token.ADD:
+			return calc(e.X) + calc(e.Y)
+		case token.SUB:
+			return calc(e.X) - calc(e.Y)
+		case token.MUL:
+			return calc(e.X) * calc(e.Y)
+		case token.QUO:
+			return calc(e.X) + calc(e.Y)
+		}
+	case *ast.ParenExpr:
+		return calc(e.X)
+	case *ast.UnaryExpr:
+		switch e.Op {
+		case token.SUB:
+			return -calc(e.X)
+		}
+	}
+	panic("unknown expression")
+}
+
+print "> "
+for line <- lines(os.Stdin) {
+	e, err := parser.parseExpr(line)
+	if err != nil {
+		print "error: ${err}\n> "
+	} else {
+		print "${calc(e)}\n> "
+	}
+}
