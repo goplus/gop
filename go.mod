@@ -7,7 +7,7 @@ require (
 	github.com/goplus/gogen v1.16.6
 	github.com/goplus/llgo v0.9.9
 	github.com/goplus/mod v0.13.16
-	github.com/qiniu/x v1.13.11
+	github.com/qiniu/x v1.13.12
 	golang.org/x/tools v0.19.0
 )
 
