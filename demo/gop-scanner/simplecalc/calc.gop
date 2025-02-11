@@ -16,8 +16,8 @@ func calc(expr string) string {
 		token.QUO: 2,
 	}
 	s := scanner.new(expr, nil, 0)
-	n := 0 // op count
-	rv := true // require value
+	n := 0       // op count
+	rv := true   // require value
 	neg := false // negative number
 	for {
 		pos, tok, lit := s.scan()
@@ -69,6 +69,6 @@ func calc(expr string) string {
 }
 
 print "> "
-for line <- lines(os.Stdin) {
+for line <- os.Stdin {
 	print "${calc(line)}\n> "
 }

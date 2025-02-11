@@ -34,6 +34,6 @@ func calc(expr string) string {
 }
 
 print "> "
-for line <- lines(os.Stdin) {
+for line <- os.Stdin {
 	print "${calc(line)}\n> "
 }
