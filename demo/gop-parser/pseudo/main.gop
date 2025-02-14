@@ -1,0 +1,18 @@
+import "os"
+
+func NewState() *state {
+	return &state{vars: {}, consts: {}}
+}
+
+func exec(code string) {
+	lines := code.split("\n")
+	stmts := parse(lines)
+	newState.exec(stmts)
+}
+
+if len(os.Args) < 2 {
+	println("Usage: pseudo <file>")
+	return
+}
+code := string(os.readFile(os.Args[1])!)
+exec(code)
