@@ -1,4 +1,5 @@
 import (
+	"fmt"
 	"gop/ast"
 	"gop/token"
 	"math"
@@ -78,7 +79,14 @@ func execOutputStmt(stmt *OutputStmt) {
 }
 
 func execInputStmt(stmt *InputStmt) {
-	panic("todo")
+	name := stmt.Name
+	oldv, ok := vars[name]
+	if !ok {
+		panic("undefined variable `${name}`")
+	}
+	v := reflect.new(reflect.typeOf(oldv))
+	fmt.scanln(v.Interface())!
+	vars[name] = v.elem.Interface()
 }
 
 func execIfStmt(stmt *IfStmt) {

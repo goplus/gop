@@ -1,6 +1,8 @@
-CONSTANT n <- 100
+DECLARE n : INTEGER
 DECLARE i : INTEGER
 DECLARE sum : INTEGER
+OUTPUT "please input n:"
+INPUT n
 i <- 1
 sum <- 0
 WHILE i <= n DO
