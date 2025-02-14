@@ -1,0 +1,289 @@
+import (
+	"gop/ast"
+	"gop/token"
+	"math"
+	"reflect"
+)
+
+var (
+	vars   map[string]any
+	consts map[string]any
+)
+
+func exec(stmts []Stmt) {
+	for _, stmt := range stmts {
+		execStmt(stmt)
+	}
+}
+
+func execStmt(stmt Stmt) {
+	switch stmt := stmt.(type) {
+	case *EmptyStmt:
+	case *VarStmt:
+		execVarStmt(stmt)
+	case *AssignStmt:
+		execAssignStmt(stmt)
+	case *OutputStmt:
+		execOutputStmt(stmt)
+	case *InputStmt:
+		execInputStmt(stmt)
+	case *ConstStmt:
+		execConstStmt(stmt)
+	case *IfStmt:
+		execIfStmt(stmt)
+	case *WhileStmt:
+		execWhileStmt(stmt)
+	case *UntilStmt:
+		execUntilStmt(stmt)
+	default:
+		panic("unknown statement")
+	}
+}
+
+func execVarStmt(stmt *VarStmt) {
+	name := stmt.Name
+	if _, ok := vars[name]; ok {
+		panic("variable `${name}` already declared")
+	}
+	vars[name] = zero(stmt.Type)
+}
+
+func execConstStmt(stmt *ConstStmt) {
+	name := stmt.Name
+	if _, ok := consts[name]; ok {
+		panic("constant `${name}` already declared")
+	}
+	consts[name] = calc(stmt.Value)
+}
+
+func execAssignStmt(stmt *AssignStmt) {
+	name := stmt.Name
+	oldv, ok := vars[name]
+	if !ok {
+		panic("undefined variable `${name}`")
+	}
+	v := calc(stmt.Value)
+	if reflect.typeOf(oldv) != reflect.typeOf(v) {
+		panic("assignment of `${name}`: type mismatch")
+	}
+	vars[name] = v
+}
+
+func execOutputStmt(stmt *OutputStmt) {
+	echo(calc(stmt.Value))
+}
+
+func execInputStmt(stmt *InputStmt) {
+	panic("todo")
+}
+
+func execIfStmt(stmt *IfStmt) {
+	if toBool(calc(stmt.Cond), "IF") {
+		exec(stmt.Body)
+	} else if stmt.Else != nil {
+		exec(stmt.Else)
+	}
+}
+
+func execWhileStmt(stmt *WhileStmt) {
+	for toBool(calc(stmt.Cond), "WHILE") {
+		exec(stmt.Body)
+	}
+}
+
+func execUntilStmt(stmt *UntilStmt) {
+	for {
+		exec(stmt.Body)
+		if toBool(calc(stmt.Cond), "UNTIL") {
+			return
+		}
+	}
+}
+
+func calc(e ast.Expr) any {
+	switch e := e.(type) {
+	case *ast.BasicLit:
+		switch e.Kind {
+		case token.INT:
+			return e.Value.int!
+		case token.FLOAT:
+			return e.Value.float!
+		case token.STRING:
+			return e.Value.unquote!
+		}
+	case *ast.Ident:
+		return getValue(e.Name)
+	case *ast.BinaryExpr:
+		switch e.Op {
+		case token.ADD:
+			return calcAdd(calc(e.X), calc(e.Y))
+		case token.SUB:
+			return calcSub(calc(e.X), calc(e.Y))
+		case token.MUL:
+			return calcMul(calc(e.X), calc(e.Y))
+		case token.QUO:
+			return calcQuo(calc(e.X), calc(e.Y))
+		}
+	case *ast.CallExpr:
+		switch e.Fun.(*ast.Ident).Name {
+		case "SIN":
+			x := toFloat(calc(e.Args[0]), "SIN")
+			return math.Sin(x)
+		case "COS":
+			x := toFloat(calc(e.Args[0]), "COS")
+			return math.Cos(x)
+		case "POW":
+			x := toFloat(calc(e.Args[0]), "POW")
+			y := toFloat(calc(e.Args[1]), "POW")
+			return math.Pow(x, y)
+		}
+	case *ast.ParenExpr:
+		return calc(e.X)
+	case *ast.UnaryExpr:
+		switch e.Op {
+		case token.SUB:
+			return calcNeg(calc(e.X))
+		}
+	}
+	panic("unknown expression")
+}
+
+func calcAdd(a, b any) any {
+	switch a := a.(type) {
+	case int:
+		switch b := b.(type) {
+		case int:
+			return a + b
+		case float64:
+			return float64(a) + b
+		}
+	case float64:
+		switch b := b.(type) {
+		case int:
+			return a + float64(b)
+		case float64:
+			return a + b
+		}
+	case string:
+		if b, ok := b.(string); ok {
+			return a + b
+		}
+	}
+	panic("invalid operands of +")
+}
+
+func calcSub(a, b any) any {
+	switch a := a.(type) {
+	case int:
+		switch b := b.(type) {
+		case int:
+			return a - b
+		case float64:
+			return float64(a) - b
+		}
+	case float64:
+		switch b := b.(type) {
+		case int:
+			return a - float64(b)
+		case float64:
+			return a - b
+		}
+	}
+	panic("invalid operands of -")
+}
+
+func calcMul(a, b any) any {
+	switch a := a.(type) {
+	case int:
+		switch b := b.(type) {
+		case int:
+			return a * b
+		case float64:
+			return float64(a) * b
+		}
+	case float64:
+		switch b := b.(type) {
+		case int:
+			return a * float64(b)
+		case float64:
+			return a * b
+		}
+	}
+	panic("invalid operands of *")
+}
+
+func calcQuo(a, b any) any {
+	switch a := a.(type) {
+	case int:
+		switch b := b.(type) {
+		case int:
+			return a / b
+		case float64:
+			return float64(a) / b
+		}
+	case float64:
+		switch b := b.(type) {
+		case int:
+			return a / float64(b)
+		case float64:
+			return a / b
+		}
+	}
+	panic("invalid operands of /")
+}
+
+func calcNeg(a any) any {
+	switch a := a.(type) {
+	case int:
+		return -a
+	case float64:
+		return -a
+	}
+	panic("invalid operand of unary -")
+}
+
+func getValue(name string) any {
+	if v, ok := vars[name]; ok {
+		return v
+	}
+	if v, ok := consts[name]; ok {
+		return v
+	}
+	panic("undefined variable `${name}`")
+}
+
+func toBool(v any, at string) bool {
+	switch v := v.(type) {
+	case bool:
+		return v
+	}
+	panic("${at}: need boolean expression")
+}
+
+func toFloat(v any, at string) float64 {
+	switch v := v.(type) {
+	case int:
+		return float64(v)
+	case float64:
+		return v
+	}
+	panic("${at}: cannot convert operand to float64")
+}
+
+// INTEGER, REAL, STRING, BOOLEAN
+func zero(t Type) any {
+	switch t := t.(type) {
+	case *Ident:
+		switch t.Name {
+		case "INTEGER":
+			return 0
+		case "REAL":
+			return 0.0
+		case "STRING":
+			return ""
+		case "BOOLEAN":
+			return false
+		}
+	}
+	panic("unknown type")
+}
