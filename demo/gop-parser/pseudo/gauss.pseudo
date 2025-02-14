@@ -1,0 +1,10 @@
+CONSTANT n <- 100
+DECLARE i : INTEGER
+DECLARE sum : INTEGER
+i <- 1
+sum <- 0
+WHILE i <= n DO
+    sum <- sum + i
+    i <- i + 1
+ENDWHILE
+OUTPUT sum

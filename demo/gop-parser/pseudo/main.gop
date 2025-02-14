@@ -1,13 +1,10 @@
 import "os"
 
-func NewState() *state {
-	return &state{vars: {}, consts: {}}
-}
-
 func exec(code string) {
 	lines := code.split("\n")
 	stmts := parse(lines)
-	newState.exec(stmts)
+	s := state.new()
+	s.exec(stmts)
 }
 
 if len(os.Args) < 2 {
