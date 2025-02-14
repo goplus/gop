@@ -1,6 +1,4 @@
-DECLARE n : INTEGER
-DECLARE i : INTEGER
-DECLARE sum : INTEGER
+DECLARE n, i, sum : INTEGER
 OUTPUT "please input n:"
 INPUT n
 i <- 1

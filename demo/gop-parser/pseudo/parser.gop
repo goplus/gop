@@ -77,13 +77,24 @@ func parseExpr(expr string) ast.Expr {
 
 // VarStmt - 变量声明语句
 //
-// DECLARE {变量名} : {类型}
+// DECLARE {变量名1}, {变量名2}... : {类型}
 func parseVarStmt(rest string, lines []string) (Stmt, []string) {
 	s := scanner.new(rest, nil, 0)
-	_, name := expect(s, token.IDENT) // {变量名}
-	expect(s, token.COLON)            // :
-	typ := parseType(s)               // {类型}
-	return &VarStmt{Name: name, Type: typ}, lines[1:]
+	var names []string
+	for {
+		_, name := expect(s, token.IDENT) // {名称}
+		names = append(names, name)
+		_, tok, _ := s.scan()
+		if tok == token.COMMA { // ,
+			continue
+		} else if tok == token.COLON { // :
+			break
+		} else {
+			panic("DECLARE: expect , or :")
+		}
+	}
+	typ := parseType(s) // {类型}
+	return &VarStmt{Names: names, Type: typ}, lines[1:]
 }
 
 func parseNameAndValue(rest string) (string, ast.Expr) {

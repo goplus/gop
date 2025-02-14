@@ -46,11 +46,12 @@ func execStmt(stmt Stmt) {
 }
 
 func execVarStmt(stmt *VarStmt) {
-	name := stmt.Name
-	if _, ok := vars[name]; ok {
-		panic("variable `${name}` already declared")
+	for name <- stmt.Names {
+		if _, ok := vars[name]; ok {
+			panic("variable `${name}` already declared")
+		}
+		vars[name] = zero(stmt.Type)
 	}
-	vars[name] = zero(stmt.Type)
 }
 
 func execConstStmt(stmt *ConstStmt) {
