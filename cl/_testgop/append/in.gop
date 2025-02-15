@@ -1,0 +1,14 @@
+type foo struct {
+	a []int
+}
+
+a := [1, 2, 3]
+a <- 4
+echo a
+
+f := foo{a: [1, 2, 3]}
+f.a <- 4
+echo f
+
+f2 := [2]chan int{}
+f2[0] <- 4
