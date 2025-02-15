@@ -11,7 +11,7 @@ func calc(expr string) string {
 		pos, tok, lit := s.scan()
 		switch tok {
 		case token.INT, token.FLOAT:
-			vals = append(vals, lit.float!)
+			vals <- lit.float!
 		case token.ADD, token.SUB, token.MUL, token.QUO:
 			x := len(vals) - 1
 			switch tok {
