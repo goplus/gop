@@ -20,7 +20,7 @@ func parseBlockStmt(lines []string) (stmts []Stmt, rest []string) {
 		if stmt == nil {
 			break
 		}
-		stmts = append(stmts, stmt)
+		stmts <- stmt
 	}
 	rest = lines
 	return
@@ -70,7 +70,7 @@ func parseType(s *scanner.Scanner) Type {
 func parseNames(s *scanner.Scanner) (names []string, tok token.Token) {
 	for {
 		_, name := expect(s, token.IDENT) // {名称}
-		names = append(names, name)
+		names <- name
 		_, tok, _ = s.scan()
 		if tok == token.COMMA { // ,
 			continue

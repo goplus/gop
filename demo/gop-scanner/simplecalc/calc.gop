@@ -31,7 +31,7 @@ func calc(expr string) string {
 				v = -v
 				neg = false
 			}
-			vals = append(vals, v)
+			vals <- v
 			rv = false
 		case token.ADD, token.SUB, token.MUL, token.QUO, token.SEMICOLON:
 			if rv {
