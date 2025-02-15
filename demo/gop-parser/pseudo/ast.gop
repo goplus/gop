@@ -51,9 +51,9 @@ type OutputStmt struct {
 
 // InputStmt - 输入语句
 //
-// INPUT {变量名}
+// INPUT {变量名1}, {变量名2}...
 type InputStmt struct {
-	Name string
+	Names []string
 }
 
 // IfStmt - 条件语句
@@ -79,7 +79,7 @@ type WhileStmt struct {
 	Body []Stmt
 }
 
-// UntilStmt - Unti循环语句
+// UntilStmt - Until循环语句
 //
 // REPEAT
 //	 {语句块}

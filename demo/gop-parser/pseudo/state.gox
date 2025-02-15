@@ -80,14 +80,15 @@ func execOutputStmt(stmt *OutputStmt) {
 }
 
 func execInputStmt(stmt *InputStmt) {
-	name := stmt.Name
-	oldv, ok := vars[name]
-	if !ok {
-		panic("undefined variable `${name}`")
+	for name <- stmt.Names {
+		oldv, ok := vars[name]
+		if !ok {
+			panic("undefined variable `${name}`")
+		}
+		v := reflect.new(reflect.typeOf(oldv))
+		fmt.scanln(v.Interface())!
+		vars[name] = v.elem.Interface()
 	}
-	v := reflect.new(reflect.typeOf(oldv))
-	fmt.scanln(v.Interface())!
-	vars[name] = v.elem.Interface()
 }
 
 func execIfStmt(stmt *IfStmt) {

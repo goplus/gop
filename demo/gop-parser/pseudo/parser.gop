@@ -66,6 +66,28 @@ func parseType(s *scanner.Scanner) Type {
 	return &Ident{Name: name}
 }
 
+// {变量名1}, {变量名2}...
+func parseNames(s *scanner.Scanner) (names []string, tok token.Token) {
+	for {
+		_, name := expect(s, token.IDENT) // {名称}
+		names = append(names, name)
+		_, tok, _ = s.scan()
+		if tok == token.COMMA { // ,
+			continue
+		}
+		return
+	}
+}
+
+// {常量名} <- {表达式}
+func parseNameAndValue(rest string) (string, ast.Expr) {
+	s := scanner.new(rest, nil, 0)
+	_, name := expect(s, token.IDENT) // {名称}
+	pos, _ := expect(s, token.ARROW)  // <-
+	value := parseExpr(rest[pos+1:])  // {表达式}
+	return name, value
+}
+
 // Expr - 表达式
 func parseExpr(expr string) ast.Expr {
 	e, err := parser.parseExpr(expr)
@@ -80,29 +102,12 @@ func parseExpr(expr string) ast.Expr {
 // DECLARE {变量名1}, {变量名2}... : {类型}
 func parseVarStmt(rest string, lines []string) (Stmt, []string) {
 	s := scanner.new(rest, nil, 0)
-	var names []string
-	for {
-		_, name := expect(s, token.IDENT) // {名称}
-		names = append(names, name)
-		_, tok, _ := s.scan()
-		if tok == token.COMMA { // ,
-			continue
-		} else if tok == token.COLON { // :
-			break
-		} else {
-			panic("DECLARE: expect , or :")
-		}
+	names, tok := parseNames(s) // {变量名1}, {变量名2}...
+	if tok != token.COLON {     // :
+		panic("DECLARE: expect , or :")
 	}
 	typ := parseType(s) // {类型}
 	return &VarStmt{Names: names, Type: typ}, lines[1:]
-}
-
-func parseNameAndValue(rest string) (string, ast.Expr) {
-	s := scanner.new(rest, nil, 0)
-	_, name := expect(s, token.IDENT) // {名称}
-	pos, _ := expect(s, token.ARROW)  // <-
-	value := parseExpr(rest[pos+1:])  // {表达式}
-	return name, value
 }
 
 // ConstStmt - 常量声明语句
@@ -131,11 +136,11 @@ func parseOutputStmt(rest string, lines []string) (Stmt, []string) {
 
 // InputStmt - 输入语句
 //
-// INPUT {变量名}
+// INPUT {变量名1}, {变量名2}...
 func parseInputStmt(rest string, lines []string) (Stmt, []string) {
 	s := scanner.new(rest, nil, 0)
-	_, name := expect(s, token.IDENT) // {变量名}
-	return &InputStmt{Name: name}, lines[1:]
+	names, _ := parseNames(s)
+	return &InputStmt{Names: names}, lines[1:]
 }
 
 // IfStmt - If 语句
