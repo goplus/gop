@@ -1,0 +1,3 @@
+t := "u_int32_t"
+echo t.split("_").capitalize.join("")
+echo t.split("_").repeat(3).join(" ")

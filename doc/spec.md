@@ -1,5 +1,7 @@
-Go+ Full Specification
+The Go+ Full Specification
 =====
+
+TODO
 
 ## Comments
 

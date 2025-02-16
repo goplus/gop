@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package gop
+package tool
 
 import (
 	"log"
@@ -37,7 +37,7 @@ func genFlags(flags []GenFlags) GenFlags {
 func InstallDir(dir string, conf *Config, install *gocmd.InstallConfig, flags ...GenFlags) (err error) {
 	_, _, err = GenGoEx(dir, conf, false, genFlags(flags))
 	if err != nil {
-		return errors.NewWith(err, `GenGo(dir, conf, false)`, -2, "gop.GenGo", dir, conf, false)
+		return errors.NewWith(err, `GenGo(dir, conf, false)`, -2, "tool.GenGo", dir, conf, false)
 	}
 	return gocmd.Install(dir, install)
 }
@@ -46,7 +46,7 @@ func InstallDir(dir string, conf *Config, install *gocmd.InstallConfig, flags ..
 func InstallPkgPath(workDir, pkgPath string, conf *Config, install *gocmd.InstallConfig, flags ...GenFlags) (err error) {
 	localDir, recursively, err := GenGoPkgPathEx(workDir, pkgPath, conf, true, genFlags(flags))
 	if err != nil {
-		return errors.NewWith(err, `GenGoPkgPath(workDir, pkgPath, conf, true)`, -2, "gop.GenGoPkgPath", workDir, pkgPath, conf, true)
+		return errors.NewWith(err, `GenGoPkgPath(workDir, pkgPath, conf, true)`, -2, "tool.GenGoPkgPath", workDir, pkgPath, conf, true)
 	}
 	old := chdir(localDir)
 	defer os.Chdir(old)
@@ -64,7 +64,7 @@ func cwdParam(recursively bool) string {
 func InstallFiles(files []string, conf *Config, install *gocmd.InstallConfig) (err error) {
 	files, err = GenGoFiles("", files, conf)
 	if err != nil {
-		return errors.NewWith(err, `GenGoFiles("", files, conf)`, -2, "gop.GenGoFiles", "", files, conf)
+		return errors.NewWith(err, `GenGoFiles("", files, conf)`, -2, "tool.GenGoFiles", "", files, conf)
 	}
 	return gocmd.InstallFiles(files, install)
 }
@@ -87,7 +87,7 @@ func chdir(dir string) string {
 func BuildDir(dir string, conf *Config, build *gocmd.BuildConfig, flags ...GenFlags) (err error) {
 	_, _, err = GenGoEx(dir, conf, false, genFlags(flags))
 	if err != nil {
-		return errors.NewWith(err, `GenGo(dir, conf, false)`, -2, "gop.GenGo", dir, conf, false)
+		return errors.NewWith(err, `GenGo(dir, conf, false)`, -2, "tool.GenGo", dir, conf, false)
 	}
 	return gocmd.Build(dir, build)
 }
@@ -96,7 +96,7 @@ func BuildDir(dir string, conf *Config, build *gocmd.BuildConfig, flags ...GenFl
 func BuildPkgPath(workDir, pkgPath string, conf *Config, build *gocmd.BuildConfig, flags ...GenFlags) (err error) {
 	localDir, recursively, err := GenGoPkgPathEx(workDir, pkgPath, conf, false, genFlags(flags))
 	if err != nil {
-		return errors.NewWith(err, `GenGoPkgPath(workDir, pkgPath, conf, false)`, -2, "gop.GenGoPkgPath", workDir, pkgPath, conf, false)
+		return errors.NewWith(err, `GenGoPkgPath(workDir, pkgPath, conf, false)`, -2, "tool.GenGoPkgPath", workDir, pkgPath, conf, false)
 	}
 	old, mod := chdirAndMod(localDir)
 	defer restoreDirAndMod(old, mod)
@@ -107,7 +107,7 @@ func BuildPkgPath(workDir, pkgPath string, conf *Config, build *gocmd.BuildConfi
 func BuildFiles(files []string, conf *Config, build *gocmd.BuildConfig) (err error) {
 	files, err = GenGoFiles("", files, conf)
 	if err != nil {
-		return errors.NewWith(err, `GenGoFiles("", files, conf)`, -2, "gop.GenGoFiles", "", files, conf)
+		return errors.NewWith(err, `GenGoFiles("", files, conf)`, -2, "tool.GenGoFiles", "", files, conf)
 	}
 	return gocmd.BuildFiles(files, build)
 }
@@ -141,7 +141,7 @@ func getBuildDir(conf *Config) string {
 func RunDir(dir string, args []string, conf *Config, run *gocmd.RunConfig, flags ...GenFlags) (err error) {
 	_, _, err = GenGoEx(dir, conf, false, genFlags(flags))
 	if err != nil {
-		return errors.NewWith(err, `GenGo(dir, conf, false)`, -2, "gop.GenGo", dir, conf, false)
+		return errors.NewWith(err, `GenGo(dir, conf, false)`, -2, "tool.GenGo", dir, conf, false)
 	}
 	return gocmd.RunDir(getBuildDir(conf), dir, args, run)
 }
@@ -150,7 +150,7 @@ func RunDir(dir string, args []string, conf *Config, run *gocmd.RunConfig, flags
 func RunPkgPath(pkgPath string, args []string, chDir bool, conf *Config, run *gocmd.RunConfig, flags ...GenFlags) (err error) {
 	localDir, recursively, err := GenGoPkgPathEx("", pkgPath, conf, true, genFlags(flags))
 	if err != nil {
-		return errors.NewWith(err, `GenGoPkgPath("", pkgPath, conf, true)`, -2, "gop.GenGoPkgPath", "", pkgPath, conf, true)
+		return errors.NewWith(err, `GenGoPkgPath("", pkgPath, conf, true)`, -2, "tool.GenGoPkgPath", "", pkgPath, conf, true)
 	}
 	if recursively {
 		return errors.NewWith(errors.New("can't use ... pattern for `gop run` command"), `recursively`, -1, "", recursively)
@@ -167,7 +167,7 @@ func RunPkgPath(pkgPath string, args []string, chDir bool, conf *Config, run *go
 func RunFiles(autogen string, files []string, args []string, conf *Config, run *gocmd.RunConfig) (err error) {
 	files, err = GenGoFiles(autogen, files, conf)
 	if err != nil {
-		return errors.NewWith(err, `GenGoFiles(autogen, files, conf)`, -2, "gop.GenGoFiles", autogen, files, conf)
+		return errors.NewWith(err, `GenGoFiles(autogen, files, conf)`, -2, "tool.GenGoFiles", autogen, files, conf)
 	}
 	return gocmd.RunFiles(getBuildDir(conf), files, args, run)
 }
@@ -178,7 +178,7 @@ func RunFiles(autogen string, files []string, args []string, conf *Config, run *
 func TestDir(dir string, conf *Config, test *gocmd.TestConfig, flags ...GenFlags) (err error) {
 	_, _, err = GenGoEx(dir, conf, true, genFlags(flags))
 	if err != nil {
-		return errors.NewWith(err, `GenGo(dir, conf, true)`, -2, "gop.GenGo", dir, conf, true)
+		return errors.NewWith(err, `GenGo(dir, conf, true)`, -2, "tool.GenGo", dir, conf, true)
 	}
 	return gocmd.Test(dir, test)
 }
@@ -187,7 +187,7 @@ func TestDir(dir string, conf *Config, test *gocmd.TestConfig, flags ...GenFlags
 func TestPkgPath(workDir, pkgPath string, conf *Config, test *gocmd.TestConfig, flags ...GenFlags) (err error) {
 	localDir, recursively, err := GenGoPkgPathEx(workDir, pkgPath, conf, false, genFlags(flags))
 	if err != nil {
-		return errors.NewWith(err, `GenGoPkgPath(workDir, pkgPath, conf, false)`, -2, "gop.GenGoPkgPath", workDir, pkgPath, conf, false)
+		return errors.NewWith(err, `GenGoPkgPath(workDir, pkgPath, conf, false)`, -2, "tool.GenGoPkgPath", workDir, pkgPath, conf, false)
 	}
 	old, mod := chdirAndMod(localDir)
 	defer restoreDirAndMod(old, mod)
@@ -198,7 +198,7 @@ func TestPkgPath(workDir, pkgPath string, conf *Config, test *gocmd.TestConfig, 
 func TestFiles(files []string, conf *Config, test *gocmd.TestConfig) (err error) {
 	files, err = GenGoFiles("", files, conf)
 	if err != nil {
-		return errors.NewWith(err, `GenGoFiles("", files, conf)`, -2, "gop.GenGoFiles", "", files, conf)
+		return errors.NewWith(err, `GenGoFiles("", files, conf)`, -2, "tool.GenGoFiles", "", files, conf)
 	}
 	return gocmd.TestFiles(files, test)
 }

@@ -57,15 +57,15 @@ type FileSystem = fsx.FileSystem
 
 // -----------------------------------------------------------------------------
 
-// Parse parses a single Go+ source file. The target specifies the Go+ source file.
+// Parse parses a single Go+ source file. The filename specifies the Go+ source file.
 // If the file couldn't be read, a nil map and the respective error are returned.
-func Parse(fset *token.FileSet, target string, src interface{}, mode Mode) (pkgs map[string]*ast.Package, err error) {
-	file, err := ParseFile(fset, target, src, mode)
+func Parse(fset *token.FileSet, filename string, src interface{}, mode Mode) (pkgs map[string]*ast.Package, err error) {
+	file, err := ParseFile(fset, filename, src, mode)
 	if err != nil {
 		return
 	}
 	pkgs = make(map[string]*ast.Package)
-	pkgs[file.Name.Name] = astFileToPkg(file, target)
+	pkgs[file.Name.Name] = astFileToPkg(file, filename)
 	return
 }
 

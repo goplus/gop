@@ -27,8 +27,8 @@ jobs:
         - macos-latest
         go:
         - 1.19.x
-        - 1.20.x
         - 1.21.x
+        - 1.22.x
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -48,7 +48,6 @@ jobs:
       run: go test -v -coverprofile="coverage.txt" -covermode=atomic ./...
 
     - name: Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
-        token: ${{ secrets.CODECOV_TOKEN }}
         slug: goplus/gop

@@ -1729,11 +1729,25 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTup
 		if p.tok == token.STRING && len(p.lit) > 1 {
 			bl.Extra = p.stringLit(p.pos, p.lit)
 		}
-		x = bl
-		if debugParseOutput {
-			log.Printf("ast.BasicLit{Kind: %v, Value: %v}\n", p.tok, p.lit)
-		}
 		p.next()
+		if p.tok == token.UNIT {
+			nu := &ast.NumberUnitLit{
+				ValuePos: bl.ValuePos,
+				Kind:     bl.Kind,
+				Value:    bl.Value,
+				Unit:     p.lit,
+			}
+			x = nu
+			if debugParseOutput {
+				log.Printf("ast.NumberUnitLit{Kind: %v, Value: %v, Unit: %v}\n", nu.Kind, nu.Value, nu.Unit)
+			}
+			p.next()
+		} else {
+			x = bl
+			if debugParseOutput {
+				log.Printf("ast.BasicLit{Kind: %v, Value: %v}\n", bl.Kind, bl.Value)
+			}
+		}
 		return
 
 	case token.LPAREN:
@@ -2168,6 +2182,7 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	case *ast.BadExpr:
 	case *ast.Ident:
 	case *ast.BasicLit:
+	case *ast.NumberUnitLit:
 	case *ast.FuncLit:
 	case *ast.CompositeLit:
 	case *ast.SliceLit:
@@ -2242,12 +2257,14 @@ func (p *parser) checkExprOrType(x ast.Expr) ast.Expr {
 }
 
 // If lhs is set and the result is an identifier, it is not resolved.
-func (p *parser) parsePrimaryExpr(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTuple bool) {
+func (p *parser) parsePrimaryExpr(iden *ast.Ident, lhs, allowTuple, allowCmd bool) (x ast.Expr, isTuple bool) {
 	if p.trace {
 		defer un(trace(p, "PrimaryExpr"))
 	}
 
-	if x, isTuple = p.parseOperand(lhs, allowTuple, allowCmd); isTuple {
+	if iden != nil {
+		x = iden
+	} else if x, isTuple = p.parseOperand(lhs, allowTuple, allowCmd); isTuple {
 		return
 	}
 L:
@@ -2369,7 +2386,7 @@ func (p *parser) checkCmd() bool {
 
 // parseErrWrapExpr: expr! expr? expr?:defval
 func (p *parser) parseErrWrapExpr(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTuple bool) {
-	if x, isTuple = p.parsePrimaryExpr(lhs, allowTuple, allowCmd); isTuple {
+	if x, isTuple = p.parsePrimaryExpr(nil, lhs, allowTuple, allowCmd); isTuple {
 		return
 	}
 	if expr, ok := x.(*ast.ErrWrapExpr); ok {
@@ -2659,8 +2676,14 @@ const (
 // of a range clause (with mode == rangeOk). The returned statement is an
 // assignment with a right-hand side that is a single unary expression of
 // the form "range x". No guarantees are given for the left-hand side.
-func (p *parser) parseSimpleStmt(mode int, allowCmd bool) (ast.Stmt, bool) {
-	return p.parseSimpleStmtEx(mode, allowCmd, false)
+func (p *parser) parseSimpleStmt(mode int, allowCmd bool) ast.Stmt {
+	ss, _ /* isRange */ := p.parseSimpleStmtEx(mode, allowCmd, false)
+	return ss
+}
+
+func (p *parser) parseBranchCmdStmt(iden *ast.Ident) ast.Stmt { // Go+: goto as command
+	x, _ := p.parsePrimaryExpr(iden, false, false, true)
+	return &ast.ExprStmt{X: x}
 }
 
 func (p *parser) parseSimpleStmtEx(mode int, allowCmd, allowRangeExpr bool) (ast.Stmt, bool) {
@@ -2818,19 +2841,28 @@ func (p *parser) parseBranchStmt(tok token.Token) ast.Stmt {
 
 	oldpos, oldlit := p.pos, p.lit // Go+: save token to allow goto() as a function
 	pos := p.expect(tok)
-	if p.tok == token.LPAREN { // Go+: allow goto() as a function
+	next := p.tok
+	if next != token.IDENT && next != token.SEMICOLON { // Go+: allow goto() as a function
 		p.unget(oldpos, token.IDENT, oldlit)
-		s, _ := p.parseSimpleStmt(basic, false)
+		s := p.parseSimpleStmt(basic, true)
 		p.expectSemi()
 		return s
 	}
 
 	var label *ast.Ident
-	if tok != token.FALLTHROUGH && p.tok == token.IDENT {
+	if tok != token.FALLTHROUGH && next == token.IDENT {
 		label = p.parseIdent()
 		// add to list of unresolved targets
 		n := len(p.targetStack) - 1
 		p.targetStack[n] = append(p.targetStack[n], label)
+	}
+	if p.tok != token.SEMICOLON { // Go+: goto command
+		if label != nil {
+			p.unget(label.NamePos, token.IDENT, label.Name)
+		}
+		s := p.parseBranchCmdStmt(&ast.Ident{NamePos: oldpos, Name: oldlit})
+		p.expectSemi()
+		return s
 	}
 	p.expectSemi()
 
@@ -2872,7 +2904,7 @@ func (p *parser) parseIfHeader() (init ast.Stmt, cond ast.Expr) {
 			p.next()
 			p.error(p.pos, "var declaration not allowed in 'IF' initializer")
 		}
-		init, _ = p.parseSimpleStmt(basic, false)
+		init = p.parseSimpleStmt(basic, false)
 	}
 
 	var condStmt ast.Stmt
@@ -2889,7 +2921,7 @@ func (p *parser) parseIfHeader() (init ast.Stmt, cond ast.Expr) {
 			p.expect(token.SEMICOLON)
 		}
 		if p.tok != token.LBRACE {
-			condStmt, _ = p.parseSimpleStmt(basic, false)
+			condStmt = p.parseSimpleStmt(basic, false)
 		}
 	} else {
 		condStmt = init
@@ -2936,24 +2968,24 @@ func (p *parser) parseForPhraseCond() (init ast.Stmt, cond ast.Expr) {
 			p.next()
 			p.error(p.pos, "var declaration not allowed in 'IF' initializer")
 		}
-		init, _ = p.parseSimpleStmt(basic, false)
+		init = p.parseSimpleStmt(basic, false)
 	}
 
 	var condStmt ast.Stmt
 	var semi struct {
 		pos token.Pos
-		lit string // ";" or "\n"; valid if pos.IsValid()
+		//lit string // ";" or "\n"; valid if pos.IsValid()
 	}
 	if !isForPhraseCondEnd(p.tok) {
 		if p.tok == token.SEMICOLON {
 			semi.pos = p.pos
-			semi.lit = p.lit
+			//semi.lit = p.lit
 			p.next()
 		} else {
 			p.expect(token.SEMICOLON)
 		}
 		if !isForPhraseCondEnd(p.tok) {
-			condStmt, _ = p.parseSimpleStmt(basic, false)
+			condStmt = p.parseSimpleStmt(basic, false)
 		}
 	} else {
 		condStmt = init
@@ -3087,7 +3119,7 @@ func (p *parser) parseSwitchStmt() ast.Stmt {
 		prevLev := p.exprLev
 		p.exprLev = -1
 		if p.tok != token.SEMICOLON {
-			s2, _ = p.parseSimpleStmt(basic, false)
+			s2 = p.parseSimpleStmt(basic, false)
 		}
 		if p.tok == token.SEMICOLON {
 			p.next()
@@ -3108,7 +3140,7 @@ func (p *parser) parseSwitchStmt() ast.Stmt {
 				// Having the extra nested but empty scope won't affect it.
 				p.openScope()
 				defer p.closeScope()
-				s2, _ = p.parseSimpleStmt(basic, false)
+				s2 = p.parseSimpleStmt(basic, false)
 			}
 		}
 		p.exprLev = prevLev
@@ -3246,6 +3278,8 @@ func (p *parser) toIdent(e ast.Expr) *ast.Ident {
 		return v
 	case *ast.BasicLit:
 		p.errorExpected(e.Pos(), fmt.Sprintf("'IDENT', found %v", v.Value), 2)
+	case *ast.NumberUnitLit:
+		p.errorExpected(e.Pos(), fmt.Sprintf("'IDENT', found %v", v.Value+v.Unit), 2)
 	default:
 		p.errorExpected(e.Pos(), "'IDENT'", 2)
 	}
@@ -3312,11 +3346,11 @@ func (p *parser) parseForStmt() ast.Stmt {
 			s1 = s2
 			s2 = nil
 			if p.tok != token.SEMICOLON {
-				s2, _ = p.parseSimpleStmt(basic, false)
+				s2 = p.parseSimpleStmt(basic, false)
 			}
 			p.expectSemi()
 			if p.tok != token.LBRACE {
-				s3, _ = p.parseSimpleStmt(basic, false)
+				s3 = p.parseSimpleStmt(basic, false)
 			}
 		}
 		p.exprLev = prevLev
@@ -3395,7 +3429,7 @@ func (p *parser) parseStmt(allowCmd bool) (s ast.Stmt) {
 		allowCmd = false
 		fallthrough
 	case token.IDENT, token.MAP: // operands
-		s, _ = p.parseSimpleStmt(labelOk, allowCmd)
+		s = p.parseSimpleStmt(labelOk, allowCmd)
 		// because of the required look-ahead, labeled statements are
 		// parsed by parseSimpleStmt - don't expect a semicolon after
 		// them
@@ -3667,7 +3701,7 @@ func (p *parser) parseOverloadFunc() (ast.Expr, bool) {
 	case token.FUNC:
 		return p.parseFuncTypeOrLit(), true
 	case token.LPAREN:
-		x, _ := p.parsePrimaryExpr(false, false, false)
+		x, _ := p.parsePrimaryExpr(nil, false, false, false)
 		return x, true
 	}
 	return nil, false

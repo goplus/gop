@@ -16,11 +16,11 @@ import (
 	"unsafe"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop"
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/format"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
+	"github.com/goplus/gop/tool"
 	"github.com/goplus/gop/x/typesutil"
 	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
@@ -77,7 +77,7 @@ func parseMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string,
 	}
 
 	conf := &types.Config{}
-	conf.Importer = gop.NewImporter(nil, &env.Gop{Root: "../..", Version: "1.0"}, fset)
+	conf.Importer = tool.NewImporter(nil, &env.Gop{Root: "../..", Version: "1.0"}, fset)
 	chkOpts := &typesutil.Config{
 		Types:                 types.NewPackage("main", f.Name.Name),
 		Fset:                  fset,

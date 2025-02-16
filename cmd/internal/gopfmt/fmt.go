@@ -26,10 +26,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/goplus/gop"
-
 	"github.com/goplus/gop/cmd/internal/base"
 	"github.com/goplus/gop/format"
+	"github.com/goplus/gop/tool"
 
 	goformat "go/format"
 	"go/parser"
@@ -147,7 +146,7 @@ func (w *walker) walk(path string, d fs.DirEntry, err error) error {
 		dir, _ := filepath.Split(path)
 		fn, ok := w.dirMap[dir]
 		if !ok {
-			if mod, err := gop.LoadMod(path); err == nil {
+			if mod, err := tool.LoadMod(path); err == nil {
 				fn = func(ext string) (ok bool, class bool) {
 					switch ext {
 					case ".go", ".gop":

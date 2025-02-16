@@ -23,9 +23,9 @@ import (
 	"reflect"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/tool"
 	"github.com/goplus/gop/x/gocmd"
 	"github.com/goplus/gop/x/gopprojs"
 	"github.com/qiniu/x/log"
@@ -80,9 +80,9 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 
 	noChdir := *flagNoChdir
-	conf, err := gop.NewDefaultConf(".", gop.ConfFlagNoTestFiles)
+	conf, err := tool.NewDefaultConf(".", tool.ConfFlagNoTestFiles, pass.Tags())
 	if err != nil {
-		log.Panicln("gop.NewDefaultConf:", err)
+		log.Panicln("tool.NewDefaultConf:", err)
 	}
 	defer conf.UpdateCache()
 
@@ -94,23 +94,23 @@ func runCmd(cmd *base.Command, args []string) {
 	run(proj, args, !noChdir, conf, confCmd)
 }
 
-func run(proj gopprojs.Proj, args []string, chDir bool, conf *gop.Config, run *gocmd.RunConfig) {
+func run(proj gopprojs.Proj, args []string, chDir bool, conf *tool.Config, run *gocmd.RunConfig) {
 	const flags = 0
 	var obj string
 	var err error
 	switch v := proj.(type) {
 	case *gopprojs.DirProj:
 		obj = v.Dir
-		err = gop.RunDir(obj, args, conf, run, flags)
+		err = tool.RunDir(obj, args, conf, run, flags)
 	case *gopprojs.PkgPathProj:
 		obj = v.Path
-		err = gop.RunPkgPath(v.Path, args, chDir, conf, run, flags)
+		err = tool.RunPkgPath(v.Path, args, chDir, conf, run, flags)
 	case *gopprojs.FilesProj:
-		err = gop.RunFiles("", v.Files, args, conf, run)
+		err = tool.RunFiles("", v.Files, args, conf, run)
 	default:
 		log.Panicln("`gop run` doesn't support", reflect.TypeOf(v))
 	}
-	if gop.NotFound(err) {
+	if tool.NotFound(err) {
 		fmt.Fprintf(os.Stderr, "gop run %v: not found\n", obj)
 	} else if err != nil {
 		fmt.Fprintln(os.Stderr, err)

@@ -81,6 +81,8 @@ func newBuiltinDefault(pkg *gogen.Package, conf *gogen.Config) *types.Package {
 	buil := pkg.TryImport("github.com/goplus/gop/builtin")
 	ng := pkg.TryImport("github.com/goplus/gop/builtin/ng")
 	iox := pkg.TryImport("github.com/goplus/gop/builtin/iox")
+	strx := pkg.TryImport("github.com/qiniu/x/stringutil")
+	stringslice := pkg.TryImport("github.com/goplus/gop/builtin/stringslice")
 	pkg.TryImport("strconv")
 	pkg.TryImport("strings")
 	if ng.Types != nil {
@@ -88,6 +90,30 @@ func newBuiltinDefault(pkg *gogen.Package, conf *gogen.Config) *types.Package {
 	}
 	initBuiltin(pkg, builtin, os, fmt, ng, iox, buil)
 	gogen.InitBuiltin(pkg, builtin, conf)
+	if strx.Types != nil {
+		ti := pkg.BuiltinTI(types.Typ[types.String])
+		ti.AddMethods(
+			&gogen.BuiltinMethod{Name: "Capitalize", Fn: strx.Ref("Capitalize")},
+		)
+	}
+	if stringslice.Types != nil {
+		ti := pkg.BuiltinTI(types.NewSlice(types.Typ[types.String]))
+		ti.AddMethods(
+			&gogen.BuiltinMethod{Name: "Capitalize", Fn: stringslice.Ref("Capitalize")},
+			&gogen.BuiltinMethod{Name: "ToTitle", Fn: stringslice.Ref("ToTitle")},
+			&gogen.BuiltinMethod{Name: "ToUpper", Fn: stringslice.Ref("ToUpper")},
+			&gogen.BuiltinMethod{Name: "ToLower", Fn: stringslice.Ref("ToLower")},
+			&gogen.BuiltinMethod{Name: "Repeat", Fn: stringslice.Ref("Repeat")},
+			&gogen.BuiltinMethod{Name: "Replace", Fn: stringslice.Ref("Replace")},
+			&gogen.BuiltinMethod{Name: "ReplaceAll", Fn: stringslice.Ref("ReplaceAll")},
+			&gogen.BuiltinMethod{Name: "Trim", Fn: stringslice.Ref("Trim")},
+			&gogen.BuiltinMethod{Name: "TrimSpace", Fn: stringslice.Ref("TrimSpace")},
+			&gogen.BuiltinMethod{Name: "TrimLeft", Fn: stringslice.Ref("TrimLeft")},
+			&gogen.BuiltinMethod{Name: "TrimRight", Fn: stringslice.Ref("TrimRight")},
+			&gogen.BuiltinMethod{Name: "TrimPrefix", Fn: stringslice.Ref("TrimPrefix")},
+			&gogen.BuiltinMethod{Name: "TrimSuffix", Fn: stringslice.Ref("TrimSuffix")},
+		)
+	}
 	return builtin
 }
 

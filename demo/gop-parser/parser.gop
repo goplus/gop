@@ -1,0 +1,7 @@
+import (
+	"gop/ast"
+	"gop/parser"
+)
+
+e := parser.parseExpr("10 + 3.2")!.(*ast.BinaryExpr)
+echo e.X, e.Op, e.Y

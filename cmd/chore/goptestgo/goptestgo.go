@@ -28,7 +28,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/goplus/gop"
+	"github.com/goplus/gop/tool"
 	"github.com/goplus/gop/x/gocmd"
 	"github.com/goplus/gop/x/gopenv"
 )
@@ -43,7 +43,7 @@ func fileIsDirty(srcMod time.Time, destFile string) bool {
 
 func runGoFile(dir, file, fname string) {
 	gopEnv := gopenv.Get()
-	conf := &gop.Config{Gop: gopEnv}
+	conf := &tool.Config{Gop: gopEnv}
 	confCmd := &gocmd.BuildConfig{Gop: gopEnv}
 	fi, err := os.Stat(file)
 	if err != nil {
@@ -53,7 +53,7 @@ func runGoFile(dir, file, fname string) {
 	hash := sha1.Sum([]byte(absFile))
 	outFile := dir + "g" + base64.RawURLEncoding.EncodeToString(hash[:]) + fname
 	if fileIsDirty(fi.ModTime(), outFile) {
-		err = gop.RunFiles(outFile, []string{file}, nil, conf, confCmd)
+		err = tool.RunFiles(outFile, []string{file}, nil, conf, confCmd)
 		if err != nil {
 			os.Remove(outFile)
 			switch e := err.(type) {

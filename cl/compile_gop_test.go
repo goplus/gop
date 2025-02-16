@@ -1570,3 +1570,122 @@ func main() {
 }
 `)
 }
+
+func TestOverlodOptions(t *testing.T) {
+	gopMixedClTest(t, "main", `
+package main
+
+type PlayOptions struct {
+	Action int
+	Wait   bool
+	Loop   bool
+}
+type Game struct {
+}
+func (g *Game) Play__0(options *PlayOptions) {
+}
+func (g *Game) Play__1(name string, options *PlayOptions) {
+}
+`, `
+g := &Game{}
+g.play "work", { Action: 0, Loop: true }
+`, `package main
+
+func main() {
+	g := &Game{}
+	g.Play__1("work", &PlayOptions{Action: 0, Loop: true})
+}
+`)
+}
+
+func TestEmbedField(t *testing.T) {
+	gopClTest(t, `package main
+
+type Info struct {
+	id int
+}
+type T struct {
+	Info
+	id string
+}
+func demo(t *T) {
+	t.id = "0"
+}
+func main() {
+}
+`, `package main
+
+type Info struct {
+	id int
+}
+type T struct {
+	Info
+	id string
+}
+
+func demo(t *T) {
+	t.id = "0"
+}
+func main() {
+}
+`)
+}
+
+func TestOverloadUntyped(t *testing.T) {
+	gopMixedClTest(t, "main", `
+package main
+
+type specialObj int
+type SpriteName string
+
+type SpriteImpl struct {
+}
+
+func (p *SpriteImpl) turn(v any) {
+}
+func (p *SpriteImpl) TurnTo__0(sprite *SpriteImpl) {
+}
+func (p *SpriteImpl) TurnTo__1(sprite SpriteName) {
+}
+func (p *SpriteImpl) TurnTo__2(obj specialObj) {
+}
+func (p *SpriteImpl) TurnTo__3(degree float64) {
+}
+`, `
+p := &SpriteImpl{}
+p.turnTo 180.0
+p.turnTo 180.1
+`, `package main
+
+func main() {
+	p := &SpriteImpl{}
+	p.TurnTo__2(180.0)
+	p.TurnTo__3(180.1)
+}
+`)
+}
+
+func TestOverloadUntyped2(t *testing.T) {
+	gopMixedClTest(t, "main", `
+package main
+
+type SpriteImpl struct {
+}
+
+func (p *SpriteImpl) Rand__0(from int, to int) {
+}
+func (p *SpriteImpl) Rand__1(from float64, to float64) {
+}
+`, `
+p := &SpriteImpl{}
+p.rand(1.0,2.0)
+p.rand(float64(1),float64(2))
+`, `package main
+
+func main() {
+	p := &SpriteImpl{}
+	p.Rand__0(1.0, 2.0)
+	p.Rand__1(float64(1), float64(2))
+}
+`)
+}

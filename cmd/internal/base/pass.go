@@ -3,6 +3,7 @@ package base
 import (
 	"flag"
 	"fmt"
+	"strings"
 )
 
 type stringValue struct {
@@ -40,6 +41,15 @@ func (p *boolValue) IsBoolFlag() bool {
 type PassArgs struct {
 	Args []string
 	Flag *flag.FlagSet
+}
+
+func (p *PassArgs) Tags() string {
+	for _, v := range p.Args {
+		if strings.HasPrefix(v, "-tags=") {
+			return v[6:]
+		}
+	}
+	return ""
 }
 
 func (p *PassArgs) Var(names ...string) {

@@ -1,0 +1,26 @@
+package main
+
+file step.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: wait
+              Args:
+                ast.NumberUnitLit:
+                  Kind: INT
+                  Value: 1
+                  Unit: µs

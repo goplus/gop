@@ -1,7 +1,74 @@
-Go+ Specification for STEM Education
+The Go+ Mini Specification
 =====
 
-## Comments
+Go+ has a recommended best practice syntax set, which we call the Go+ Mini Specification. It is simple but Turing-complete and can elegantly implement any business requirements.
+
+## Notation
+
+The syntax is specified using a [variant](https://en.wikipedia.org/wiki/Wirth_syntax_notation) of Extended Backus-Naur Form (EBNF):
+
+```go
+Syntax      = { Production } .
+Production  = production_name "=" [ Expression ] "." .
+Expression  = Term { "|" Term } .
+Term        = Factor { Factor } .
+Factor      = production_name | token [ "…" token ] | Group | Option | Repetition .
+Group       = "(" Expression ")" .
+Option      = "[" Expression "]" .
+Repetition  = "{" Expression "}" .
+```
+
+Productions are expressions constructed from terms and the following operators, in increasing precedence:
+
+```go
+|   alternation
+()  grouping
+[]  option (0 or 1 times)
+{}  repetition (0 to n times)
+```
+
+Lowercase production names are used to identify lexical (terminal) tokens. Non-terminals are in CamelCase. Lexical tokens are enclosed in double quotes `""` or back quotes ``.
+
+The form `a … b` represents the set of characters from a through b as alternatives. The horizontal ellipsis `…` is also used elsewhere in the spec to informally denote various enumerations or code snippets that are not further specified. The character … (as opposed to the three characters `...`) is not a token of the Go+ language.
+
+## Source code representation
+
+Source code is Unicode text encoded in [UTF-8](https://en.wikipedia.org/wiki/UTF-8). The text is not canonicalized, so a single accented code point is distinct from the same character constructed from combining an accent and a letter; those are treated as two code points. For simplicity, this document will use the unqualified term character to refer to a Unicode code point in the source text.
+
+Each code point is distinct; for instance, uppercase and lowercase letters are different characters.
+
+Implementation restriction: For compatibility with other tools, a compiler may disallow the NUL character (U+0000) in the source text.
+
+Implementation restriction: For compatibility with other tools, a compiler may ignore a UTF-8-encoded byte order mark (U+FEFF) if it is the first Unicode code point in the source text. A byte order mark may be disallowed anywhere else in the source.
+
+### Characters
+
+The following terms are used to denote specific Unicode character categories:
+
+```go
+newline        = /* the Unicode code point U+000A */ .
+unicode_char   = /* an arbitrary Unicode code point except newline */ .
+unicode_letter = /* a Unicode code point categorized as "Letter" */ .
+unicode_digit  = /* a Unicode code point categorized as "Number, decimal digit" */ .
+```
+
+In [The Unicode Standard 8.0](https://www.unicode.org/versions/Unicode8.0.0/), Section 4.5 "General Category" defines a set of character categories. Go treats all characters in any of the Letter categories Lu, Ll, Lt, Lm, or Lo as Unicode letters, and those in the Number category Nd as Unicode digits.
+
+### Letters and digits
+
+The underscore character _ (U+005F) is considered a lowercase letter.
+
+```go
+letter        = unicode_letter | "_" .
+decimal_digit = "0" … "9" .
+binary_digit  = "0" | "1" .
+octal_digit   = "0" … "7" .
+hex_digit     = "0" … "9" | "A" … "F" | "a" … "f" .
+```
+
+## Lexical elements
+
+### Comments
 
 Comments serve as program documentation. There are three forms:
 
@@ -17,13 +84,83 @@ A _general comment_ containing no newlines acts like a space. Any other comment 
 /* this is a general comment */
 ```
 
-## Literals
+### Tokens
+
+Tokens form the vocabulary of the Go+ language. There are four classes: _identifiers_, _keywords_, _operators_ and _punctuation_, and _literals_. White space, formed from spaces (U+0020), horizontal tabs (U+0009), carriage returns (U+000D), and newlines (U+000A), is ignored except as it separates tokens that would otherwise combine into a single token. Also, a newline or end of file may trigger the insertion of a [semicolon](). While breaking the input into tokens, the next token is the longest sequence of characters that form a valid token.
+
+### Semicolons
+
+The formal syntax uses semicolons ";" as terminators in a number of productions. Go+ programs may omit most of these semicolons using the following two rules:
+
+* When the input is broken into tokens, a semicolon is automatically inserted into the token stream immediately after a line's final token if that token is
+  * an [identifier](#identifiers)
+  * an [integer](), [floating-point](), [imaginary](), [rune](), or [string]() literal
+  * one of the [keywords]() `break`, `continue`, `fallthrough`, or `return`
+  * one of the [operators and punctuation]() `++`, `--`, `)`, `]`, or `}`
+* To allow complex statements to occupy a single line, a semicolon may be omitted before a closing `")"` or `"}"`.
+
+To reflect idiomatic use, code examples in this document elide semicolons using these rules.
+
+### Identifiers
+
+Identifiers name program entities such as variables and types. An identifier is a sequence of one or more letters and digits. The first character in an identifier must be a letter.
+
+```go
+identifier = letter { letter | unicode_digit } .
+```
+
+```go
+a
+_x9
+ThisVariableIsExported
+αβ
+```
+
+Some identifiers are [predeclared](#predeclared-identifiers).
+
+### Keywords
+
+The following keywords are reserved and may not be used as identifiers (TODO: some keywords are allowed as identifiers).
+
+```go
+break        default      func         interface    select
+case         defer        go           map          struct
+chan         else         goto         package      switch
+const        fallthrough  if           range        type
+continue     for          import       return       var
+```
+
+### Operators and punctuation
+
+The following character sequences represent [operators](#operators) (including [assignment operators](#assignment-statements)) and punctuation:
+
+```
++    &     +=    &=     &&    ==    !=    (    )
+-    |     -=    |=     ||    <     <=    [    ]
+*    ^     *=    ^=     <-    >     >=    {    }
+/    <<    /=    <<=    ++    =     :=    ,    ;
+%    >>    %=    >>=    --    !     ...   .    :
+     &^          &^=          ~
+```
 
 ### Integer literals
 
-An integer literal is a sequence of digits representing an [integer constant](). An optional prefix sets a non-decimal base: 0b or 0B for binary, 0, 0o, or 0O for octal, and 0x or 0X for hexadecimal. A single 0 is considered a decimal zero. In hexadecimal literals, letters a through f and A through F represent values 10 through 15.
+An integer literal is a sequence of digits representing an [integer constant](#constants). An optional prefix sets a non-decimal base: 0b or 0B for binary, 0, 0o, or 0O for octal, and 0x or 0X for hexadecimal. A single 0 is considered a decimal zero. In hexadecimal literals, letters a through f and A through F represent values 10 through 15.
 
 For readability, an underscore character _ may appear after a base prefix or between successive digits; such underscores do not change the literal's value.
+
+```go
+int_lit        = decimal_lit | binary_lit | octal_lit | hex_lit .
+decimal_lit    = "0" | ( "1" … "9" ) [ [ "_" ] decimal_digits ] .
+binary_lit     = "0" ( "b" | "B" ) [ "_" ] binary_digits .
+octal_lit      = "0" [ "o" | "O" ] [ "_" ] octal_digits .
+hex_lit        = "0" ( "x" | "X" ) [ "_" ] hex_digits .
+
+decimal_digits = decimal_digit { [ "_" ] decimal_digit } .
+binary_digits  = binary_digit { [ "_" ] binary_digit } .
+octal_digits   = octal_digit { [ "_" ] octal_digit } .
+hex_digits     = hex_digit { [ "_" ] hex_digit } .
+```
 
 ```go
 42
@@ -46,13 +183,28 @@ _42         // an identifier, not an integer literal
 
 ### Floating-point literals
 
-A floating-point literal is a decimal or hexadecimal representation of a [floating-point constant]().
+A floating-point literal is a decimal or hexadecimal representation of a [floating-point constant](#constants).
 
 A decimal floating-point literal consists of an integer part (decimal digits), a decimal point, a fractional part (decimal digits), and an exponent part (e or E followed by an optional sign and decimal digits). One of the integer part or the fractional part may be elided; one of the decimal point or the exponent part may be elided. An exponent value exp scales the mantissa (integer and fractional part) by 10<sup>exp</sup>.
 
 A hexadecimal floating-point literal consists of a 0x or 0X prefix, an integer part (hexadecimal digits), a radix point, a fractional part (hexadecimal digits), and an exponent part (p or P followed by an optional sign and decimal digits). One of the integer part or the fractional part may be elided; the radix point may be elided as well, but the exponent part is required. (This syntax matches the one given in IEEE 754-2008 §5.12.3.) An exponent value exp scales the mantissa (integer and fractional part) by 2<sup>exp</sup>.
 
 For readability, an underscore character _ may appear after a base prefix or between successive digits; such underscores do not change the literal value.
+
+```go
+float_lit         = decimal_float_lit | hex_float_lit .
+
+decimal_float_lit = decimal_digits "." [ decimal_digits ] [ decimal_exponent ] |
+                    decimal_digits decimal_exponent |
+                    "." decimal_digits [ decimal_exponent ] .
+decimal_exponent  = ( "e" | "E" ) [ "+" | "-" ] decimal_digits .
+
+hex_float_lit     = "0" ( "x" | "X" ) hex_mantissa hex_exponent .
+hex_mantissa      = [ "_" ] hex_digits "." [ hex_digits ] |
+                    [ "_" ] hex_digits |
+                    "." hex_digits .
+hex_exponent      = ( "p" | "P" ) [ "+" | "-" ] decimal_digits .
+```
 
 ```go
 0.
@@ -96,9 +248,13 @@ TODO
 
 ### Imaginary literals
 
-An imaginary literal represents the imaginary part of a [complex constant](). It consists of an [integer](#integer-literals) or [floating-point](#floating-point-literals) literal followed by the lowercase letter _i_. The value of an imaginary literal is the value of the respective integer or floating-point literal multiplied by the imaginary unit _i_.
+An imaginary literal represents the imaginary part of a [complex constant](#constants). It consists of an [integer](#integer-literals) or [floating-point](#floating-point-literals) literal followed by the lowercase letter _i_. The value of an imaginary literal is the value of the respective integer or floating-point literal multiplied by the imaginary unit _i_.
 
-For backward compatibility, an imaginary literal's integer part consisting entirely of decimal digits (and possibly underscores) is considered a decimal integer, even if it starts with a leading 0.
+```go
+imaginary_lit = (decimal_digits | int_lit | float_lit) "i" .
+```
+
+For backward compatibility, an imaginary literal's integer part consisting entirely of decimal digits (and possibly underscores) is considered a decimal integer, even if it starts with a leading `0`.
 
 ```go
 0i
@@ -117,7 +273,7 @@ For backward compatibility, an imaginary literal's integer part consisting entir
 
 ### Boolean literals
 
-The boolean truth values are represented by the predeclared constants `true` and `false`.
+The boolean truth values are represented by the [predeclared constants](#constants) `true` and `false`.
 
 ```go
 true
@@ -126,7 +282,7 @@ false
 
 ### Rune literals
 
-A rune literal represents a [rune constant](), an integer value identifying a Unicode code point. A rune literal is expressed as one or more characters enclosed in single quotes, as in `'x'` or `'\n'`. Within the quotes, any character may appear except newline and unescaped single quote. A single quoted character represents the Unicode value of the character itself, while multi-character sequences beginning with a backslash encode values in various formats.
+A rune literal represents a [rune constant](#constants), an integer value identifying a Unicode code point. A rune literal is expressed as one or more characters enclosed in single quotes, as in `'x'` or `'\n'`. Within the quotes, any character may appear except newline and unescaped single quote. A single quoted character represents the Unicode value of the character itself, while multi-character sequences beginning with a backslash encode values in various formats.
 
 The simplest form represents the single character within the quotes; since Go+ source text is Unicode characters encoded in UTF-8, multiple UTF-8-encoded bytes may represent a single integer value. For instance, the literal `'a'` holds a single byte representing a literal a, Unicode `U+0061`, value 0x61, while `'ä'` holds two bytes (0xc3 0xa4) representing a literal a-dieresis, `U+00E4`, value 0xe4.
 
@@ -152,6 +308,18 @@ After a backslash, certain single-character escapes represent special values:
 An unrecognized character following a backslash in a rune literal is illegal.
 
 ```go
+rune_lit         = "'" ( unicode_value | byte_value ) "'" .
+unicode_value    = unicode_char | little_u_value | big_u_value | escaped_char .
+byte_value       = octal_byte_value | hex_byte_value .
+octal_byte_value = `\` octal_digit octal_digit octal_digit .
+hex_byte_value   = `\` "x" hex_digit hex_digit .
+little_u_value   = `\` "u" hex_digit hex_digit hex_digit hex_digit .
+big_u_value      = `\` "U" hex_digit hex_digit hex_digit hex_digit
+                           hex_digit hex_digit hex_digit hex_digit .
+escaped_char     = `\` ( "a" | "b" | "f" | "n" | "r" | "t" | "v" | `\` | "'" | `"` ) .
+```
+
+```go
 'a'
 'ä'
 '本'
@@ -175,11 +343,17 @@ An unrecognized character following a backslash in a rune literal is illegal.
 
 ### String literals
 
-A string literal represents a [string constant]() obtained from concatenating a sequence of characters. There are two forms: raw string literals and interpreted string literals.
+A string literal represents a [string constant](#constants) obtained from concatenating a sequence of characters. There are two forms: raw string literals and interpreted string literals.
 
 Raw string literals are character sequences between back quotes, as in \`foo\`. Within the quotes, any character may appear except back quote. The value of a raw string literal is the string composed of the uninterpreted (implicitly UTF-8-encoded) characters between the quotes; in particular, backslashes have no special meaning and the string may contain newlines. Carriage return characters (`'\r'`) inside raw string literals are discarded from the raw string value.
 
 Interpreted string literals are character sequences between double quotes, as in `"bar"`. Within the quotes, any character may appear except newline and unescaped double quote. The text between the quotes forms the value of the literal, with backslash escapes interpreted as they are in [rune literals](#rune-literals) (except that `\'` is illegal and `\"` is legal), with the same restrictions. The three-digit octal (`\nnn`) and two-digit hexadecimal (`\xnn`) escapes represent individual bytes of the resulting string; all other escapes represent the (possibly multi-byte) UTF-8 encoding of individual characters. Thus inside a string literal `\377` and `\xFF` represent a single byte of value 0xFF=255, while `ÿ`, `\u00FF`, `\U000000FF` and `\xc3\xbf` represent the two bytes 0xc3 0xbf of the UTF-8 encoding of character `U+00FF`.
+
+```go
+string_lit             = raw_string_lit | interpreted_string_lit .
+raw_string_lit         = "`" { unicode_char | newline } "`" .
+interpreted_string_lit = `"` { unicode_value | byte_value } `"` .
+```
 
 ```go
 `abc`                // same as "abc"
@@ -220,9 +394,9 @@ iota
 
 There are _boolean constants_, _rune constants_, _integer constants_, _floating-point constants_, _complex constants_, and _string constants_. Rune, integer, floating-point, and complex constants are collectively called _numeric constants_.
 
-A constant value is represented by a [rune](#rune-literals), [integer](#integer-literals), [floating-point](#floating-point-literals), [imaginary](#imaginary-literals), [boolean](#boolean-literals) or [string](#string-literals) literal, an identifier denoting a constant, a [constant expression](), a [conversion](#conversions) with a result that is a constant, or the result value of some built-in functions such as `min` or `max` applied to constant arguments, `unsafe.Sizeof` applied to [certain values](), `cap` or `len` applied to [some expressions](), `real` and `imag` applied to a complex constant and complex applied to numeric constants. The predeclared identifier `iota` denotes an integer constant.
+A constant value is represented by a [rune](#rune-literals), [integer](#integer-literals), [floating-point](#floating-point-literals), [imaginary](#imaginary-literals), [boolean](#boolean-literals) or [string](#string-literals) literal, an identifier denoting a constant, a [constant expression](), a [conversion](#conversions) with a result that is a constant, or the result value of some built-in functions such as `min` or `max` applied to constant arguments, `unsafe.Sizeof` applied to [certain values](), `cap` or `len` applied to [some expressions](), `real` and `imag` applied to a complex constant and complex applied to numeric constants. The boolean truth values are represented by the predeclared constants `true` and `false`. The predeclared identifier `iota` denotes an integer constant.
 
-Not all literals are constants. For example:
+Not all literals are constants. For example (TODO: check this):
 
 ```sh
 nil
@@ -262,6 +436,21 @@ A variable's value is retrieved by referring to the variable in an [expression](
 
 
 ## Types
+
+A type determines a set of values together with operations and methods specific to those values. A type may be denoted by a _type name_. A type may also be specified using a type literal, which composes a type from existing types.
+
+```go
+Type      = TypeName [ TypeArgs ] | TypeLit | "(" Type ")" .
+TypeName  = identifier | QualifiedIdent .
+TypeArgs  = "[" TypeList [ "," ] "]" .
+TypeList  = Type { "," Type } .
+TypeLit   = ArrayType | StructType | PointerType | FunctionType | InterfaceType |
+            SliceType | MapType . // TODO: check this
+```
+
+The language [predeclares]() certain type names. Others are introduced with [type declarations](#type-declarations). _Composite types_—array, struct, pointer, function, interface, slice, map—may be constructed using type literals.
+
+Predeclared types and defined types are called _named types_. An alias denotes a named type if the type given in the alias declaration is a named type.
 
 ### Boolean types
 
@@ -331,27 +520,48 @@ The length of a string `s` can be discovered using the built-in function [len]()
 An array is a numbered sequence of elements of a single type, called the element type. The number of elements is called the length of the array and is never negative.
 
 ```go
-[N]T
+ArrayType   = "[" ArrayLength "]" ElementType .
+ArrayLength = Expression .
+ElementType = Type .
 ```
 
-The length is part of the array's type; it must evaluate to a non-negative [constant]() [representable]() by a value of type int. The length of array `a` can be discovered using the built-in function [len](). The elements can be addressed by integer [indices]() `0` through `len(a)-1`. Array types are always one-dimensional but may be composed to form multi-dimensional types.
+The length is part of the array's type; it must evaluate to a non-negative [constant](#constants) [representable]() by a value of type int. The length of array `a` can be discovered using the built-in function [len](). The elements can be addressed by integer [indices]() `0` through `len(a)-1`. Array types are always one-dimensional but may be composed to form multi-dimensional types.
 
 ```go
 [32]byte
+[2*N] struct { x, y int32 }
 [1000]*float64
 [3][5]int
 [2][2][2]float64  // same as [2]([2]([2]float64))
 ```
 
-### Pointer types
-
-A _pointer_ type denotes the set of all pointers to [variables]() of a given type, called the base type of the pointer. The value of an uninitialized pointer is `nil`.
+An array type T may not have an element of type T, or of a type containing T as a component, directly or indirectly, if those containing types are only array or struct types.
 
 ```go
-*T
+// invalid array types
+type (
+	T1 [10]T1                 // element type of T1 is T1
+	T2 [10]struct{ f T2 }     // T2 contains T2 as component of a struct
+	T3 [10]T4                 // T3 contains T3 as component of a struct in T4
+	T4 struct{ f T3 }         // T4 contains T4 as component of array T3 in a struct
+)
+
+// valid array types
+type (
+	T5 [10]*T5                // T5 contains T5 as component of a pointer
+	T6 [10]func() T6          // T6 contains T6 as component of a function type
+	T7 [10]struct{ f []T7 }   // T7 contains T7 as component of a slice in a struct
+)
 ```
 
-For example:
+### Pointer types
+
+A _pointer_ type denotes the set of all pointers to [variables](#variables) of a given type, called the base type of the pointer. The value of an uninitialized pointer is `nil`.
+
+```go
+PointerType = "*" BaseType .
+BaseType    = Type .
+```
 
 ```go
 *Point
@@ -360,10 +570,10 @@ For example:
 
 ### Slice types
 
-A _slice_ is a descriptor for a contiguous segment of an underlying array and provides access to a numbered sequence of elements from that array. A slice type denotes the set of all slices of arrays of its element type. The number of elements is called the length of the slice and is never negative. The value of an uninitialized slice is `nil`.
+A _slice_ is a descriptor for a contiguous segment of an _underlying array_ and provides access to a numbered sequence of elements from that array. A slice type denotes the set of all slices of arrays of its element type. The number of elements is called the length of the slice and is never negative. The value of an uninitialized slice is `nil`.
 
 ```go
-[]T
+SliceType = "[" "]" ElementType .
 ```
 
 The length of a slice `s` can be discovered by the built-in function [len](); unlike with arrays it may change during execution. The elements can be addressed by integer [indices]() `0` through `len(s)-1`. The slice index of a given element may be less than the index of the same element in the underlying array.
@@ -387,19 +597,114 @@ new([100]int)[0:50]
 
 Like arrays, slices are always one-dimensional but may be composed to construct higher-dimensional objects. With arrays of arrays, the inner arrays are, by construction, always the same length; however with slices of slices (or arrays of slices), the inner lengths may vary dynamically. Moreover, the inner slices must be initialized individually.
 
-### Map types
+### Struct types
 
-A _map_ is an unordered group of elements of one type, called the element type, indexed by a set of unique keys of another type, called the key type. The value of an uninitialized map is `nil`.
+A struct is a sequence of named elements, called fields, each of which has a name and a type. Field names may be specified explicitly (IdentifierList) or implicitly (EmbeddedField). Within a struct, non-[blank](#blank-identifier) field names must be [unique]().
 
 ```go
-map[KeyT]ElemT
+StructType    = "struct" "{" { FieldDecl ";" } "}" .
+FieldDecl     = (IdentifierList Type | EmbeddedField) [ Tag ] .
+EmbeddedField = [ "*" ] TypeName [ TypeArgs ] .
+Tag           = string_lit .
+```
+
+```go
+// An empty struct.
+struct {}
+
+// A struct with 6 fields.
+struct {
+	x, y int
+	u float32
+	_ float32  // padding
+	A *[]int
+	F func()
+}
+```
+
+A field declared with a type but no explicit field name is called an _embedded field_. An embedded field must be specified as a type name T or as a pointer to a non-interface type name *T, and T itself may not be a pointer type. The unqualified type name acts as the field name.
+
+```go
+// A struct with four embedded fields of types T1, *T2, P.T3 and *P.T4
+struct {
+	T1        // field name is T1
+	*T2       // field name is T2
+	P.T3      // field name is T3
+	*P.T4     // field name is T4
+	x, y int  // field names are x and y
+}
+```
+
+The following declaration is illegal because field names must be unique in a struct type:
+
+```go
+struct {
+	T     // conflicts with embedded field *T and *P.T
+	*T    // conflicts with embedded field T and *P.T
+	*P.T  // conflicts with embedded field T and *T
+}
+```
+
+A field `f` or [method]() of an embedded field in a struct `x` is called promoted if `x.f` is a legal [selector]() that denotes that field or method `f`.
+
+Promoted fields act like ordinary fields of a struct except that they cannot be used as field names in [composite literals]() of the struct.
+
+Given a struct type `S` and a [named type](#types) `T`, promoted methods are included in the method set of the struct as follows:
+
+* If `S` contains an embedded field `T`, the [method sets]() of `S` and `*S` both include promoted methods with receiver `T`. The method set of `*S` also includes promoted methods with receiver `*T`.
+* If `S` contains an embedded field `*T`, the method sets of `S` and `*S` both include promoted methods with receiver `T` or `*T`.
+
+A field declaration may be followed by an optional string literal _tag_, which becomes an attribute for all the fields in the corresponding field declaration. An empty tag string is equivalent to an absent tag. The tags are made visible through a [reflection interface]() and take part in [type identity]() for structs but are otherwise ignored.
+
+```go
+struct {
+	x, y float64 ""  // an empty tag string is like an absent tag
+	name string  "any string is permitted as a tag"
+	_    [4]byte "ceci n'est pas un champ de structure"
+}
+
+// A struct corresponding to a TimeStamp protocol buffer.
+// The tag strings define the protocol buffer field numbers;
+// they follow the convention outlined by the reflect package.
+struct {
+	microsec  uint64 `protobuf:"1"`
+	serverIP6 uint64 `protobuf:"2"`
+}
+```
+
+A struct type `T` may not contain a field of type T, or of a type containing T as a component, directly or indirectly, if those containing types are only array or struct types.
+
+```go
+// invalid struct types
+type (
+	T1 struct{ T1 }            // T1 contains a field of T1
+	T2 struct{ f [10]T2 }      // T2 contains T2 as component of an array
+	T3 struct{ T4 }            // T3 contains T3 as component of an array in struct T4
+	T4 struct{ f [10]T3 }      // T4 contains T4 as component of struct T3 in an array
+)
+
+// valid struct types
+type (
+	T5 struct{ f *T5 }         // T5 contains T5 as component of a pointer
+	T6 struct{ f func() T6 }   // T6 contains T6 as component of a function type
+	T7 struct{ f [10][]T7 }    // T7 contains T7 as component of a slice in an array
+)
+```
+
+### Map types
+
+A _map_ is an unordered group of elements of one type, called the element type, indexed by a set of unique _keys_ of another type, called the key type. The value of an uninitialized map is `nil`.
+
+```go
+MapType     = "map" "[" KeyType "]" ElementType .
+KeyType     = Type .
 ```
 
 The comparison operators `==` and `!=` must be fully defined for operands of the key type; thus the key type must not be a function, map, or slice. If the key type is an interface type, these comparison operators must be defined for the dynamic key values; failure will cause a run-time panic.
 
 ```go
 map[string]int
-map[*T]string
+map[*T]struct{ x, y float64 }
 map[string]any
 ```
 
@@ -414,13 +719,17 @@ make(map[string]int, 100)
 
 The initial capacity does not bound its size: maps grow to accommodate the number of items stored in them, with the exception of nil maps. A nil map is equivalent to an empty map except that no elements may be added.
 
-
 ### Function types
 
 A _function_ type denotes the set of all functions with the same parameter and result types. The value of an uninitialized variable of function type is `nil`.
 
 ```go
-func(parameters) results
+FunctionType   = "func" Signature .
+Signature      = Parameters [ Result ] .
+Result         = Parameters | Type .
+Parameters     = "(" [ ParameterList [ "," ] ] ")" .
+ParameterList  = ParameterDecl { "," ParameterDecl } .
+ParameterDecl  = [ IdentifierList ] [ "..." ] Type .
 ```
 
 Within a list of parameters or results, the names (IdentifierList) must either all be present or all be absent. If present, each name stands for one item (parameter or result) of the specified type and all non-[blank]() names in the signature must be [unique](). If absent, each type stands for one item of that type. Parameter and result lists are always parenthesized except that if there is exactly one unnamed result it may be written as an unparenthesized type.
@@ -440,6 +749,116 @@ func(n int) func(p *T)
 
 ### Interface types
 
+An interface type specifies a [method set]() called its _interface_. A variable of interface type can store a value of any type with a method set that is any superset of the interface. Such a type is said to _implement the interface_. The value of an uninitialized variable of interface type is `nil`.
+
+```go
+InterfaceType      = "interface" "{" { ( MethodSpec | InterfaceTypeName ) ";" } "}" .
+MethodSpec         = MethodName Signature .
+MethodName         = identifier .
+InterfaceTypeName  = TypeName .
+```
+
+An interface type may specify methods _explicitly_ through method specifications, or it may _embed_ methods of other interfaces through interface type names.
+
+```go
+// A simple File interface.
+interface {
+	Read([]byte) (int, error)
+	Write([]byte) (int, error)
+	Close() error
+}
+```
+
+The name of each explicitly specified method must be [unique]() and not [blank]().
+
+```go
+interface {
+	String() string
+	String() string  // illegal: String not unique
+	_(x int)         // illegal: method must have non-blank name
+}
+```
+
+More than one type may implement an interface. For instance, if two types `S1` and `S2` have the method set
+
+```go
+func Read(p []byte) (n int, err error)
+func Write(p []byte) (n int, err error)
+func Close() error
+```
+
+(where `T` stands for either `S1` or `S2`) then the `File` interface is implemented by both `S1` and `S2`, regardless of what other methods `S1` and `S2` may have or share.
+
+A type implements any interface comprising any subset of its methods and may therefore implement several distinct interfaces. For instance, all types implement the _empty interface_:
+
+```go
+interface{}
+```
+
+Similarly, consider this interface specification, which appears within a [type declaration](#type-declarations) to define an interface called `Locker`:
+
+```go
+type Locker interface {
+	Lock()
+	Unlock()
+}
+```
+
+If `S1` and `S2` also implement
+
+```go
+func Lock() { … }
+func Unlock() { … }
+```
+
+they implement the `Locker` interface as well as the `File` interface.
+
+An interface `T` may use a (possibly qualified) interface type name `E` in place of a method specification. This is called _embedding_ interface `E` in `T`. The method set of `T` is the union of the method sets of T’s explicitly declared methods and of T’s embedded interfaces.
+
+```go
+type Reader interface {
+	Read(p []byte) (n int, err error)
+	Close() error
+}
+
+type Writer interface {
+	Write(p []byte) (n int, err error)
+	Close() error
+}
+
+// ReadWriter's methods are Read, Write, and Close.
+type ReadWriter interface {
+	Reader  // includes methods of Reader in ReadWriter's method set
+	Writer  // includes methods of Writer in ReadWriter's method set
+}
+```
+
+A union of method sets contains the (exported and non-exported) methods of each method set exactly once, and methods with the [same]() names must have [identical]() signatures.
+
+```go
+type ReadCloser interface {
+	Reader   // includes methods of Reader in ReadCloser's method set
+	Close()  // illegal: signatures of Reader.Close and Close are different
+}
+```
+
+An interface type `T` may not embed itself or any interface type that embeds `T`, recursively.
+
+```go
+// illegal: Bad cannot embed itself
+type Bad interface {
+	Bad
+}
+
+// illegal: Bad1 cannot embed itself using Bad2
+type Bad1 interface {
+	Bad2
+}
+type Bad2 interface {
+	Bad1
+}
+```
+
 #### Built-in interfaces
 
 TODO:
@@ -449,12 +868,288 @@ error
 any
 ```
 
+#### Errors
+
+The predeclared type `error` is defined as
+
+```go
+type error interface {
+	Error() string
+}
+```
+
+It is the conventional interface for representing an `error` condition, with the nil value representing no error. For instance, a function to read data from a file might be defined:
+
+```go
+func Read(f *File, b []byte) (n int, err error)
+```
+
 ### Classes
 
 TODO (classfile)
 
 
+## Properties of types and values
+
+### Underlying types
+
+Each type T has an _underlying type_: If T is one of the predeclared boolean, numeric, or string types, or a type literal, the corresponding underlying type is T itself. Otherwise, T's underlying type is the underlying type of the type to which T refers in its declaration.
+
+```go
+type (
+	A1 = string
+	A2 = A1
+)
+
+type (
+	B1 string
+	B2 B1
+	B3 []B1
+	B4 B3
+)
+```
+
+The underlying type of `string`, `A1`, `A2`, `B1`, and `B2` is `string`. The underlying type of `[]B1`, `B3`, and `B4` is `[]B1`.
+
+### Type identity
+
+Two types are either _identical_ or _different_.
+
+A [named type](#types) is always different from any other type. Otherwise, two types are identical if their [underlying type](#underlying-types) literals are structurally equivalent; that is, they have the same literal structure and corresponding components have identical types. In detail:
+
+* Two array types are identical if they have identical element types and the same array length.
+* Two slice types are identical if they have identical element types.
+* Two struct types are identical if they have the same sequence of fields, and if corresponding fields have the same names, and identical types, and identical tags. [Non-exported](#exported-identifiers) field names from different packages are always different.
+* Two pointer types are identical if they have identical base types.
+* Two function types are identical if they have the same number of parameters and result values, corresponding parameter and result types are identical, and either both functions are variadic or neither is. Parameter and result names are not required to match.
+* Two interface types are identical if they define the same type set.
+* Two map types are identical if they have identical key and element types.
+
+Given the declarations
+
+```go
+type (
+	A0 = []string
+	A1 = A0
+	A2 = struct{ a, b int }
+	A3 = int
+	A4 = func(A3, float64) *A0
+	A5 = func(x int, _ float64) *[]string
+
+	B0 A0
+	B1 []string
+	B2 struct{ a, b int }
+	B3 struct{ a, c int }
+	B4 func(int, float64) *B0
+	B5 func(x int, y float64) *A1
+
+	C0 = B0
+)
+```
+
+these types are identical:
+
+```go
+A0, A1, and []string
+A2 and struct{ a, b int }
+A3 and int
+A4, func(int, float64) *[]string, and A5
+
+B0 and C0
+[]int and []int
+struct{ a, b *B5 } and struct{ a, b *B5 }
+func(x int, y float64) *[]string, func(int, float64) (result *[]string), and A5
+```
+
+`B0` and `B1` are different because they are new types created by distinct [type definitions](#type-definitions); `func(int, float64) *B0` and `func(x int, y float64) *[]string` are different because `B0` is different from `[]string`.
+
+### Assignability
+
+A value x of type V is _assignable_ to a [variable](#variables) of type T ("x is assignable to T") if one of the following conditions applies:
+
+* V and T are identical.
+* V and T have identical [underlying types](#underlying-types) but are not type parameters and at least one of V or T is not a [named type](#types).
+* T is an interface type, and x [implements]() T.
+* x is the predeclared identifier nil and T is a pointer, function, slice, map, or interface type.
+* x is an untyped [constant](#constants) [representable](#representability) by a value of type T.
+
+### Representability
+
+A [constant](#constants) x is _representable_ by a value of type T if one of the following conditions applies:
+
+* x is in the set of values [determined](#types) by T.
+* T is a floating-point type and x can be rounded to T's precision without overflow. Rounding uses IEEE 754 round-to-even rules but with an IEEE negative zero further simplified to an unsigned zero. Note that constant values never result in an IEEE negative zero, NaN, or infinity.
+* T is a complex type, and x's [components](#manipulating-complex-numbers) `real(x)` and `imag(x)` are representable by values of T's component type (`float32` or `float64`).
+
+```go
+x                   T           x is representable by a value of T because
+
+'a'                 byte        97 is in the set of byte values
+97                  rune        rune is an alias for int32, and 97 is in the set of 32-bit integers
+"foo"               string      "foo" is in the set of string values
+1024                int16       1024 is in the set of 16-bit integers
+42.0                byte        42 is in the set of unsigned 8-bit integers
+1e10                uint64      10000000000 is in the set of unsigned 64-bit integers
+2.718281828459045   float32     2.718281828459045 rounds to 2.7182817 which is in the set of float32 values
+-1e-1000            float64     -1e-1000 rounds to IEEE -0.0 which is further simplified to 0.0
+0i                  int         0 is an integer value
+(42 + 0i)           float32     42.0 (with zero imaginary part) is in the set of float32 values
+```
+
+```go
+x                   T           x is not representable by a value of T because
+
+0                   bool        0 is not in the set of boolean values
+'a'                 string      'a' is a rune, it is not in the set of string values
+1024                byte        1024 is not in the set of unsigned 8-bit integers
+-1                  uint16      -1 is not in the set of unsigned 16-bit integers
+1.1                 int         1.1 is not an integer value
+42i                 float32     (0 + 42i) is not in the set of float32 values
+1e1000              float64     1e1000 overflows to IEEE +Inf after rounding
+```
+
+### Method sets
+
+The _method set_ of a type determines the methods that can be [called](#commands-and-calls) on an [operand]() of that type. Every type has a (possibly empty) method set associated with it:
+
+* The method set of a [defined type](#type-definitions) T consists of all [methods]() declared with receiver type T.
+* The method set of a pointer to a defined type T (where T is neither a pointer nor an interface) is the set of all methods declared with receiver *T or T.
+* The method set of an [interface type](#interface-types) is the intersection of the method sets of each type in the interface's [type set](#interface-types) (the resulting method set is usually just the set of declared methods in the interface).
+
+Further rules apply to structs (and pointer to structs) containing embedded fields, as described in the section on [struct types](#struct-types). Any other type has an empty method set.
+
+In a method set, each method must have a [unique](#uniqueness-of-identifiers) non-[blank](#blank-identifier) [method name]().
+
+
 ## Expressions
+
+An expression specifies the computation of a value by applying operators and functions to operands.
+
+### Operands
+
+Operands denote the elementary values in an expression. An operand may be a literal, a (possibly [qualified]()) non-[blank](#blank-identifier) identifier denoting a [constant](#constant-declarations), [variable](#variable-declarations), or [function](#function-declarations), or a parenthesized expression.
+
+```go
+Operand     = Literal | OperandName [ TypeArgs ] | "(" Expression ")" .
+Literal     = BasicLit | CompositeLit | FunctionLit .
+BasicLit    = int_lit | float_lit | imaginary_lit | rune_lit | string_lit .
+OperandName = identifier | QualifiedIdent .
+```
+
+The [blank identifier](#blank-identifier) may appear as an operand only on the left-hand side of an [assignment statement](#assignment-statements).
+
+### Qualified identifiers
+
+A _qualified identifier_ is an identifier qualified with a package name prefix. Both the package name and the identifier must not be [blank](#blank-identifier).
+
+```go
+QualifiedIdent = PackageName "." identifier .
+```
+
+A qualified identifier accesses an identifier in a different package, which must be [imported](#import-declarations). The identifier must be [exported](#exported-identifiers) and declared in the [package block](#blocks) of that package.
+
+```go
+math.Sin // denotes the Sin function in package math
+```
+
+### Composite literals
+
+Composite literals construct new composite values each time they are evaluated. They consist of the type of the literal followed by a brace-bound list of elements. Each element may optionally be preceded by a corresponding key.
+
+```go
+CompositeLit  = LiteralType LiteralValue .
+LiteralType   = TypeName [ TypeArgs ] .
+LiteralValue  = "{" [ ElementList [ "," ] ] "}" .
+ElementList   = KeyedElement { "," KeyedElement } .
+KeyedElement  = [ Key ":" ] Element .
+Key           = FieldName | Expression | LiteralValue .
+FieldName     = identifier .
+Element       = Expression | LiteralValue .
+```
+
+The LiteralType's [underlying type](#underlying-types) `T` must be a [struct](#struct-types) or a [classfile]() type. The types of the elements and keys must be [assignable](#assignability) to the respective field; there is no additional conversion. It is an error to specify multiple elements with the same field name.
+
+* A key must be a field name declared in the struct type.
+* An element list that does not contain any keys must list an element for each struct field in the order in which the fields are declared.
+* If any element has a key, every element must have a key.
+* An element list that contains keys does not need to have an element for each struct field. Omitted fields get the zero value for that field.
+* A literal may omit the element list; such a literal evaluates to the zero value for its type.
+* It is an error to specify an element for a non-exported field of a struct belonging to a different package.
+
+Given the declarations
+
+```go
+type Point3D struct { x, y, z float64 }
+type Line struct { p, q Point3D }
+```
+
+one may write
+
+```go
+origin := Point3D{}                            // zero value for Point3D
+line := Line{origin, Point3D{y: -4, z: 12.3}}  // zero value for line.q.x
+```
+
+[Taking the address](#address-operators) of a composite literal generates a pointer to a unique [variable](#variables) initialized with the literal's value.
+
+```go
+var pointer *Point3D = &Point3D{y: 1000}
+```
+
+A parsing ambiguity arises when a composite literal using the TypeName form of the LiteralType appears as an operand between the [keyword](#keywords) and the opening brace of the block of an "if", "for", or "switch" statement, and the composite literal is not enclosed in parentheses, square brackets, or curly braces. In this rare case, the opening brace of the literal is erroneously parsed as the one introducing the block of statements. To resolve the ambiguity, the composite literal must appear within parentheses.
+
+```go
+if x == (T{a,b,c}[i]) { … }
+if (x == T{a,b,c}[i]) { … }
+```
+
+### Function literals
+
+A function literal represents an anonymous [function](#function-declarations).
+
+```go
+FunctionLit                 = [ AnonymousParameters ] "=>" AnonymousFunctionBody .
+AnonymousParameters         = SingleAnonymousParameter | MultipleAnonymousParameters .
+SingleAnonymousParameter    = identifier .
+MultipleAnonymousParameters = "(" AnonymousParameterList ")" .
+AnonymousParameterList      = identifier { "," identifier } .
+AnonymousFunctionBody       = Expression | FunctionBody .
+```
+
+A anonymous function body can be a single expression.
+
+```go
+x => math.Sin(x)
+(x, y) => x*x + y*y
+```
+
+It can also be the same as a normal function body. The above examples are equivalent to
+
+```go
+x => {
+	return math.Sin(x)
+}
+
+(x, y) => {
+	return x*x + y*y
+}
+```
+
+Anonymous functions are typically passed in as parameters for function calls.
+
+```go
+import "sort"
+
+a := [32, 100, 50, 6, 92]
+sort.Slice a, (i, j) => {
+	return a[i] < b[j]
+}
+```
+
+Note: Both the parameter types and return value types of anonymous functions are omitted. Go+ determines the parameter types and return value types of anonymous functions through type inference.
+
+Function literals are _closures_: they may refer to variables defined in a surrounding function. Those variables are then shared between the surrounding function and the function literal, and they survive as long as they are accessible.
+
 
 ### Commands and calls
 
@@ -565,7 +1260,7 @@ The equality operators == and != apply to operands of comparable types. The orde
 
 A comparison of two interface values with identical dynamic types causes a [run-time panic]() if that type is not comparable. This behavior applies not only to direct interface value comparisons but also when comparing arrays of interface values or structs with interface-valued fields.
 
-Slice, map, and function types are not comparable. However, as a special case, a slice, map, or function value may be compared to the predeclared identifier `nil`. Comparison of pointer, channel, and interface values to `nil` is also allowed and follows from the general rules above.
+Slice, map, and function types are not comparable. However, as a special case, a slice, map, or function value may be compared to the predeclared identifier `nil`. Comparison of pointer, and interface values to `nil` is also allowed and follows from the general rules above.
 
 #### Logical operators
 
@@ -728,16 +1423,14 @@ int8(^1)   // same as int8(-2)
 A short variable declaration uses the syntax:
 
 ```go
-varName[, ...] = expression[, ...]
+ShortVarDecl = IdentifierList ":=" ExpressionList .
 ```
 
-It is shorthand for a regular [variable declaration]() with initializer expressions but no types:
+It is shorthand for a regular [variable declaration](#variable-declarations) with initializer expressions but no types:
 
 ```go
-var varName[, ...] = expression[, ...]
+"var" IdentifierList "=" ExpressionList .
 ```
-
-For example:
 
 ```go
 i, j := 0, 10
@@ -820,6 +1513,43 @@ var a map[string]any = {"Monday": 1, "Sunday": 7}
 echo a
 ```
 
+### Order of evaluation
+
+At package level, [initialization dependencies]() determine the evaluation order of individual initialization expressions in [variable declarations](). Otherwise, when evaluating the [operands]() of an expression, assignment, or [return statement](#return-statements), all function calls, method calls, [receive operations](), and [binary logical operations](#logical-operators) are evaluated in lexical left-to-right order.
+
+For example, in the (function-local) assignment
+
+```go
+y[f()], ok = g(z || h(), i()+x[j()], <-c), k()
+```
+
+the function calls and communication happen in the order `f()`, `h()` (if z evaluates to false), `i()`, `j()`, `<-c`, `g()`, and `k()`. However, the order of those events compared to the evaluation and indexing of `x` and the evaluation of `y` and `z` is not specified, except as required lexically. For instance, `g` cannot be called before its arguments are evaluated.
+
+```go
+a := 1
+f := func() int { a++; return a }
+x := [a, f()]      // x may be [1, 2] or [2, 2]: evaluation order between a and f() is not specified
+m := {a: 1, a: 2}  // m may be {2: 1} or {2: 2}: evaluation order between the two map assignments is not specified
+n := {a: f()}      // n may be {2: 3} or {3: 3}: evaluation order between the key and the value is not specified
+```
+
+At package level, initialization dependencies override the left-to-right rule for individual initialization expressions, but not for operands within each expression:
+
+```go
+var a, b, c = f() + v(), g(), sqr(u()) + v()
+
+func f() int        { return c }
+func g() int        { return a }
+func sqr(x int) int { return x*x }
+
+// functions u and v are independent of all other variables and functions
+```
+
+The function calls happen in the order `u()`, `sqr()`, `v()`, `f()`, `v()`, and `g()`.
+
+Floating-point operations within a single expression are evaluated according to the associativity of the operators. Explicit parentheses affect the evaluation by overriding the default associativity. In the expression `x + (y + z)` the addition `y + z` is performed before adding `x`.
+
+
 ## Statements
 
 Statements control execution.
@@ -855,8 +1585,6 @@ The following built-in functions are not permitted in statement context:
 append cap complex imag len make new real
 unsafe.Add unsafe.Alignof unsafe.Offsetof unsafe.Sizeof unsafe.Slice unsafe.SliceData unsafe.String unsafe.StringData
 ```
-
-For example:
 
 ```go
 h(x+y)
@@ -913,7 +1641,7 @@ a[i] <<= 2
 i &^= 1<<n
 ```
 
-A tuple assignment assigns the individual elements of a multi-valued operation to a list of variables. There are two forms. In the first, the right hand operand is a single multi-valued expression such as a function call, a channel or [map](#map-types) operation, or a [type assertion](). The number of operands on the left hand side must match the number of values. For instance, if f is a function returning two values,
+A tuple assignment assigns the individual elements of a multi-valued operation to a list of variables. There are two forms. In the first, the right hand operand is a single multi-valued expression such as a function call or [map](#map-types) operation, or a [type assertion](). The number of operands on the left hand side must match the number of values. For instance, if f is a function returning two values,
 
 ```go
 x, y = f()
@@ -971,8 +1699,6 @@ In assignments, each value must be [assignable]() to the type of the operand to 
 IfStmt = "if" [ SimpleStmt ";" ] Expression Block [ "else" ( IfStmt | Block ) ] .
 ```
 
-For example:
-
 ```go
 if x > 1 {
 	x = 1
@@ -1019,8 +1745,6 @@ ForClause = [ InitStmt ] ";" [ Condition ] ";" [ PostStmt ] .
 InitStmt = SimpleStmt .
 PostStmt = SimpleStmt .
 ```
-
-For example:
 
 ```go
 for i := 0; i < 10; i++ {
@@ -1201,8 +1925,6 @@ LabeledStmt = Label ":" Statement .
 Label       = identifier .
 ```
 
-For example:
-
 ```go
 Error:
 	log.Panic("error encountered")
@@ -1271,8 +1993,6 @@ A "goto" statement transfers control to the statement with the corresponding lab
 ```go
 GotoStmt = "goto" Label .
 ```
-
-For example:
 
 ```go
 goto Error
@@ -1351,11 +2071,6 @@ func complexF3() (re float64, im float64) {
 	im = 4.0
 	return
 }
-
-func (devnull) Write(p []byte) (n int, _ error) {
-	n = len(p)
-	return
-}
 ```
 
 Regardless of how they are declared, all the result values are initialized to the [zero values]() for their type upon entry to the function. A "return" statement that specifies results sets the result parameters before any deferred functions are executed.
@@ -1414,10 +2129,10 @@ The built-in functions do not have standard Go types, so they can only appear in
 
 The built-in functions `append` and `copy` assist in common slice operations. For both functions, the result is independent of whether the memory referenced by the arguments overlaps.
 
-The [variadic](#function-types) function append appends zero or more values x to a slice s and returns the resulting slice of the same type as s. The [core type]() of s must be a slice of type `[]E`. The values x are passed to a parameter of type `...E` and the respective [parameter passing rules]() apply. As a special case, if the core type of s is []byte, append also accepts a second argument with core type [bytestring]() followed by `...`. This form appends the bytes of the byte slice or string.
+The [variadic](#function-types) function append appends zero or more values x to a slice s and returns the resulting slice of the same type as s. The [underlying type](#underlying-types) of s must be a slice of type `[]E`. The values x are passed to a parameter of type `...E` and the respective [parameter passing rules]() apply. As a special case, if the underlying type of s is []byte, append also accepts a second argument with underlying type [bytestring]() followed by `...`. This form appends the bytes of the byte slice or string.
 
 ```go
-append(s S, x ...E) S  // core type of S is []E
+append(s S, x ...E) S  // underlying type of S is []E
 ```
 
 If the capacity of s is not large enough to fit the additional values, append [allocates]() a new, sufficiently large underlying array that fits both the existing slice elements and the additional values. Otherwise, append re-uses the underlying array.
@@ -1436,7 +2151,7 @@ var b []byte
 b = append(b, "bar"...)            // append string contents      b is []byte("bar")
 ```
 
-The function copy copies slice elements from a source src to a destination dst and returns the number of elements copied. The [core types]() of both arguments must be slices with [identical]() element type. The number of elements copied is the minimum of `len(src)` and `len(dst)`. As a special case, if the destination's core type is `[]byte`, copy also accepts a source argument with core type [bytestring](). This form copies the bytes from the byte slice or string into the byte slice.
+The function copy copies slice elements from a source src to a destination dst and returns the number of elements copied. The [underlying types](#underlying-types) of both arguments must be slices with [identical]() element type. The number of elements copied is the minimum of `len(src)` and `len(dst)`. As a special case, if the destination's underlying type is `[]byte`, copy also accepts a source argument with underlying type [bytestring](). This form copies the bytes from the byte slice or string into the byte slice.
 
 ```go
 copy(dst, src []T) int
@@ -1472,4 +2187,838 @@ If the map or slice is `nil`, `clear` is a no-op.
 
 ### Manipulating complex numbers
 
+Three functions assemble and disassemble complex numbers. The built-in function complex constructs a complex value from a floating-point real and imaginary part, while real and imag extract the real and imaginary parts of a complex value.
+
+```go
+complex(realPart, imaginaryPart floatT) complexT
+real(complexT) floatT
+imag(complexT) floatT
+```
+
+The type of the arguments and return value correspond. For `complex`, the two arguments must be of the same [floating-point type](#numeric-types) and the return type is the [complex type](#numeric-types) with the corresponding floating-point constituents: `complex64` for `float32` arguments, and `complex128` for `float64` arguments. If one of the arguments evaluates to an untyped constant, it is first implicitly [converted](#conversions) to the type of the other argument. If both arguments evaluate to untyped constants, they must be non-complex numbers or their imaginary parts must be zero, and the return value of the function is an untyped complex constant.
+
+For `real` and `imag`, the argument must be of complex type, and the return type is the corresponding floating-point type: `float32` for a `complex64` argument, and float64 for a complex128 argument. If the argument evaluates to an untyped constant, it must be a number, and the return value of the function is an untyped floating-point constant.
+
+The `real` and `imag` functions together form the inverse of `complex`, so for a value `z` of a complex type `Z`, `z == Z(complex(real(z), imag(z)))`.
+
+If the operands of these functions are all constants, the return value is a constant.
+
+```go
+var a = complex(2, -2)             // complex128
+const b = complex(1.0, -1.4)       // untyped complex constant 1 - 1.4i
+x := float32(math.Cos(math.Pi/2))  // float32
+var c64 = complex(5, -x)           // complex64
+var s int = complex(1, 0)          // untyped complex constant 1 + 0i can be converted to int
+_ = complex(1, 2<<s)               // illegal: 2 assumes floating-point type, cannot shift
+var rl = real(c64)                 // float32
+var im = imag(a)                   // float64
+const c = imag(b)                  // untyped constant -1.4
+_ = imag(3 << s)                   // illegal: 3 assumes complex type, cannot shift
+```
+
+### Deletion of map elements
+
+The built-in function `delete` removes the element with key `k` from a [map](#map-types) `m`. The value `k` must be [assignable]() to the key type of `m`.
+
+```go
+delete(m, k)  // remove element m[k] from map m
+```
+
+If the map m is nil or the element m[k] does not exist, delete is a no-op.
+
+### Length and capacity
+
+The built-in functions `len` and `cap` take arguments of various types and return a result of type `int`. The implementation guarantees that the result always fits into an `int`.
+
+```go
+Call      Argument type    Result
+
+len(s)    string type      string length in bytes
+          [n]T, *[n]T      array length (== n)
+          []T              slice length
+          map[K]T          map length (number of defined keys)
+          type parameter   see below
+
+cap(s)    [n]T, *[n]T      array length (== n)
+          []T              slice capacity
+          type parameter   see below
+```
+
+The capacity of a slice is the number of elements for which there is space allocated in the underlying array. At any time the following relationship holds:
+
+```go
+0 <= len(s) <= cap(s)
+```
+
+The length of a `nil` slice, map is `0`. The capacity of a `nil` slice is `0`.
+
+The expression `len(s)` is [constant](#constants) if s is a string constant. The expressions `len(s)` and `cap(s)` are constants if the type of `s` is an array or pointer to an array and the expression `s` does not contain (non-constant) [function calls](#commands-and-calls); in this case `s` is not evaluated. Otherwise, invocations of `len` and `cap` are not constant and `s` is evaluated.
+
+```go
+const (
+	c1 = imag(2i)                    // imag(2i) = 2.0 is a constant
+	c2 = len([10]float64{2})         // [10]float64{2} contains no function calls
+	c3 = len([10]float64{c1})        // [10]float64{c1} contains no function calls
+	c4 = len([10]float64{imag(2i)})  // imag(2i) is a constant and no function call is issued
+	c5 = len([10]float64{imag(z)})   // invalid: imag(z) is a (non-constant) function call
+)
+var z complex128
+```
+
+Making slices and maps
+
+The built-in function `make` takes a type `T`, optionally followed by a type-specific list of expressions. The [underlying type]() of `T` must be a slice or map. It returns a value of type `T` (not `*T`). The memory is initialized as described in the section on [initial values]().
+
+```go
+Call             Underlying type    Result
+
+make(T, n)       slice        slice of type T with length n and capacity n
+make(T, n, m)    slice        slice of type T with length n and capacity m
+
+make(T)          map          map of type T
+make(T, n)       map          map of type T with initial space for approximately n elements
+```
+
+Each of the size arguments `n` and `m` must be of [integer type](#numeric-types), have a [type set](#interface-types) containing only integer types, or be an untyped constant. A constant size argument must be non-negative and [representable]() by a value of type `int`; if it is an untyped constant it is given type `int`. If both `n` and `m` are provided and are constant, then `n` must be no larger than `m`. For slices, if `n` is negative or larger than `m` at run time, a [run-time panic]() occurs.
+
+```go
+s := make([]int, 10, 100)       // slice with len(s) == 10, cap(s) == 100
+s := make([]int, 1e3)           // slice with len(s) == cap(s) == 1000
+s := make([]int, 1<<63)         // illegal: len(s) is not representable by a value of type int
+s := make([]int, 10, 0)         // illegal: len(s) > cap(s)
+m := make(map[string]int, 100)  // map with initial space for approximately 100 elements
+```
+
+Calling make with a map type and size hint `n` will create a map with initial space to hold `n` map elements. The precise behavior is implementation-dependent.
+
+
+### Allocation
+
+The built-in function `new` takes a type `T`, allocates storage for a [variable](#variables) of that type at run time, and returns a value of type `*T` [pointing](#pointer-types) to it. The variable is initialized as described in the section on [initial values]().
+
+```go
+new(T)
+```
+
+For instance
+
+```go
+new(int)
+```
+
+allocates storage for a variable of type `int`, initializes it `0`, and returns a value of type `*int` containing the address of the location.
+
+
+### Min and max
+
+The built-in functions `min` and `max` compute the smallest—or largest, respectively—value of a fixed number of arguments of [ordered types](). There must be at least one argument.
+
+The same type rules as for [operators](#operators) apply: for [ordered]() arguments `x` and `y`, `min(x, y)` is valid if `x + y` is valid, and the type of `min(x, y)` is the type of `x + y` (and similarly for `max`). If all arguments are constant, the result is constant.
+
+```go
+var x, y int
+m := min(x)                 // m == x
+m := min(x, y)              // m is the smaller of x and y
+m := max(x, y, 10)          // m is the larger of x and y but at least 10
+c := max(1, 2.0, 10)        // c == 10.0 (floating-point kind)
+f := max(0, float32(x))     // type of f is float32
+var s []string
+_ = min(s...)               // invalid: slice arguments are not permitted
+t := max("", "foo", "bar")  // t == "foo" (string kind)
+```
+
+For numeric arguments, assuming all `NaN`s are equal, `min` and `max` are commutative and associative:
+
+```
+min(x, y)    == min(y, x)
+min(x, y, z) == min(min(x, y), z) == min(x, min(y, z))
+```
+
+For floating-point arguments negative zero, `NaN`, and infinity the following rules apply:
+
+```go
+x        y    min(x, y)    max(x, y)
+
+-0.0    0.0         -0.0          0.0    // negative zero is smaller than (non-negative) zero
+-Inf      y         -Inf            y    // negative infinity is smaller than any other number
++Inf      y            y         +Inf    // positive infinity is larger than any other number
+ NaN      y          NaN          NaN    // if any argument is a NaN, the result is a NaN
+```
+
+For string arguments the result for min is the first argument with the smallest (or for max, largest) value, compared lexically byte-wise:
+
+```go
+min(x, y)    == if x <= y then x else y
+min(x, y, z) == min(min(x, y), z)
+```
+
+### Handling panics
+
+Two built-in functions, `panic` and `recover`, assist in reporting and handling [run-time panics]() and program-defined error conditions.
+
+```go
+func panic(any)
+func recover() any
+```
+
+While executing a function `F`, an explicit call to `panic` or a [run-time panic]() terminates the execution of `F`. Any functions [deferred]() by `F` are then executed as usual. Next, any deferred functions run by `F`'s caller are run, and so on up to any deferred by the top-level function in the executing goroutine. At that point, the program is terminated and the error condition is reported, including the value of the argument to panic. This termination sequence is called _panicking_.
+
+```go
+panic(42)
+panic("unreachable")
+panic(Error("cannot parse"))
+```
+
+The `recover` function allows a program to manage behavior of a panicking goroutine. Suppose a function `G` defers a function `D` that calls `recover` and a panic occurs in a function on the same goroutine in which `G` is executing. When the running of deferred functions reaches `D`, the return value of `D`'s call to recover will be the value passed to the call of panic. If `D` returns normally, without starting a new panic, the panicking sequence stops. In that case, the state of functions called between `G` and the call to panic is discarded, and normal execution resumes. Any functions deferred by `G` before `D` are then run and `G`'s execution terminates by returning to its caller.
+
+The return value of `recover` is `nil` when the goroutine is not panicking or `recover` was not called directly by a deferred function. Conversely, if a goroutine is panicking and recover was called directly by a deferred function, the return value of recover is guaranteed not to be `nil`. To ensure this, calling panic with a `nil` interface value (or an untyped nil) causes a [run-time panic]().
+
+The `protect` function in the example below invokes the function argument `g` and protects callers from run-time panics raised by `g`.
+
+```go
+func protect(g func()) {
+	defer func() {
+		log.Println("done")  // Println executes normally even if there is a panic
+		if x := recover(); x != nil {
+			log.Printf("run time panic: %v", x)
+		}
+	}()
+	log.Println("start")
+	g()
+}
+```
+
+### TODO
+
+```go
+print
+printf
+println
+...
+```
+
+## Blocks
+
+A _block_ is a possibly empty sequence of declarations and statements within matching brace brackets.
+
+```go
+Block = "{" StatementList "}" .
+StatementList = { Statement ";" } .
+```
+
+In addition to explicit blocks in the source code, there are implicit blocks:
+
+* The _universe block_ encompasses all Go+ source text.
+* Each [package](#packages) has a _package block_ containing all Go+ source text for that package.
+* Each file has a _file block_ containing all Go+ source text in that file.
+* Each "[if](#if-statements)", "[for](#for-statements)", and "[switch](#switch-statements)" statement is considered to be in its own implicit block.
+* Each clause in a "[switch](#switch-statements)" statement acts as an implicit block.
+
+Blocks nest and influence [scoping]().
+
+
+## Declarations and scope
+
+A _declaration_ binds a non-[blank]() identifier to a [constant](), [type](), [variable](), [function](), [label](), or [package](). Every identifier in a program must be declared. No identifier may be declared twice in the same block, and no identifier may be declared in both the file and package block.
+
+The [blank identifier]() may be used like any other identifier in a declaration, but it does not introduce a binding and thus is not declared. In the package block, the identifier `init` may only be used for [init function]() declarations, and like the blank identifier it does not introduce a new binding.
+
+```go
+Declaration   = ConstDecl | TypeDecl | VarDecl .
+TopLevelDecl  = Declaration | FunctionDecl .
+```
+
+The scope of a declared identifier is the extent of source text in which the identifier denotes the specified constant, type, variable, function, label, or package.
+
+Go+ is lexically scoped using blocks:
+
+* The scope of a [predeclared identifier]() is the universe block.
+* The scope of an identifier denoting a constant, type, variable, or function declared at top level (outside any function) is the package block.
+* The scope of the package name of an imported package is the file block of the file containing the import declaration.
+* The scope of an identifier denoting function parameter, or result variable is the function body.
+* The scope of a constant or variable identifier declared inside a function begins at the end of the `ConstSpec` or `VarSpec` (`ShortVarDecl` for short variable declarations) and ends at the end of the innermost containing block.
+
+An identifier declared in a block may be redeclared in an inner block. While the identifier of the inner declaration is in scope, it denotes the entity declared by the inner declaration.
+
+The [package clause]() is not a declaration; the package name does not appear in any scope. Its purpose is to identify the files belonging to the same [package](#packages) and to specify the default package name for import declarations.
+
+### Label scopes
+
+Labels are declared by [labeled statements](#labeled-statements) and are used in the "[break](#break-statements)", "[continue](#continue-statements)", and "[goto](#goto-statements)" statements. It is illegal to define a label that is never used. In contrast to other identifiers, labels are not block scoped and do not conflict with identifiers that are not labels. The scope of a label is the body of the function in which it is declared and excludes the body of any nested function.
+
+
+### Blank identifier
+
+The _blank identifier_ is represented by the underscore character `_`. It serves as an anonymous placeholder instead of a regular (non-blank) identifier and has special meaning in [declarations](#declarations-and-scope), as an [operand](), and in [assignment statements](#assignment-statements).
+
+### Predeclared identifiers
+
+The following identifiers are implicitly declared in the [universe block]():
+
+```go
+Types:
+	any bigint bigrat bool byte comparable
+	complex64 complex128 error float32 float64
+	int int8 int16 int32 int64 rune string
+	uint uint8 uint16 uint32 uint64 uintptr
+
+Constants:
+	true false iota
+
+Zero value:
+	nil
+
+Functions:
+	append cap clear close complex copy delete echo imag len
+	make max min new panic print printf println real recover // TODO(xsw): more
+```
+
+### Exported identifiers
+
+An identifier may be _exported_ to permit access to it from another package. An identifier is exported if both:
+
+* the first character of the identifier's name is a Unicode uppercase letter (Unicode character category Lu); and
+* the identifier is declared in the [package block]() or it is a [field name]() or [method name]().
+
+All other identifiers are not exported.
+
+### Uniqueness of identifiers
+
+Given a set of identifiers, an identifier is called _unique_ if it is _different_ from every other in the set. Two identifiers are different if they are spelled differently, or if they appear in different [packages](#packages) and are not [exported](#exported-identifiers). Otherwise, they are the same.
+
+### Constant declarations
+
+A constant declaration binds a list of identifiers (the names of the constants) to the values of a list of [constant expressions](#constant-expressions). The number of identifiers must be equal to the number of expressions, and the nth identifier on the left is bound to the value of the nth expression on the right.
+
+```go
+ConstDecl      = "const" ( ConstSpec | "(" { ConstSpec ";" } ")" ) .
+ConstSpec      = IdentifierList [ [ Type ] "=" ExpressionList ] .
+
+IdentifierList = identifier { "," identifier } .
+ExpressionList = Expression { "," Expression } .
+```
+
+If the type is present, all constants take the type specified, and the expressions must be [assignable]() to that type, which must not be a type parameter. If the type is omitted, the constants take the individual types of the corresponding expressions. If the expression values are untyped [constants](#constants), the declared constants remain untyped and the constant identifiers denote the constant values. For instance, if the expression is a floating-point literal, the constant identifier denotes a floating-point constant, even if the literal's fractional part is zero.
+
+```go
+const Pi float64 = 3.14159265358979323846
+const zero = 0.0         // untyped floating-point constant
+const (
+	size int64 = 1024
+	eof        = -1  // untyped integer constant
+)
+const a, b, c = 3, 4, "foo"  // a = 3, b = 4, c = "foo", untyped integer and string constants
+const u, v float32 = 0, 3    // u = 0.0, v = 3.0
+```
+
+Within a parenthesized const declaration list the expression list may be omitted from any but the first ConstSpec. Such an empty list is equivalent to the textual substitution of the first preceding non-empty expression list and its type if any. Omitting the list of expressions is therefore equivalent to repeating the previous list. The number of identifiers must be equal to the number of expressions in the previous list. Together with the [iota constant generator](#iota) this mechanism permits light-weight declaration of sequential values:
+
+```go
+const (
+	Sunday = iota
+	Monday
+	Tuesday
+	Wednesday
+	Thursday
+	Friday
+	Partyday
+	numberOfDays  // this constant is not exported
+)
+```
+
+### Iota
+
+Within a [constant declaration](#constant-declarations), the predeclared identifier iota represents successive untyped integer [constants](#constants). Its value is the index of the respective [ConstSpec]() in that constant declaration, starting at zero. It can be used to construct a set of related constants:
+
+```go
+const (
+	c0 = iota  // c0 == 0
+	c1 = iota  // c1 == 1
+	c2 = iota  // c2 == 2
+)
+
+const (
+	a = 1 << iota  // a == 1  (iota == 0)
+	b = 1 << iota  // b == 2  (iota == 1)
+	c = 3          // c == 3  (iota == 2, unused)
+	d = 1 << iota  // d == 8  (iota == 3)
+)
+
+const (
+	u         = iota * 42  // u == 0     (untyped integer constant)
+	v float64 = iota * 42  // v == 42.0  (float64 constant)
+	w         = iota * 42  // w == 84    (untyped integer constant)
+)
+
+const x = iota  // x == 0
+const y = iota  // y == 0
+```
+
+By definition, multiple uses of iota in the same ConstSpec all have the same value:
+
+```go
+const (
+	bit0, mask0 = 1 << iota, 1<<iota - 1  // bit0 == 1, mask0 == 0  (iota == 0)
+	bit1, mask1                           // bit1 == 2, mask1 == 1  (iota == 1)
+	_, _                                  //                        (iota == 2, unused)
+	bit3, mask3                           // bit3 == 8, mask3 == 7  (iota == 3)
+)
+```
+
+This last example exploits the [implicit repetition](#constant-declarations) of the last non-empty expression list.
+
+### Type declarations
+
+A type declaration binds an identifier, the _type name_, to a [type](#types). Type declarations come in two forms: alias declarations and type definitions.
+
+```go
+TypeDecl = "type" ( TypeSpec | "(" { TypeSpec ";" } ")" ) .
+TypeSpec = AliasDecl | TypeDef .
+```
+
+#### Alias declarations
+
+An alias declaration binds an identifier to the given type.
+
+```go
+AliasDecl = identifier "=" Type .
+```
+
+Within the [scope]() of the identifier, it serves as an alias for the type.
+
+```go
+type (
+	nodeList = []*Node  // nodeList and []*Node are identical types
+	Polar    = polar    // Polar and polar denote identical types
+)
+```
+
+#### Type definitions
+
+A type definition creates a new, distinct type with the same [underlying type](#underlying-types) and operations as the given type and binds an identifier, the _type name_, to it.
+
+```go
+TypeDef = identifier Type .
+```
+
+The new type is called a _defined type_. It is [different]() from any other type, including the type it is created from.
+
+```go
+type (
+	Point struct{ x, y float64 }  // Point and struct{ x, y float64 } are different types
+	polar Point                   // polar and Point denote different types
+)
+
+type TreeNode struct {
+	left, right *TreeNode
+	value any
+}
+
+type Block interface {
+	BlockSize() int
+	Encrypt(src, dst []byte)
+	Decrypt(src, dst []byte)
+}
+```
+
+Type definitions may be used to define different boolean, numeric, or string types:
+
+```go
+type TimeZone int
+
+const (
+	EST TimeZone = -(5 + iota)
+	CST
+	MST
+	PST
+)
+```
+
+### Variable declarations
+
+A variable declaration creates one or more [variables](#variables), binds corresponding identifiers to them, and gives each a type and an initial value.
+
+```go
+VarDecl     = "var" ( VarSpec | "(" { VarSpec ";" } ")" ) .
+VarSpec     = IdentifierList ( Type [ "=" ExpressionList ] | "=" ExpressionList ) .
+```
+
+```go
+var i int
+var U, V, W float64
+var k = 0
+var x, y float32 = -1, -2
+var (
+	i       int
+	u, v, s = 2.0, 3.0, "bar"
+)
+var re, im = complexSqrt(-1)
+var _, found = entries[name]  // map lookup; only interested in "found"
+```
+
+If a list of expressions is given, the variables are initialized with the expressions following the rules for [assignment statements](#assignment-statements). Otherwise, each variable is initialized to its [zero value](#the-zero-value).
+
+If a type is present, each variable is given that type. Otherwise, each variable is given the type of the corresponding initialization value in the assignment. If that value is an untyped constant, it is first implicitly [converted](#conversions) to its [default type](#constants); if it is an untyped boolean value, it is first implicitly converted to type `bool`. The predeclared value `nil` cannot be used to initialize a variable with no explicit type.
+
+```go
+var d = math.Sin(0.5)  // d is float64
+var i = 42             // i is int
+var t, ok = x.(T)      // t is T, ok is bool
+var n = nil            // illegal
+```
+
+Implementation restriction: A compiler may make it illegal to declare a variable inside a [function body](#function-declarations) if the variable is never used.
+
+In a function body, variables do not need to be explicitly defined.
+
+```go
+d := math.Sin(0.5)  // d is float64
+i := 42             // i is int
+t, ok := x.(T)      // t is T, ok is bool
+```
+
+See [short variable declarations](#short-variable-declarations).
+
+### Function declarations
+
+A function declaration binds an identifier, the function name, to a function.
+
+```go
+FunctionDecl = "func" FunctionName Signature [ FunctionBody ] .
+FunctionName = identifier .
+FunctionBody = Block .
+```
+
+If the function's [signature](#function-types) declares result parameters, the function body's statement list must end in a [terminating statement](#terminating-statements).
+
+```go
+func IndexRune(s string, r rune) int {
+	for i, c := range s {
+		if c == r {
+			return i
+		}
+	}
+	// invalid: missing return statement
+}
+```
+
+
+## Packages
+
+Go+ programs are constructed by linking together packages. A package in turn is constructed from one or more source files that together declare constants, types, variables and functions belonging to the package and which are accessible in all files of the same package. Those elements may be [exported]() and used in another package.
+
+### Source file organization
+
+Each source file consists of a package clause defining the package to which it belongs, followed by a possibly empty set of import declarations that declare packages whose contents it wishes to use, followed by a possibly empty set of declarations of functions, types, variables, and constants.
+
+```go
+SourceFile       = [ PackageClause ";" ] { ImportDecl ";" } { TopLevelDecl ";" } .
+```
+
+### Package clause
+
+A package clause begins each source file and defines the package to which the file belongs.
+
+```go
+PackageClause  = "package" PackageName .
+PackageName    = identifier .
+```
+
+The PackageName must not be the [blank identifier]().
+
+```go
+package math
+```
+
+### Import declarations
+
+An import declaration states that the source file containing the declaration depends on functionality of the `imported` package ([Program initialization and execution]()) and enables access to [exported]() identifiers of that package. The import names an identifier (PackageName) to be used for access and an ImportPath that specifies the package to be imported.
+
+```go
+ImportDecl       = "import" ( ImportSpec | "(" { ImportSpec ";" } ")" ) .
+ImportSpec       = [ "." | PackageName ] ImportPath .
+ImportPath       = string_lit .
+```
+
+The PackageName is used in [qualified identifiers]() to access exported identifiers of the package within the importing source file. It is declared in the [file block](). If the PackageName is omitted, it defaults to the identifier specified in the [package clause](#package-clause) of the imported package. If an explicit period (.) appears instead of a name, all the package's exported identifiers declared in that package's [package block]() will be declared in the importing source file's file block and must be accessed without a qualifier.
+
+The interpretation of the ImportPath is implementation-dependent but it is typically a substring of the full file name of the compiled package and may be relative to a repository of installed packages.
+
+Implementation restriction: A compiler may restrict ImportPaths to non-empty strings using only characters belonging to [Unicode's]() L, M, N, P, and S general categories (the Graphic characters without spaces) and may also exclude the characters !"#$%&'()*,:;<=>?[\]^`{|} and the Unicode replacement character U+FFFD.
+
+Consider a compiled a package containing the package clause package math, which exports function `Sin`, and installed the compiled package in the file identified by "lib/math". This table illustrates how `Sin` is accessed in files that import the package after the various types of import declaration.
+
+```go
+Import declaration          Local name of Sin
+
+import   "lib/math"         math.Sin
+import m "lib/math"         m.Sin
+import . "lib/math"         Sin
+```
+
+An import declaration declares a dependency relation between the importing and imported package. It is illegal for a package to import itself, directly or indirectly, or to directly import a package without referring to any of its exported identifiers. To import a package solely for its side-effects (initialization), use the [blank]() identifier as explicit package name:
+
+```go
+import _ "lib/math"
+```
+
+### An example package
+
+Here is a complete Go+ package that implements XXX.
+
+```go
 TODO
+```
+
+## Program initialization and execution
+
+### The zero value
+
+When storage is allocated for a [variable](#variables), either through a declaration or a call of `new`, or when a new value is created, either through a composite literal or a call of `make`, and no explicit initialization is provided, the variable or value is given a default value. Each element of such a variable or value is set to the _zero_ value for its type: `false` for booleans, `0` for numeric types, `""` for strings, and `nil` for pointers, functions, interfaces, slices, and maps. This initialization is done recursively, so for instance each element of an array of structs will have its fields zeroed if no value is specified.
+
+These two simple declarations are equivalent:
+
+```go
+var i int
+var i int = 0
+```
+
+TODO
+
+### Package initialization
+
+Within a package, package-level variable initialization proceeds stepwise, with each step selecting the variable earliest in `declaration order` which has no dependencies on uninitialized variables.
+
+More precisely, a package-level variable is considered ready for `initialization` if it is not yet initialized and either has no [initialization expression]() or its initialization expression has no dependencies on uninitialized variables. Initialization proceeds by repeatedly initializing the next package-level variable that is earliest in declaration order and ready for initialization, until there are no variables ready for initialization.
+
+If any variables are still uninitialized when this process ends, those variables are part of one or more initialization cycles, and the program is not valid.
+
+Multiple variables on the left-hand side of a variable declaration initialized by single (multi-valued) expression on the right-hand side are initialized together: If any of the variables on the left-hand side is initialized, all those variables are initialized in the same step.
+
+```go
+var x = a
+var a, b = f() // a and b are initialized together, before x is initialized
+```
+
+For the purpose of package initialization, [blank]() variables are treated like any other variables in declarations.
+
+The declaration order of variables declared in multiple files is determined by the order in which the files are presented to the compiler: Variables declared in the first file are declared before any of the variables declared in the second file, and so on. To ensure reproducible initialization behavior, build systems are encouraged to present multiple files belonging to the same package in lexical file name order to a compiler.
+
+Dependency analysis does not rely on the actual values of the variables, only on lexical `references` to them in the source, analyzed transitively. For instance, if a variable x's initialization expression refers to a function whose body refers to variable y then x depends on y. Specifically:
+
+* A reference to a variable or function is an identifier denoting that variable or function.
+* A reference to a method m is a [method value]() or [method expression]() of the form `t.m`, where the (static) type of t is not an interface type, and the method `m` is in the method set of `t`. It is immaterial whether the resulting function value `t.m` is invoked.
+* A variable, function, or method x depends on a variable y if x's initialization expression or body (for functions and methods) contains a reference to y or to a function or method that depends on y.
+
+For example, given the declarations
+
+```go
+var (
+	a = c + b  // == 9
+	b = f()    // == 4
+	c = f()    // == 5
+	d = 3      // == 5 after initialization has finished
+)
+
+func f() int {
+	d++
+	return d
+}
+```
+
+the initialization order is `d`, `b`, `c`, `a`. Note that the order of subexpressions in initialization expressions is irrelevant: `a = c + b` and `a = b + c` result in the same initialization order in this example.
+
+Dependency analysis is performed per package; only references referring to variables, functions, and (non-interface) methods declared in the current package are considered. If other, hidden, data dependencies exists between variables, the initialization order between those variables is unspecified.
+
+For instance, given the declarations (TODO: use classfile instead of method)
+
+```go
+var x = I(T{}).ab()   // x has an undetected, hidden dependency on a and b
+var _ = sideEffect()  // unrelated to x, a, or b
+var a = b
+var b = 42
+
+type I interface      { ab() []int }
+type T struct{}
+func (T) ab() []int   { return []int{a, b} }
+```
+
+the variable `a` will be initialized after `b` but whether `x` is initialized before `b`, between `b` and `a`, or after `a`, and thus also the moment at which `sideEffect()` is called (before or after `x` is initialized) is not specified.
+
+Variables may also be initialized using functions named init declared in the package block, with no arguments and no result parameters.
+
+```go
+func init() { … }
+```
+
+Multiple such functions may be defined per package, even within a single source file. In the package block, the `init` identifier can be used only to declare `init` functions, yet the identifier itself is not [declared](). Thus init functions cannot be referred to from anywhere in a program.
+
+The entire package is initialized by assigning initial values to all its package-level variables followed by calling all `init` functions in the order they appear in the source, possibly in multiple files, as presented to the compiler.
+
+### Program initialization
+
+The packages of a complete program are initialized stepwise, one package at a time. If a package has imports, the imported packages are initialized before initializing the package itself. If multiple packages import a package, the imported package will be initialized only once. The importing of packages, by construction, guarantees that there can be no cyclic initialization dependencies. More precisely:
+
+Given the list of all packages, sorted by import path, in each step the first uninitialized package in the list for which all imported packages (if any) are already initialized is [initialized](#package-initialization). This step is repeated until all packages are initialized.
+
+Package initialization—variable initialization and the invocation of `init` functions—happens in a single goroutine, sequentially, one package at a time. An `init` function may launch other goroutines, which can run concurrently with the initialization code. However, initialization always sequences the `init` functions: it will not invoke the next one until the previous one has returned.
+
+### Program execution
+
+A complete program is created by linking a single, unimported package called the main package with all the packages it imports, transitively. The main package must have package name main and declare a function main that takes no arguments and returns no value.
+
+```go
+func main() { … }
+```
+
+Program execution begins by [initializing the program](#program-initialization) and then invoking the function `main` in package `main`. When that function invocation returns, the program exits. It does not wait for other (non-main) goroutines to complete.
+
+
+### Run-time panics
+
+Execution errors such as attempting to index an array out of bounds trigger a _run-time panic_ equivalent to a call of the built-in function [panic]() with a value of the implementation-defined interface type `runtime.Error`. That type satisfies the predeclared interface type [error](#errors). The exact error values that represent distinct run-time error conditions are unspecified.
+
+```go
+package runtime
+
+type Error interface {
+	error
+	// and perhaps other methods
+}
+```
+
+
+## System considerations
+
+### Package unsafe
+
+The built-in package `unsafe`, known to the compiler and accessible through the [import path]() `"unsafe"`, provides facilities for low-level programming including operations that violate the type system. A package using unsafe must be vetted manually for type safety and may not be portable. The package provides the following interface:
+
+```go
+package unsafe
+
+type ArbitraryType int  // shorthand for an arbitrary Go type; it is not a real type
+type Pointer *ArbitraryType
+
+func Alignof(variable ArbitraryType) uintptr
+func Offsetof(selector ArbitraryType) uintptr
+func Sizeof(variable ArbitraryType) uintptr
+
+type IntegerType int  // shorthand for an integer type; it is not a real type
+func Add(ptr Pointer, len IntegerType) Pointer
+func Slice(ptr *ArbitraryType, len IntegerType) []ArbitraryType
+func SliceData(slice []ArbitraryType) *ArbitraryType
+func String(ptr *byte, len IntegerType) string
+func StringData(str string) *byte
+```
+
+A Pointer is a [pointer type](#pointer-types) but a Pointer value may not be [dereferenced](#address-operators). Any pointer or value of [underlying type](#underlying-types) `uintptr` can be [converted](#conversions) to a type of underlying type Pointer and vice versa. The effect of converting between Pointer and `uintptr` is implementation-defined.
+
+```go
+var f float64
+bits = *(*uint64)(unsafe.Pointer(&f))
+
+type ptr unsafe.Pointer
+bits = *(*uint64)(ptr(&f))
+
+func f[P ~*B, B any](p P) uintptr {
+	return uintptr(unsafe.Pointer(p))
+}
+
+var p ptr = nil
+```
+
+The functions `Alignof` and `Sizeof` take an expression `x` of any type and return the alignment or size, respectively, of a hypothetical variable `v` as if `v` was declared via `var v = x`.
+
+The function `Offsetof` takes a (possibly parenthesized) [selector]() `s.f`, denoting a field `f` of the struct denoted by `s` or `*s`, and returns the field offset in bytes relative to the struct's address. If `f` is an [embedded field](), it must be reachable without pointer indirections through fields of the struct. For a struct `s` with field `f`:
+
+```go
+uintptr(unsafe.Pointer(&s)) + unsafe.Offsetof(s.f) == uintptr(unsafe.Pointer(&s.f))
+```
+
+Computer architectures may require memory addresses to be _aligned_; that is, for addresses of a variable to be a multiple of a factor, the variable's type's _alignment_. The function `Alignof` takes an expression denoting a variable of any type and returns the alignment of the (type of the) variable in bytes. For a variable `x`:
+
+```go
+uintptr(unsafe.Pointer(&x)) % unsafe.Alignof(x) == 0
+```
+
+A (variable of) type T has _variable size_ if T is a [type parameter](), or if it is an array or struct type containing elements or fields of variable size. Otherwise the size is constant. Calls to `Alignof`, `Offsetof`, and `Sizeof` are compile-time [constant expressions](#constant-expressions) of type `uintptr` if their arguments (or the struct `s` in the selector expression `s.f` for `Offsetof`) are types of constant size.
+
+The function `Add` adds `len` to `ptr` and returns the updated pointer `unsafe.Pointer(uintptr(ptr) + uintptr(len))`. The `len` argument must be of [integer type](#numeric-types) or an untyped [constant](#constants). A constant `len` argument must be [representable]() by a value of type `int`; if it is an untyped constant it is given type `int`. The rules for [valid uses]() of Pointer still apply.
+
+The function `Slice` returns a slice whose underlying array starts at `ptr` and whose length and capacity are `len`. `Slice(ptr, len)` is equivalent to
+
+```go
+(*[len]ArbitraryType)(unsafe.Pointer(ptr))[:]
+```
+
+except that, as a special case, if `ptr` is `nil` and `len` is zero, `Slice` returns `nil`.
+
+The `len` argument must be of [integer type](#numeric-types) or an untyped [constant](#constants). A constant `len` argument must be non-negative and [representable]() by a value of type `int`; if it is an untyped constant it is given type `int`. At run time, if `len` is negative, or if `ptr` is nil and `len` is not zero, a [run-time panic](#run-time-panics) occurs.
+
+The function `SliceData` returns a pointer to the underlying array of the `slice` argument. If the slice's capacity `cap(slice)` is not zero, that pointer is `&slice[:1][0]`. If slice is `nil`, the result is `nil`. Otherwise it is a non-nil pointer to an unspecified memory address.
+
+The function `String` returns a `string` value whose underlying bytes start at `ptr` and whose length is `len`. The same requirements apply to the `ptr` and `len` argument as in the function `Slice`. If `len` is zero, the result is the empty string `""`. Since Go+ strings are immutable, the bytes passed to `String` must not be modified afterwards.
+
+The function `StringData` returns a pointer to the underlying bytes of the `str` argument. For an empty string the return value is unspecified, and may be `nil`. Since Go+ strings are immutable, the bytes returned by `StringData` must not be modified.
+
+### Size and alignment guarantees
+
+For the [numeric types](#numeric-types), the following sizes are guaranteed:
+
+```go
+type                                 size in bytes
+
+byte, uint8, int8                     1
+uint16, int16                         2
+uint32, int32, float32                4
+uint64, int64, float64, complex64     8
+complex128                           16
+```
+
+The following minimal alignment properties are guaranteed:
+
+* For a variable `x` of any type: `unsafe.Alignof(x)` is at least 1.
+* For a variable `x` of struct type: `unsafe.Alignof(x)` is the largest of all the values `unsafe.Alignof(x.f)` for each field `f` of `x`, but at least 1.
+* For a variable `x` of array type: `unsafe.Alignof(x)` is the same as the alignment of a variable of the array's element type.
+
+A struct or array type has size zero if it contains no fields (or elements, respectively) that have a size greater than zero. Two distinct zero-size variables may have the same address in memory.
+
+## Appendix
+
+### Language versions
+
+TODO
+
+### Type unification rules
+
+The type unification rules describe if and how two types unify. The precise details are relevant for Go+ implementations, affect the specifics of error messages (such as whether a compiler reports a type inference or other error), and may explain why type inference fails in unusual code situations. But by and large these rules can be ignored when writing Go code: type inference is designed to mostly "work as expected", and the unification rules are fine-tuned accordingly.
+
+Type unification is controlled by a matching mode, which may be `exact` or `loose`. As unification recursively descends a composite type structure, the matching mode used for elements of the type, the element matching mode, remains the same as the matching mode except when two types are unified for [assignability]() (≡A): in this case, the matching mode is loose at the top level but then changes to exact for element types, reflecting the fact that types don't have to be identical to be assignable.
+
+Two types that are not bound type parameters unify exactly if any of following conditions is true:
+
+* Both types are [identical]().
+* Both types have identical structure and their element types unify exactly.
+* Exactly one type is an [unbound]() type parameter with a [underlying type](#underlying-types), and that underlying type unifies with the other type per the unification rules for ≡A (loose unification at the top level and exact unification for element types).
+
+If both types are bound type parameters, they unify per the given matching modes if:
+
+* Both type parameters are identical.
+* At most one of the type parameters has a known type argument. In this case, the type parameters are `joined`: they both stand for the same type argument. If neither type parameter has a known type argument yet, a future type argument inferred for one the type parameters is simultaneously inferred for both of them.
+* Both type parameters have a known type argument and the type arguments unify per the given matching modes.
+
+A single bound type parameter P and another type T unify per the given matching modes if:
+
+* P doesn't have a known type argument. In this case, T is inferred as the type argument for P.
+* P does have a known type argument A, A and T unify per the given matching modes, and one of the following conditions is true:
+  * Both A and T are interface types: In this case, if both A and T are also [defined]() types, they must be [identical](). Otherwise, if neither of them is a defined type, they must have the same number of methods (unification of A and T already established that the methods match).
+  * Neither A nor T are interface types: In this case, if T is a defined type, T replaces A as the inferred type argument for P.
+
+Finally, two types that are not bound type parameters unify loosely (and per the element matching mode) if:
+
+* Both types unify exactly.
+* One type is a [defined type](), the other type is a type literal, but not an interface, and their underlying types unify per the element matching mode.
+* Both types are interfaces (but not type parameters) with identical [type terms](), both or neither embed the predeclared type [comparable](), corresponding method types unify exactly, and the method set of one of the interfaces is a subset of the method set of the other interface.
+* Only one type is an interface (but not a type parameter), corresponding methods of the two types unify per the element matching mode, and the method set of the interface is a subset of the method set of the other type.
+* Both types have the same structure and their element types unify per the element matching mode.

@@ -25,9 +25,9 @@ import (
 	"reflect"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/tool"
 	"github.com/goplus/gop/x/gocmd"
 	"github.com/goplus/gop/x/gopprojs"
 )
@@ -39,9 +39,9 @@ var Cmd = &base.Command{
 }
 
 var (
+	flag       = &Cmd.Flag
 	flagDebug  = flag.Bool("debug", false, "print debug information")
 	flagOutput = flag.String("o", "", "gop build output file")
-	flag       = &Cmd.Flag
 )
 
 func init() {
@@ -74,9 +74,9 @@ func runCmd(cmd *base.Command, args []string) {
 		log.Panicln("too many arguments:", args)
 	}
 
-	conf, err := gop.NewDefaultConf(".", gop.ConfFlagNoTestFiles)
+	conf, err := tool.NewDefaultConf(".", tool.ConfFlagNoTestFiles, pass.Tags())
 	if err != nil {
-		log.Panicln("gop.NewDefaultConf:", err)
+		log.Panicln("tool.NewDefaultConf:", err)
 	}
 	defer conf.UpdateCache()
 
@@ -92,23 +92,23 @@ func runCmd(cmd *base.Command, args []string) {
 	build(proj, conf, confCmd)
 }
 
-func build(proj gopprojs.Proj, conf *gop.Config, build *gocmd.BuildConfig) {
-	const flags = gop.GenFlagPrompt
+func build(proj gopprojs.Proj, conf *tool.Config, build *gocmd.BuildConfig) {
+	const flags = tool.GenFlagPrompt
 	var obj string
 	var err error
 	switch v := proj.(type) {
 	case *gopprojs.DirProj:
 		obj = v.Dir
-		err = gop.BuildDir(obj, conf, build, flags)
+		err = tool.BuildDir(obj, conf, build, flags)
 	case *gopprojs.PkgPathProj:
 		obj = v.Path
-		err = gop.BuildPkgPath("", v.Path, conf, build, flags)
+		err = tool.BuildPkgPath("", v.Path, conf, build, flags)
 	case *gopprojs.FilesProj:
-		err = gop.BuildFiles(v.Files, conf, build)
+		err = tool.BuildFiles(v.Files, conf, build)
 	default:
 		log.Panicln("`gop build` doesn't support", reflect.TypeOf(v))
 	}
-	if gop.NotFound(err) {
+	if tool.NotFound(err) {
 		fmt.Fprintf(os.Stderr, "gop build %v: not found\n", obj)
 	} else if err != nil {
 		fmt.Fprintln(os.Stderr, err)

@@ -21,8 +21,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/goplus/gop"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/tool"
 	"github.com/goplus/mod/modcache"
 	"github.com/goplus/mod/modfetch"
 	"github.com/goplus/mod/modload"
@@ -62,7 +62,7 @@ func runCmd(cmd *base.Command, args []string) {
 func get(pkgPath string) {
 	modBase := ""
 	mod, err := modload.Load(".")
-	noMod := gop.NotFound(err)
+	noMod := tool.NotFound(err)
 	if !noMod {
 		check(err)
 		modBase = mod.Path()

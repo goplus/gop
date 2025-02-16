@@ -7,7 +7,7 @@ m := make(map[string]chan interface{})
 for range arr[1:] {
 foo:
 	*(p) = 1
-	println f(arr...)
+	echo f(arr...)
 	m["a"] <- true
 }
 for i := 0; i < 10; i++ {

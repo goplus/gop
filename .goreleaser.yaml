@@ -51,6 +51,7 @@ dockers:
     build_flag_templates:
       - --platform=linux/386
       - --build-arg=USE_GORELEASER_ARTIFACTS=1
+      - --build-arg=GORELEASER_ARTIFACTS_TARBALL=./.dist/{{.ProjectName}}{{.Version}}.linux-386.tar.gz
     extra_files:
       - ./
   - goarch: amd64
@@ -60,6 +61,7 @@ dockers:
     build_flag_templates:
       - --platform=linux/amd64
       - --build-arg=USE_GORELEASER_ARTIFACTS=1
+      - --build-arg=GORELEASER_ARTIFACTS_TARBALL=./.dist/{{.ProjectName}}{{.Version}}.linux-amd64.tar.gz
     extra_files:
       - ./
   - goarch: arm64
@@ -69,6 +71,7 @@ dockers:
     build_flag_templates:
       - --platform=linux/arm64
       - --build-arg=USE_GORELEASER_ARTIFACTS=1
+      - --build-arg=GORELEASER_ARTIFACTS_TARBALL=./.dist/{{.ProjectName}}{{.Version}}.linux-arm64.tar.gz
     extra_files:
       - ./
 
@@ -182,16 +185,14 @@ nfpms:
         dst: "/usr/lib/{{ .ProjectName }}/Makefile"
       - src: "README.md"
         dst: "/usr/lib/{{ .ProjectName }}/README.md"
-      - src: "_gendeps.go"
-        dst: "/usr/lib/{{ .ProjectName }}/_gendeps.go"
       - src: "all.bash"
         dst: "/usr/lib/{{ .ProjectName }}/all.bash"
       - src: "all.bat"
         dst: "/usr/lib/{{ .ProjectName }}/all.bat"
       - src: "ast"
         dst: "/usr/lib/{{ .ProjectName }}/ast"
-      - src: "build_install_run.go"
-        dst: "/usr/lib/{{ .ProjectName }}/build_install_run.go"
+      - src: "tool"
+        dst: "/usr/lib/{{ .ProjectName }}/tool"
       - src: "builtin"
         dst: "/usr/lib/{{ .ProjectName }}/builtin"
       - src: "cl"
@@ -204,22 +205,14 @@ nfpms:
         dst: "/usr/lib/{{ .ProjectName }}/env"
       - src: "format"
         dst: "/usr/lib/{{ .ProjectName }}/format"
-      - src: "gengo.go"
-        dst: "/usr/lib/{{ .ProjectName }}/gengo.go"
       - src: "go.mod"
         dst: "/usr/lib/{{ .ProjectName }}/go.mod"
       - src: "go.sum"
         dst: "/usr/lib/{{ .ProjectName }}/go.sum"
-      - src: "imp.go"
-        dst: "/usr/lib/{{ .ProjectName }}/imp.go"
-      - src: "load.go"
-        dst: "/usr/lib/{{ .ProjectName }}/load.go"
       - src: "make.bash"
         dst: "/usr/lib/{{ .ProjectName }}/make.bash"
       - src: "make.bat"
         dst: "/usr/lib/{{ .ProjectName }}/make.bat"
-      - src: "outline.go"
-        dst: "/usr/lib/{{ .ProjectName }}/outline.go"
       - src: "parser"
         dst: "/usr/lib/{{ .ProjectName }}/parser"
       - src: "printer"
@@ -230,8 +223,6 @@ nfpms:
         dst: "/usr/lib/{{ .ProjectName }}/test"
       - src: "demo"
         dst: "/usr/lib/{{ .ProjectName }}/demo"
-      - src: "tidy.go"
-        dst: "/usr/lib/{{ .ProjectName }}/tidy.go"
       - src: "token"
         dst: "/usr/lib/{{ .ProjectName }}/token"
       - src: "x"
@@ -268,16 +259,14 @@ snapcrafts:
         destination: "Makefile"
       - source: "README.md"
         destination: "README.md"
-      - source: "_gendeps.go"
-        destination: "_gendeps.go"
       - source: "all.bash"
         destination: "all.bash"
       - source: "all.bat"
         destination: "all.bat"
       - source: "ast"
         destination: "ast"
-      - source: "build_install_run.go"
-        destination: "build_install_run.go"
+      - source: "tool"
+        destination: "tool"
       - source: "builtin"
         destination: "builtin"
       - source: "cl"
@@ -290,22 +279,14 @@ snapcrafts:
         destination: "env"
       - source: "format"
         destination: "format"
-      - source: "gengo.go"
-        destination: "gengo.go"
       - source: "go.mod"
         destination: "go.mod"
       - source: "go.sum"
         destination: "go.sum"
-      - source: "imp.go"
-        destination: "imp.go"
-      - source: "load.go"
-        destination: "load.go"
       - source: "make.bash"
         destination: "make.bash"
       - source: "make.bat"
         destination: "make.bat"
-      - source: "outline.go"
-        destination: "outline.go"
       - source: "parser"
         destination: "parser"
       - source: "printer"
@@ -316,8 +297,6 @@ snapcrafts:
         destination: "test"
       - source: "demo"
         destination: "demo"
-      - source: "tidy.go"
-        destination: "tidy.go"
       - source: "token"
         destination: "token"
       - source: "x"

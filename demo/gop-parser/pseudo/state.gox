@@ -1,0 +1,484 @@
+import (
+	"fmt"
+	"gop/ast"
+	"gop/token"
+	"math"
+	"reflect"
+)
+
+var (
+	vars   map[string]any
+	consts map[string]any
+)
+
+func .new() *state {
+	return &state{vars: {}, consts: {}}
+}
+
+func exec(stmts []Stmt) {
+	for _, stmt := range stmts {
+		execStmt(stmt)
+	}
+}
+
+func execStmt(stmt Stmt) {
+	switch stmt := stmt.(type) {
+	case *EmptyStmt:
+	case *VarStmt:
+		execVarStmt(stmt)
+	case *AssignStmt:
+		execAssignStmt(stmt)
+	case *OutputStmt:
+		execOutputStmt(stmt)
+	case *InputStmt:
+		execInputStmt(stmt)
+	case *ConstStmt:
+		execConstStmt(stmt)
+	case *IfStmt:
+		execIfStmt(stmt)
+	case *WhileStmt:
+		execWhileStmt(stmt)
+	case *UntilStmt:
+		execUntilStmt(stmt)
+	default:
+		panic("unknown statement")
+	}
+}
+
+func execVarStmt(stmt *VarStmt) {
+	for name <- stmt.Names {
+		if _, ok := vars[name]; ok {
+			panic("variable `${name}` already declared")
+		}
+		vars[name] = zero(stmt.Type)
+	}
+}
+
+func execConstStmt(stmt *ConstStmt) {
+	name := stmt.Name
+	if _, ok := consts[name]; ok {
+		panic("constant `${name}` already declared")
+	}
+	consts[name] = calc(stmt.Value)
+}
+
+func execAssignStmt(stmt *AssignStmt) {
+	name := stmt.Name
+	oldv, ok := vars[name]
+	if !ok {
+		panic("undefined variable `${name}`")
+	}
+	v := calc(stmt.Value)
+	if reflect.typeOf(oldv) != reflect.typeOf(v) {
+		panic("assignment of `${name}`: type mismatch")
+	}
+	vars[name] = v
+}
+
+func execOutputStmt(stmt *OutputStmt) {
+	echo(calc(stmt.Value))
+}
+
+func execInputStmt(stmt *InputStmt) {
+	for name <- stmt.Names {
+		oldv, ok := vars[name]
+		if !ok {
+			panic("undefined variable `${name}`")
+		}
+		v := reflect.new(reflect.typeOf(oldv))
+		fmt.scanln(v.Interface())!
+		vars[name] = v.elem.Interface()
+	}
+}
+
+func execIfStmt(stmt *IfStmt) {
+	if toBool(calc(stmt.Cond), "IF") {
+		exec(stmt.Body)
+	} else if stmt.Else != nil {
+		exec(stmt.Else)
+	}
+}
+
+func execWhileStmt(stmt *WhileStmt) {
+	for toBool(calc(stmt.Cond), "WHILE") {
+		exec(stmt.Body)
+	}
+}
+
+func execUntilStmt(stmt *UntilStmt) {
+	for {
+		exec(stmt.Body)
+		if toBool(calc(stmt.Cond), "UNTIL") {
+			return
+		}
+	}
+}
+
+func calc(e ast.Expr) any {
+	switch e := e.(type) {
+	case *ast.BasicLit:
+		switch e.Kind {
+		case token.INT:
+			return e.Value.int!
+		case token.FLOAT:
+			return e.Value.float!
+		case token.STRING:
+			return e.Value.unquote!
+		}
+	case *ast.Ident:
+		return getValue(e.Name)
+	case *ast.BinaryExpr:
+		switch e.Op {
+		case token.ADD:
+			return calcAdd(calc(e.X), calc(e.Y))
+		case token.SUB:
+			return calcSub(calc(e.X), calc(e.Y))
+		case token.MUL:
+			return calcMul(calc(e.X), calc(e.Y))
+		case token.QUO:
+			return calcQuo(calc(e.X), calc(e.Y))
+		case token.EQL:
+			return calcEQL(calc(e.X), calc(e.Y))
+		case token.NEQ:
+			return calcNEQ(calc(e.X), calc(e.Y))
+		case token.LSS:
+			return calcLSS(calc(e.X), calc(e.Y))
+		case token.GTR:
+			return calcGTR(calc(e.Y), calc(e.X))
+		case token.LEQ:
+			return calcLEQ(calc(e.X), calc(e.Y))
+		case token.GEQ:
+			return calcGEQ(calc(e.Y), calc(e.X))
+		default:
+			panic("unknown binary operator ${e.Op}")
+		}
+	case *ast.CallExpr:
+		fn := e.Fun.(*ast.Ident).Name
+		switch fn {
+		case "SIN":
+			x := toFloat(calc(e.Args[0]), "SIN")
+			return math.Sin(x)
+		case "COS":
+			x := toFloat(calc(e.Args[0]), "COS")
+			return math.Cos(x)
+		case "POW":
+			x := toFloat(calc(e.Args[0]), "POW")
+			y := toFloat(calc(e.Args[1]), "POW")
+			return math.Pow(x, y)
+		default:
+			panic("unknown function `${fn}`")
+		}
+	case *ast.ParenExpr:
+		return calc(e.X)
+	case *ast.UnaryExpr:
+		switch e.Op {
+		case token.SUB:
+			return calcNeg(calc(e.X))
+		case token.NOT:
+			return calcNot(calc(e.X))
+		default:
+			panic("unknown unary operator ${e.Op}")
+		}
+	}
+	panic("unknown expression: ${reflect.typeOf(e)}")
+}
+
+func calcAdd(a, b any) any {
+	switch a := a.(type) {
+	case int:
+		switch b := b.(type) {
+		case int:
+			return a + b
+		case float64:
+			return float64(a) + b
+		}
+	case float64:
+		switch b := b.(type) {
+		case int:
+			return a + float64(b)
+		case float64:
+			return a + b
+		}
+	case string:
+		if b, ok := b.(string); ok {
+			return a + b
+		}
+	}
+	panic("invalid operands of +")
+}
+
+func calcSub(a, b any) any {
+	switch a := a.(type) {
+	case int:
+		switch b := b.(type) {
+		case int:
+			return a - b
+		case float64:
+			return float64(a) - b
+		}
+	case float64:
+		switch b := b.(type) {
+		case int:
+			return a - float64(b)
+		case float64:
+			return a - b
+		}
+	}
+	panic("invalid operands of -")
+}
+
+func calcMul(a, b any) any {
+	switch a := a.(type) {
+	case int:
+		switch b := b.(type) {
+		case int:
+			return a * b
+		case float64:
+			return float64(a) * b
+		}
+	case float64:
+		switch b := b.(type) {
+		case int:
+			return a * float64(b)
+		case float64:
+			return a * b
+		}
+	}
+	panic("invalid operands of *")
+}
+
+func calcQuo(a, b any) any {
+	switch a := a.(type) {
+	case int:
+		switch b := b.(type) {
+		case int:
+			return a / b
+		case float64:
+			return float64(a) / b
+		}
+	case float64:
+		switch b := b.(type) {
+		case int:
+			return a / float64(b)
+		case float64:
+			return a / b
+		}
+	}
+	panic("invalid operands of /")
+}
+
+func calcLSS(a, b any) any {
+	switch a := a.(type) {
+	case int:
+		switch b := b.(type) {
+		case int:
+			return a < b
+		case float64:
+			return float64(a) < b
+		}
+	case float64:
+		switch b := b.(type) {
+		case int:
+			return a < float64(b)
+		case float64:
+			return a < b
+		}
+	case string:
+		if b, ok := b.(string); ok {
+			return a < b
+		}
+	}
+	panic("invalid operands of <")
+}
+
+func calcGTR(a, b any) any {
+	switch a := a.(type) {
+	case int:
+		switch b := b.(type) {
+		case int:
+			return a > b
+		case float64:
+			return float64(a) > b
+		}
+	case float64:
+		switch b := b.(type) {
+		case int:
+			return a > float64(b)
+		case float64:
+			return a > b
+		}
+	case string:
+		if b, ok := b.(string); ok {
+			return a > b
+		}
+	}
+	panic("invalid operands of >")
+}
+
+func calcLEQ(a, b any) any {
+	switch a := a.(type) {
+	case int:
+		switch b := b.(type) {
+		case int:
+			return a <= b
+		case float64:
+			return float64(a) <= b
+		}
+	case float64:
+		switch b := b.(type) {
+		case int:
+			return a <= float64(b)
+		case float64:
+			return a <= b
+		}
+	case string:
+		if b, ok := b.(string); ok {
+			return a <= b
+		}
+	}
+	panic("invalid operands of <=")
+}
+
+func calcGEQ(a, b any) any {
+	switch a := a.(type) {
+	case int:
+		switch b := b.(type) {
+		case int:
+			return a >= b
+		case float64:
+			return float64(a) >= b
+		}
+	case float64:
+		switch b := b.(type) {
+		case int:
+			return a >= float64(b)
+		case float64:
+			return a >= b
+		}
+	case string:
+		if b, ok := b.(string); ok {
+			return a >= b
+		}
+	}
+	panic("invalid operands of >=")
+}
+
+func calcEQL(a, b any) any {
+	switch a := a.(type) {
+	case int:
+		switch b := b.(type) {
+		case int:
+			return a == b
+		case float64:
+			return float64(a) == b
+		}
+	case float64:
+		switch b := b.(type) {
+		case int:
+			return a == float64(b)
+		case float64:
+			return a == b
+		}
+	case string:
+		if b, ok := b.(string); ok {
+			return a == b
+		}
+	case bool:
+		if b, ok := b.(bool); ok {
+			return a == b
+		}
+	}
+	panic("invalid operands of ==")
+}
+
+func calcNEQ(a, b any) any {
+	switch a := a.(type) {
+	case int:
+		switch b := b.(type) {
+		case int:
+			return a != b
+		case float64:
+			return float64(a) != b
+		}
+	case float64:
+		switch b := b.(type) {
+		case int:
+			return a != float64(b)
+		case float64:
+			return a != b
+		}
+	case string:
+		if b, ok := b.(string); ok {
+			return a != b
+		}
+	case bool:
+		if b, ok := b.(bool); ok {
+			return a != b
+		}
+	}
+	panic("invalid operands of !=")
+}
+
+func calcNeg(a any) any {
+	switch a := a.(type) {
+	case int:
+		return -a
+	case float64:
+		return -a
+	}
+	panic("invalid operand of unary -")
+}
+
+func calcNot(a any) any {
+	switch a := a.(type) {
+	case bool:
+		return !a
+	}
+	panic("invalid operand of !")
+}
+
+func getValue(name string) any {
+	if v, ok := vars[name]; ok {
+		return v
+	}
+	if v, ok := consts[name]; ok {
+		return v
+	}
+	panic("undefined variable `${name}`")
+}
+
+func toBool(v any, at string) bool {
+	switch v := v.(type) {
+	case bool:
+		return v
+	}
+	panic("${at}: need boolean expression")
+}
+
+func toFloat(v any, at string) float64 {
+	switch v := v.(type) {
+	case int:
+		return float64(v)
+	case float64:
+		return v
+	}
+	panic("${at}: cannot convert operand to float64")
+}
+
+// INTEGER, REAL, STRING, BOOLEAN
+func zero(t Type) any {
+	switch t := t.(type) {
+	case *Ident:
+		switch t.Name {
+		case "INTEGER":
+			return 0
+		case "REAL":
+			return 0.0
+		case "STRING":
+			return ""
+		case "BOOLEAN":
+			return false
+		}
+	}
+	panic("unknown type")
+}

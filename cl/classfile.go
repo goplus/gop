@@ -41,11 +41,16 @@ type gmxClass struct {
 	proj    *gmxProject
 }
 
+type spxObj struct {
+	obj  gogen.Ref
+	proj string
+}
+
 type gmxProject struct {
-	gameClass  string               // <gmtype>.gmx
-	game       gogen.Ref            // Game (project base class)
-	sprite     map[string]gogen.Ref // .spx => Sprite
-	sptypes    []string             // <sptype>.spx
+	gameClass  string            // <gmtype>.gmx
+	game       gogen.Ref         // Game (project base class)
+	sprite     map[string]spxObj // .spx => Sprite
+	sptypes    []string          // <sptype>.spx
 	scheds     []string
 	schedStmts []goast.Stmt // nil or len(scheds) == 2 (delayload)
 	pkgImps    []gogen.PkgRef
@@ -161,10 +166,10 @@ func loadClass(ctx *pkgCtx, pkg *gogen.Package, file string, f *ast.File, conf *
 		if gt.Class != "" {
 			p.game, p.gameIsPtr = spxRef(spx, gt.Class)
 		}
-		p.sprite = make(map[string]types.Object)
+		p.sprite = make(map[string]spxObj)
 		for _, v := range gt.Works {
 			obj, _ := spxRef(spx, v.Class)
-			p.sprite[v.Ext] = obj
+			p.sprite[v.Ext] = spxObj{obj, v.Project}
 		}
 		if x := getStringConst(spx, "Gop_sched"); x != "" {
 			p.scheds, p.hasScheds = strings.SplitN(x, ",", 2), true

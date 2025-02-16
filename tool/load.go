@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package gop
+package tool
 
 import (
 	"fmt"
@@ -145,7 +145,7 @@ const (
 )
 
 // NewDefaultConf creates a dfault configuration for common cases.
-func NewDefaultConf(dir string, flags ConfFlags) (conf *Config, err error) {
+func NewDefaultConf(dir string, flags ConfFlags, tags ...string) (conf *Config, err error) {
 	mod, err := LoadMod(dir)
 	if err != nil {
 		return
@@ -153,6 +153,9 @@ func NewDefaultConf(dir string, flags ConfFlags) (conf *Config, err error) {
 	gop := gopenv.Get()
 	fset := token.NewFileSet()
 	imp := NewImporter(mod, gop, fset)
+	if len(tags) > 0 {
+		imp.SetTags(strings.Join(tags, ","))
+	}
 	conf = &Config{
 		Gop: gop, Fset: fset, Mod: mod, Importer: imp,
 		IgnoreNotatedError: flags&ConfFlagIgnoreNotatedError != 0,
@@ -235,7 +238,7 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 	mod := conf.Mod
 	if mod == nil {
 		if mod, err = LoadMod(dir); err != nil {
-			err = errors.NewWith(err, `LoadMod(dir)`, -2, "gop.LoadMod", dir)
+			err = errors.NewWith(err, `LoadMod(dir)`, -2, "tool.LoadMod", dir)
 			return
 		}
 	}
@@ -355,7 +358,7 @@ func LoadFiles(dir string, files []string, conf *Config) (out *gogen.Package, er
 	mod := conf.Mod
 	if mod == nil {
 		if mod, err = LoadMod(dir); err != nil {
-			err = errors.NewWith(err, `LoadMod(dir)`, -2, "gop.LoadMod", dir)
+			err = errors.NewWith(err, `LoadMod(dir)`, -2, "tool.LoadMod", dir)
 			return
 		}
 	}

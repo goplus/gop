@@ -47,7 +47,7 @@ func main() {
 `, `// this is main
 
 // say hello
-println "Hello world"
+echo "Hello world"
 `)
 	testFormat(t, "hello world 2", `package main
 
@@ -64,7 +64,7 @@ func f() {
 `, `// this is main
 func main() {
 	// say hello
-	println "Hello world"
+	echo "Hello world"
 }
 
 func f() {
@@ -120,7 +120,7 @@ func f() {
 	fmt.Println("hello")
 }
 `, `func f() {
-	println "hello"
+	echo "hello"
 }
 `)
 }
@@ -136,7 +136,7 @@ func f() {
 	fmt.Println("hello")
 }
 `, `func f() {
-	println "hello"
+	echo "hello"
 }
 `)
 }
@@ -155,7 +155,7 @@ func f() {
 
 func f() {
 	errorf "%w", New("hello")
-	println "hello"
+	echo "hello"
 }
 `)
 }
@@ -178,7 +178,7 @@ func f() {
 
 func f() {
 	errorf "%w", errors.new("hello")
-	println "hello"
+	echo "hello"
 }
 `)
 }
@@ -197,7 +197,7 @@ func f() {
 
 func f() {
 	_ = errorf("%w", errors.new("hello"))
-	println "hello"
+	echo "hello"
 }
 `)
 }
@@ -220,7 +220,7 @@ func f() {
 
 func f() {
 	_ = errorf("%w", errors.new("hello"))
-	println "hello"
+	echo "hello"
 }
 `)
 }
@@ -238,7 +238,7 @@ func f() {
 
 func f() {
 	_ = fmt.Stringer
-	println "hello"
+	echo "hello"
 }
 `)
 }
@@ -256,7 +256,7 @@ func f() {
 
 func f() {
 	var _ fmt.Stringer
-	println "hello"
+	echo "hello"
 }
 `)
 }
@@ -280,7 +280,7 @@ func f() {
 		fmt.Stringer
 		fn func()
 	}
-	println "hello"
+	echo "hello"
 }
 `)
 }
@@ -294,7 +294,7 @@ func f() {
 	fmt1.Println("hello")
 }
 `, `func f() {
-	println "hello"
+	echo "hello"
 }
 `)
 }
@@ -312,8 +312,8 @@ func f() {
 	fmt2.Println(2)
 }
 `, `func f() {
-	println 1
-	println 2
+	echo 1
+	echo 2
 }
 `)
 }
@@ -337,8 +337,8 @@ func f() {
 
 func f() {
 	var _ fmt.Stringer
-	println 1
-	println 2
+	echo 1
+	echo 2
 }
 `)
 }
@@ -426,7 +426,7 @@ func f() {
 	_ = fmt
 }
 `, `func f() {
-	println 1
+	echo 1
 	var fmt Foo
 	_ = fmt
 }
@@ -476,5 +476,60 @@ func f() {
 	var fmt = Foo()
 	fmt.println 1
 }
+`)
+}
+
+func TestLambdaFromFuncLit(t *testing.T) {
+	testFormat(t, "funclit to lambda", `package main
+println(demo(func(n int) int {
+	return n+100
+}))
+println(demo(func(n int) int {
+	return n+100
+}),200)
+demo1(100, func(n int) {
+	println(n)
+})
+demo1(100, func(int) {
+	println(100)
+})
+demo2(300, func(n1, n2 int) int {
+	return(n1 + n2)
+})
+demo2(300, func(int, int) int {
+	return -600
+})
+demo3(100,func(n1,n2 int)(int) {
+	return n1+n2,n1-n2
+},100)
+demo3(100,func(n1,n2 int)(v int) {
+	return n1+n2,n1-n2
+},100)
+demo4(100,func(n1,n2 int)(a,b int) {
+	println(a,b)
+	return n1+n2,n1-n2
+},100)
+`, `println demo(n => n + 100)
+println demo(n => n + 100), 200
+demo1 100, n => {
+	println n
+}
+demo1 100, _ => {
+	println 100
+}
+demo2 300, (n1, n2) => (n1 + n2)
+
+demo2 300, (_, _) => -600
+
+demo3 100, (n1, n2) => {
+	return n1 + n2, n1 - n2
+}, 100
+demo3 100, func(n1, n2 int) (v int) {
+	return n1 + n2, n1 - n2
+}, 100
+demo4 100, func(n1, n2 int) (a, b int) {
+	println a, b
+	return n1 + n2, n1 - n2
+}, 100
 `)
 }

@@ -243,9 +243,44 @@ func compileIncDecStmt(ctx *blockCtx, expr *ast.IncDecStmt) {
 	ctx.cb.IncDec(gotoken.Token(expr.Tok))
 }
 
+// issue #2107:
+//
+//	a <- v
+//	foo.a <- v
+func isAppendable(x ast.Expr) bool {
+	switch x := x.(type) {
+	case *ast.Ident:
+		return true
+	case *ast.SelectorExpr:
+		_, ok := x.X.(*ast.Ident)
+		return ok
+	}
+	return false
+}
+
 func compileSendStmt(ctx *blockCtx, expr *ast.SendStmt) {
-	compileExpr(ctx, expr.Chan)
-	compileExpr(ctx, expr.Value)
+	cb := ctx.cb
+	ch, v := expr.Chan, expr.Value
+	stk := cb.InternalStack()
+	if isAppendable(ch) { // a <- v (issue #2107)
+		compileExpr(ctx, ch)
+		a := stk.Get(-1)
+		t := a.Type.Underlying()
+		if _, ok := t.(*types.Slice); ok { // a = append(a, x)
+			stk.Pop()
+			compileExprLHS(ctx, ch)
+			cb.Val(ctx.pkg.Builtin().Ref("append"))
+			stk.Push(a)
+			compileExpr(ctx, v)
+			cb.CallWith(2, 0, expr).AssignWith(1, 1, expr)
+			return
+		}
+		goto normal
+	}
+	compileExpr(ctx, ch)
+
+normal:
+	compileExpr(ctx, v)
 	ctx.cb.Send()
 }
 

@@ -24,9 +24,9 @@ import (
 	"reflect"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop"
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/tool"
 	"github.com/goplus/gop/x/gocmd"
 	"github.com/goplus/gop/x/gopprojs"
 	"github.com/goplus/mod/modfetch"
@@ -71,9 +71,9 @@ func runCmd(cmd *base.Command, args []string) {
 		cl.SetDisableRecover(true)
 	}
 
-	conf, err := gop.NewDefaultConf(".", gop.ConfFlagNoTestFiles)
+	conf, err := tool.NewDefaultConf(".", tool.ConfFlagNoTestFiles, pass.Tags())
 	if err != nil {
-		log.Panicln("gop.NewDefaultConf:", err)
+		log.Panicln("tool.NewDefaultConf:", err)
 	}
 	defer conf.UpdateCache()
 
@@ -84,23 +84,23 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 }
 
-func install(proj gopprojs.Proj, conf *gop.Config, install *gocmd.InstallConfig) {
-	const flags = gop.GenFlagPrompt
+func install(proj gopprojs.Proj, conf *tool.Config, install *gocmd.InstallConfig) {
+	const flags = tool.GenFlagPrompt
 	var obj string
 	var err error
 	switch v := proj.(type) {
 	case *gopprojs.DirProj:
 		obj = v.Dir
-		err = gop.InstallDir(obj, conf, install, flags)
+		err = tool.InstallDir(obj, conf, install, flags)
 	case *gopprojs.PkgPathProj:
 		obj = v.Path
-		err = gop.InstallPkgPath("", v.Path, conf, install, flags)
+		err = tool.InstallPkgPath("", v.Path, conf, install, flags)
 	case *gopprojs.FilesProj:
-		err = gop.InstallFiles(v.Files, conf, install)
+		err = tool.InstallFiles(v.Files, conf, install)
 	default:
 		log.Panicln("`gop install` doesn't support", reflect.TypeOf(v))
 	}
-	if gop.NotFound(err) {
+	if tool.NotFound(err) {
 		fmt.Fprintf(os.Stderr, "gop install %v: not found\n", obj)
 	} else if err != nil {
 		fmt.Fprintln(os.Stderr, err)

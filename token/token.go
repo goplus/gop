@@ -142,11 +142,13 @@ const (
 	TILDE // additional tokens, handled in an ad-hoc manner
 	additional_end
 	additional_end2
+	additional_end3
 
 	additional_literal_beg = 96
 	additional_literal_end = 97
 
-	ENV = additional_end2 // ${name}
+	ENV  = additional_end2 // ${name}
+	UNIT = additional_end3 // 1m, 2s, 3ms, 4us, 5ns, 6m, 7h, 8d, 9w, 10y
 
 	PYSTRING = additional_literal_beg // py"Hello"
 

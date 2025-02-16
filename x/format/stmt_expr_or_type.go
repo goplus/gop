@@ -168,6 +168,11 @@ func formatSliceExpr(ctx *formatCtx, v *ast.SliceExpr) {
 func formatCallExpr(ctx *formatCtx, v *ast.CallExpr) {
 	formatExpr(ctx, v.Fun, &v.Fun)
 	fncallStartingLowerCase(v)
+	for i, arg := range v.Args {
+		if fn, ok := arg.(*ast.FuncLit); ok {
+			funcLitToLambdaExpr(fn, &v.Args[i])
+		}
+	}
 	formatExprs(ctx, v.Args)
 }
 

@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/goplus/gop"
 	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/gop/tool"
 	"github.com/goplus/gop/x/gopenv"
 )
 
@@ -36,9 +36,9 @@ func init() {
 }
 
 func runTidy(cmd *base.Command, args []string) {
-	err := gop.Tidy(".", gopenv.Get())
+	err := tool.Tidy(".", gopenv.Get())
 	if err != nil {
-		if gop.NotFound(err) {
+		if tool.NotFound(err) {
 			fmt.Fprintln(os.Stderr, "go.mod not found")
 		} else {
 			fmt.Fprintln(os.Stderr, err)

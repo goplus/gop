@@ -753,6 +753,12 @@ func fnCall(ctx *blockCtx, v *ast.CallExpr, flags gogen.InstrFlags, extra int) e
 }
 
 func compileCallArgs(ctx *blockCtx, pfn *gogen.Element, fn *fnType, v *ast.CallExpr, ellipsis bool, flags gogen.InstrFlags) (err error) {
+	defer func() {
+		r := recover()
+		if r != nil {
+			err = ctx.recoverErr(r, v)
+		}
+	}()
 	var needInferFunc bool
 	for i, arg := range v.Args {
 		switch expr := arg.(type) {
@@ -807,12 +813,15 @@ func compileCallArgs(ctx *blockCtx, pfn *gogen.Element, fn *fnType, v *ast.CallE
 			if typetype {
 				return
 			}
+		case *ast.NumberUnitLit:
+			compileNumberUnitLit(ctx, expr, fn.arg(i, ellipsis))
 		default:
 			compileExpr(ctx, arg)
 		}
 	}
 	if needInferFunc {
-		typ, err := gogen.InferFunc(ctx.pkg, pfn, fn.sig, nil, ctx.cb.InternalStack().GetArgs(len(v.Args)), flags)
+		args := ctx.cb.InternalStack().GetArgs(len(v.Args))
+		typ, err := gogen.InferFunc(ctx.pkg, pfn, fn.sig, nil, args, flags)
 		if err != nil {
 			return err
 		}
@@ -971,6 +980,12 @@ func compileFuncLit(ctx *blockCtx, v *ast.FuncLit) {
 	}
 }
 
+func compileNumberUnitLit(ctx *blockCtx, v *ast.NumberUnitLit, expected types.Type) {
+	ctx.cb.ValWithUnit(
+		&goast.BasicLit{ValuePos: v.ValuePos, Kind: gotoken.Token(v.Kind), Value: v.Value},
+		expected, v.Unit)
+}
+
 func compileBasicLit(ctx *blockCtx, v *ast.BasicLit) {
 	cb := ctx.cb
 	switch kind := v.Kind; kind {
@@ -1038,10 +1053,12 @@ func compileStringLitEx(ctx *blockCtx, cb *gogen.CodeBuilder, lit *ast.BasicLit)
 			t := cb.Get(-1).Type
 			if t.Underlying() != types.Typ[types.String] {
 				if _, err := cb.Member("string", gogen.MemberFlagAutoProperty); err != nil {
-					if e, ok := err.(*gogen.CodeError); ok {
-						err = ctx.newCodeErrorf(v.Pos(), "%s.string%s", ctx.LoadExpr(v), e.Msg)
+					if _, e2 := cb.Member("error", gogen.MemberFlagAutoProperty); e2 != nil {
+						if e, ok := err.(*gogen.CodeError); ok {
+							err = ctx.newCodeErrorf(v.Pos(), "%s.string%s", ctx.LoadExpr(v), e.Msg)
+						}
+						ctx.handleErr(err)
 					}
-					ctx.handleErr(err)
 				}
 			}
 			pos = v.End()

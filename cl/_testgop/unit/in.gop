@@ -1,0 +1,12 @@
+import (
+    "time"
+
+    "github.com/goplus/gop/cl/internal/unit"
+)
+
+func Wait(time.Duration) {}
+func Step(unit.Distance) {}
+
+wait 0.5µs
+wait 1m
+step 1m

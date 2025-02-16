@@ -1,0 +1,12 @@
+// this is a comment
+
+// x comment 1
+// x comment 2
+// x comment 3
+func x() {
+}
+
+/*
+ y comment
+*/
+var y int

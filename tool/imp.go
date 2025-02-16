@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package gop
+package tool
 
 import (
 	"crypto/sha256"
@@ -71,6 +71,13 @@ func NewImporter(mod *gopmod.Module, gop *env.Gop, fset *token.FileSet) *Importe
 	return ret
 }
 
+func (p *Importer) SetTags(tags string) {
+	p.impFrom.SetTags(tags)
+	if c, ok := p.impFrom.Cache().(*cache.Impl); ok {
+		c.SetTags(tags)
+	}
+}
+
 // CacheFile returns file path of the cache.
 func (p *Importer) CacheFile() string {
 	cacheDir, _ := os.UserCacheDir()
@@ -82,6 +89,9 @@ func (p *Importer) CacheFile() string {
 	if root := p.mod.Root(); root != "" {
 		io.WriteString(h, root)
 		fname = filepath.Base(root)
+	}
+	if tags := p.impFrom.Tags(); tags != "" {
+		io.WriteString(h, tags)
 	}
 	hash := base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 	return cacheDir + hash + fname

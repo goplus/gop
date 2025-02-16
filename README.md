@@ -47,9 +47,9 @@ For more details, see [Quick Start](doc/docs.md).
 ## Key Features of Go+
 
 * Approaching natural language expression and intuitive (see [How Go+ simplifies Go's expressions](#how-go-simplifies-gos-expressions)).
-* Smallest but Turing-complete syntax set in best practices (see [Go+ Specification for STEM Education](doc/spec-mini.md)).
-* Fully compatible with [Go](https://github.com/golang/go) and can mix Go/Go+ code in the same package (see [Go+ Full Specification](doc/spec.md) and [Go/Go+ Hybrid Programming](doc/docs.md#gogo-hybrid-programming)).
-* Integrating with the C ecosystem including Python and providing limitless possibilities based on [LLGo](https://github.com/goplus/llgo) (see [Support for C/C++ and Python](#support-for-cc-and-python)).
+* Smallest but Turing-complete syntax set in best practices (see [The Go+ Mini Specification](doc/spec-mini.md)).
+* Fully compatible with [Go](https://github.com/golang/go) and can mix Go/Go+ code in the same package (see [The Go+ Full Specification](doc/spec.md) and [Go/Go+ Hybrid Programming](doc/docs.md#gogo-hybrid-programming)).
+* Integrating with the C ecosystem including Python and providing limitless possibilities based on [LLGo](https://github.com/goplus/llgo) (see [Importing C/C++ and Python libraries](#importing-cc-and-python-libraries)).
 * Does not support DSL (Domain-Specific Languages), but supports SDF (Specific Domain Friendliness) (see [Go+ Classfiles](#go-classfiles)).
 
 
@@ -81,10 +81,10 @@ Code style is just the first step. We have made many efforts to make the code mo
 | OnStart(func() {<br>&nbsp;&nbsp;&nbsp;&nbsp;...<br>}) | onStart => {<br>&nbsp;&nbsp;&nbsp;&nbsp;...<br>} | Lambda expressions |
 | type Rect struct {<br>&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp; float64<br>&nbsp;&nbsp;&nbsp;&nbsp;Height float64<br>}<br><br>func (this *Rect) Area() float64 { <br>&nbsp;&nbsp;&nbsp;&nbsp;return this.Width * this.Height<br>} | var (<br>&nbsp;&nbsp;&nbsp;&nbsp;Width&nbsp; float64<br>&nbsp;&nbsp;&nbsp;&nbsp;Height float64<br>)<br><br>func Area() float64 { <br>&nbsp;&nbsp;&nbsp;&nbsp;return Width * Height<br>} | [Go+ Classfiles](doc/classfile.md): We can express OOP with global variables and functions. |
 
-For more details, see [Go+ Specification for STEM Education](doc/spec-mini.md).
+For more details, see [The Go+ Mini Specification](doc/spec-mini.md).
 
 
-## Support for C/C++ and Python
+## Importing C/C++ and Python libraries
 
 Go+ can choose different Go compilers as its underlying support. Currently known supported Go compilers include:
 
@@ -115,10 +115,10 @@ module YourModulePath
 
 go 1.21 // llgo 1.0
 
-require github.com/goplus/llgo v0.9.7
+require github.com/goplus/llgo v0.9.9
 ```
 
-Based on LLGo, Go+ can support importing libraries written in C/C++ and Python.
+Based on LLGo, Go+ can import libraries written in C/C++ and Python.
 
 Here is an example (see [chello](demo/_llgo/chello/hello.gop)) of printing `Hello world` using C's `printf`:
 
