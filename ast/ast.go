@@ -604,13 +604,6 @@ type (
 		X Expr // expression
 	}
 
-	// A SendStmt node represents a send statement.
-	SendStmt struct {
-		Chan  Expr
-		Arrow token.Pos // position of "<-"
-		Value Expr
-	}
-
 	// An IncDecStmt node represents an increment or decrement statement.
 	IncDecStmt struct {
 		X      Expr
@@ -814,9 +807,6 @@ func (s *LabeledStmt) End() token.Pos { return s.Stmt.End() }
 
 // End returns position of first character immediately after the node.
 func (s *ExprStmt) End() token.Pos { return s.X.End() }
-
-// End returns position of first character immediately after the node.
-func (s *SendStmt) End() token.Pos { return s.Value.End() }
 
 // End returns position of first character immediately after the node.
 func (s *IncDecStmt) End() token.Pos {

@@ -1402,7 +1402,15 @@ func (p *printer) stmt(stmt ast.Stmt, nextIsRBrace bool) {
 		const depth = 1
 		p.expr0(s.Chan, depth)
 		p.print(blank, s.Arrow, token.ARROW, blank)
-		p.expr0(s.Value, depth)
+		for i, val := range s.Values {
+			if i > 0 {
+				p.print(token.COMMA, blank)
+			}
+			p.expr0(val, depth)
+		}
+		if s.Ellipsis.IsValid() {
+			p.print(s.Ellipsis, token.ELLIPSIS)
+		}
 
 	case *ast.IncDecStmt:
 		const depth = 1
