@@ -68,7 +68,7 @@ ast.FuncDecl:
           Chan:
             ast.Ident:
               Name: v
-          Value:
+          Values:
             ast.Ident:
               Name: true
         ast.ExprStmt:

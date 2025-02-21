@@ -248,7 +248,9 @@ func formatStmt(ctx *formatCtx, stmt ast.Stmt) {
 		formatCallExpr(ctx, v.Call)
 	case *ast.SendStmt:
 		formatExpr(ctx, v.Chan, &v.Chan)
-		formatExpr(ctx, v.Value, &v.Value)
+		for i, val := range v.Values {
+			formatExpr(ctx, val, &v.Values[i])
+		}
 	case *ast.LabeledStmt:
 		formatStmt(ctx, v.Stmt)
 	case *ast.BranchStmt, *ast.EmptyStmt, nil, *ast.BadStmt:

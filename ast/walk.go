@@ -223,7 +223,9 @@ func Walk(v Visitor, node Node) {
 
 	case *SendStmt:
 		Walk(v, n.Chan)
-		Walk(v, n.Value)
+		for _, val := range n.Values {
+			Walk(v, val)
+		}
 
 	case *IncDecStmt:
 		Walk(v, n.X)

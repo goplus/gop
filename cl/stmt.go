@@ -260,19 +260,21 @@ func isAppendable(x ast.Expr) bool {
 
 func compileSendStmt(ctx *blockCtx, expr *ast.SendStmt) {
 	cb := ctx.cb
-	ch, v := expr.Chan, expr.Value
+	ch, vals := expr.Chan, expr.Values
 	stk := cb.InternalStack()
-	if isAppendable(ch) { // a <- v (issue #2107)
+	if isAppendable(ch) { // a <- v1, v2, v3 (issue #2107)
 		compileExpr(ctx, ch)
 		a := stk.Get(-1)
 		t := a.Type.Underlying()
-		if _, ok := t.(*types.Slice); ok { // a = append(a, x)
+		if _, ok := t.(*types.Slice); ok { // a = append(a, v1, v2, v3)
 			stk.Pop()
 			compileExprLHS(ctx, ch)
 			cb.Val(ctx.pkg.Builtin().Ref("append"))
 			stk.Push(a)
-			compileExpr(ctx, v)
-			cb.CallWith(2, 0, expr).AssignWith(1, 1, expr)
+			for _, v := range vals {
+				compileExpr(ctx, v)
+			}
+			cb.CallWith(len(vals)+1, 0, expr).AssignWith(1, 1, expr)
 			return
 		}
 		goto normal
@@ -280,7 +282,7 @@ func compileSendStmt(ctx *blockCtx, expr *ast.SendStmt) {
 	compileExpr(ctx, ch)
 
 normal:
-	compileExpr(ctx, v)
+	compileExpr(ctx, vals[0]) // TODO(xsw): issue #2107
 	ctx.cb.Send()
 }
 

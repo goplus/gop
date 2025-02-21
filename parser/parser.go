@@ -2763,7 +2763,8 @@ func (p *parser) parseSimpleStmtEx(mode int, allowCmd, allowRangeExpr bool) (ast
 		arrow := p.pos
 		p.next()
 		y := p.parseRHS()
-		return &ast.SendStmt{Chan: x[0], Arrow: arrow, Value: y}, false
+		// TODO(xsw): https://github.com/goplus/gop/issues/2107
+		return &ast.SendStmt{Chan: x[0], Arrow: arrow, Values: []ast.Expr{y}}, false
 
 	case token.INC, token.DEC:
 		// increment or decrement
@@ -3183,7 +3184,7 @@ func (p *parser) parseCommClause() *ast.CommClause {
 			arrow := p.pos
 			p.next()
 			rhs := p.parseRHS()
-			comm = &ast.SendStmt{Chan: lhs[0], Arrow: arrow, Value: rhs}
+			comm = &ast.SendStmt{Chan: lhs[0], Arrow: arrow, Values: []ast.Expr{rhs}}
 		} else {
 			// RecvStmt
 			if tok := p.tok; tok == token.ASSIGN || tok == token.DEFINE {
