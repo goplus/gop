@@ -1,0 +1,22 @@
+package main
+
+file append.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.SendStmt:
+          Chan:
+            ast.Ident:
+              Name: a
+          Values:
+            ast.Ident:
+              Name: b
