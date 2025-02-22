@@ -37,6 +37,13 @@ func codeErrorTestAst(t *testing.T, pkgname, filename, msg, src string) {
 	cltest.ErrorAst(t, pkgname, filename, msg, src)
 }
 
+func TestErrSendStmt(t *testing.T) {
+	codeErrorTest(t, `bar.gop:3:8: can't send multiple values to a channel`, `
+	var a chan int
+	a <- 1, 2
+`)
+}
+
 func TestErrVargCommand(t *testing.T) {
 	codeErrorTest(t, `bar.gop:5:1: not enough arguments in call to Ls
 	have ()
