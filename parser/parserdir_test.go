@@ -276,7 +276,7 @@ ast.FuncDecl:
                       Chan:
                         ast.Ident:
                           Name: c
-                      Value:
+                      Values:
                         ast.Ident:
                           Name: true
                 ast.CommClause:

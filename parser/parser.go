@@ -2762,8 +2762,19 @@ func (p *parser) parseSimpleStmtEx(mode int, allowCmd, allowRangeExpr bool) (ast
 		// send statement
 		arrow := p.pos
 		p.next()
-		y := p.parseRHS()
-		return &ast.SendStmt{Chan: x[0], Arrow: arrow, Value: y}, false
+		var ellipsis token.Pos
+		vals := make([]ast.Expr, 1)
+		vals[0] = p.parseRHS()
+		if p.tok == token.ELLIPSIS { // a <- v... (issues #2107)
+			ellipsis = p.pos
+			p.next()
+		} else {
+			for p.tok == token.COMMA { // a <- v1, v2, v3 (issues #2107)
+				p.next()
+				vals = append(vals, p.parseRHS())
+			}
+		}
+		return &ast.SendStmt{Chan: x[0], Arrow: arrow, Values: vals, Ellipsis: ellipsis}, false
 
 	case token.INC, token.DEC:
 		// increment or decrement
@@ -3183,7 +3194,7 @@ func (p *parser) parseCommClause() *ast.CommClause {
 			arrow := p.pos
 			p.next()
 			rhs := p.parseRHS()
-			comm = &ast.SendStmt{Chan: lhs[0], Arrow: arrow, Value: rhs}
+			comm = &ast.SendStmt{Chan: lhs[0], Arrow: arrow, Values: []ast.Expr{rhs}}
 		} else {
 			// RecvStmt
 			if tok := p.tok; tok == token.ASSIGN || tok == token.DEFINE {
