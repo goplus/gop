@@ -1800,8 +1800,8 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTup
 			break
 		}
 		fallthrough
-	case token.GOTO, token.BREAK, token.CONTINUE, token.FALLTHROUGH:
-		// token.RANGE, token.IMPORT, token.TYPE, token.SELECT, token.INTERFACE:
+	case token.GOTO, token.TYPE, token.BREAK, token.CONTINUE, token.FALLTHROUGH:
+		// token.RANGE, token.IMPORT, token.SELECT, token.INTERFACE:
 		// Go+: allow goto() as a function
 		p.tok = token.IDENT
 		x = p.parseIdent()
@@ -2372,7 +2372,8 @@ func (p *parser) checkCmd() bool {
 	case token.IDENT, token.DRARROW,
 		token.STRING, token.CSTRING, token.PYSTRING,
 		token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT,
-		token.FUNC, token.GOTO, token.MAP, token.INTERFACE, token.CHAN, token.STRUCT, token.ENV:
+		token.FUNC, token.GOTO, token.TYPE, token.MAP, token.INTERFACE,
+		token.CHAN, token.STRUCT, token.ENV:
 		return true
 	case token.SUB, token.AND, token.MUL, token.ARROW, token.XOR, token.ADD:
 		oldtok, oldpos := p.tok, p.pos

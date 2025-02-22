@@ -1,0 +1,1 @@
+echo type([1]), type("Hi")
