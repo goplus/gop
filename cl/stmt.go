@@ -274,7 +274,11 @@ func compileSendStmt(ctx *blockCtx, expr *ast.SendStmt) {
 			for _, v := range vals {
 				compileExpr(ctx, v)
 			}
-			cb.CallWith(len(vals)+1, 0, expr).AssignWith(1, 1, expr)
+			flags := gogen.InstrFlags(0)
+			if expr.Ellipsis != 0 { // a = append(a, b...)
+				flags |= gogen.InstrFlagEllipsis
+			}
+			cb.CallWith(len(vals)+1, flags, expr).AssignWith(1, 1, expr)
 			return
 		}
 		goto normal
@@ -282,7 +286,10 @@ func compileSendStmt(ctx *blockCtx, expr *ast.SendStmt) {
 	compileExpr(ctx, ch)
 
 normal:
-	compileExpr(ctx, vals[0]) // TODO(xsw): issue #2107
+	if len(vals) != 1 || expr.Ellipsis != 0 {
+		panic(ctx.newCodeError(vals[0].End(), "can't send multiple values to a channel"))
+	}
+	compileExpr(ctx, vals[0])
 	ctx.cb.Send()
 }
 
