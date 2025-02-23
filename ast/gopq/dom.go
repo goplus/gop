@@ -126,10 +126,11 @@ func NameOf(node Node) string {
 	case *ast.FuncDecl:
 		return v.Name.Name
 	case *ast.ImportSpec:
-		if v.Name == nil {
+		n := v.Name
+		if n == nil {
 			return ""
 		}
-		return v.Name.Name
+		return n.Name
 	default:
 		panic("node doesn't contain the `name` property")
 	}

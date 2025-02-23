@@ -1224,8 +1224,8 @@ func TestAutoProperty(t *testing.T) {
 func foo(script string) {
 	doc := goptest.New(script)!
 
-	println(doc.any.funcDecl.name)
-	println(doc.any.importSpec.name)
+	echo doc.any.funcDecl.name
+	echo doc.any.importSpec.name
 }
 `, `package main
 

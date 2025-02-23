@@ -15,3 +15,15 @@
  */
 
 package gopq
+
+/*
+// VarSpec returns variables *ast.ValueSpec node set.
+func (p NodeSet) VarSpec() NodeSet {
+	return p.GenDecl(token.VAR).Child()
+}
+
+// ConstSpec returns constants *ast.ValueSpec node set.
+func (p NodeSet) ConstSpec() NodeSet {
+	return p.GenDecl(token.CONST).Child()
+}
+*/

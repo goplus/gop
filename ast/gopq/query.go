@@ -130,40 +130,58 @@ func (p NodeSet) Ok() bool {
 // FuncDecl returns *ast.FuncDecl node set.
 func (p NodeSet) FuncDecl() NodeSet {
 	return p.Match(func(node Node) bool {
-		_, ok := node.Obj().(*ast.FuncDecl)
-		return ok
+		if node, ok := node.(*astDecl); ok {
+			_, ok = node.Decl.(*ast.FuncDecl)
+			return ok
+		}
+		return false
 	})
 }
 
 // GenDecl returns *ast.GenDecl node set.
 func (p NodeSet) GenDecl(tok token.Token) NodeSet {
 	return p.Match(func(node Node) bool {
-		decl, ok := node.Obj().(*ast.GenDecl)
-		return ok && decl.Tok == tok
+		if node, ok := node.(*astDecl); ok {
+			if decl, ok := node.Decl.(*ast.GenDecl); ok {
+				return decl.Tok == tok
+			}
+		}
+		return false
 	})
 }
 
-/*
 // TypeSpec returns *ast.TypeSpec node set.
 func (p NodeSet) TypeSpec() NodeSet {
-	return p.GenDecl(token.TYPE).Child()
+	return p.Match(func(node Node) bool {
+		if node, ok := node.(*astSpec); ok {
+			_, ok = node.Spec.(*ast.TypeSpec)
+			return ok
+		}
+		return false
+	})
 }
 
-// VarSpec returns variables *ast.ValueSpec node set.
-func (p NodeSet) VarSpec() NodeSet {
-	return p.GenDecl(token.VAR).Child()
+// ValueSpec returns variables *ast.ValueSpec node set.
+func (p NodeSet) ValueSpec() NodeSet {
+	return p.Match(func(node Node) bool {
+		if node, ok := node.(*astSpec); ok {
+			_, ok = node.Spec.(*ast.ValueSpec)
+			return ok
+		}
+		return false
+	})
 }
 
-// ConstSpec returns constants *ast.ValueSpec node set.
-func (p NodeSet) ConstSpec() NodeSet {
-	return p.GenDecl(token.CONST).Child()
-}
-
-// ImportSpec returns *ast.ImportSpec node set.
+// ImportSpec returns variables *ast.ImportSpec node set.
 func (p NodeSet) ImportSpec() NodeSet {
-	return p.GenDecl(token.IMPORT).Child()
+	return p.Match(func(node Node) bool {
+		if node, ok := node.(*astSpec); ok {
+			_, ok = node.Spec.(*ast.ImportSpec)
+			return ok
+		}
+		return false
+	})
 }
-*/
 
 // -----------------------------------------------------------------------------
 
@@ -268,7 +286,7 @@ func (p NodeSet) Any() (ret NodeSet) {
 }
 
 // -----------------------------------------------------------------------------
-/*
+
 type childNodes struct {
 	data NodeEnum
 }
@@ -286,7 +304,7 @@ func (p NodeSet) Child() NodeSet {
 	}
 	return NodeSet{Data: &childNodes{p.Data}}
 }
-*/
+
 // -----------------------------------------------------------------------------
 
 type matchedNodes struct {
