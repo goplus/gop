@@ -6,13 +6,21 @@ import (
 )
 
 func collect(fn gopq.NodeSet) {
-	item := fn.body.any.exprStmt.x.callExpr("scope.Insert").arg(0).cache
+	stmt := fn.body.any.exprStmt.cache.x
+	item := stmt.callExpr("scope.Insert").arg(0).cache
 	for call <- item.callExpr("gogen.NewOverloadFunc") {
 		builtin := call.arg(2).unquotedString!
 		ref := call.arg(3).callExpr.one
 		pkg := ref.fun.x.ident!
 		name := ref.arg(0).unquotedString!
 		echo "builtin ${builtin} => ${pkg}.${name}"
+	}
+	for call <- stmt.callExpr("initBuiltinFns") {
+		pkg := call.arg(2).ident!
+		builtins := call.arg(3).unquotedStringElts!
+		for builtin <- builtins {
+			echo "builtin ${builtin} => ${pkg}.${builtin.capitalize}"
+		}
 	}
 }
 

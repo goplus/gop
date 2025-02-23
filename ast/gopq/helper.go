@@ -33,11 +33,38 @@ func (p NodeSet) UnquotedString__1(exactly bool) (ret string, err error) {
 	if lit, ok := item.Obj().(*ast.BasicLit); ok && lit.Kind == token.STRING {
 		return strconv.Unquote(lit.Value)
 	}
-	return "", ErrNotFound
+	return "", ErrUnexpectedNode
 }
 
 func (p NodeSet) UnquotedString__0() (ret string, err error) {
 	return p.UnquotedString__1(false)
+}
+
+// -----------------------------------------------------------------------------
+
+func (p NodeSet) UnquotedStringElts__1(exactly bool) (ret []string, err error) {
+	item, err := p.CollectOne__1(exactly)
+	if err != nil {
+		return
+	}
+	if lit, ok := item.Obj().(*ast.CompositeLit); ok {
+		ret = make([]string, len(lit.Elts))
+		for i, elt := range lit.Elts {
+			if lit, ok := elt.(*ast.BasicLit); ok && lit.Kind == token.STRING {
+				if ret[i], err = strconv.Unquote(lit.Value); err != nil {
+					return
+				}
+			} else {
+				return nil, ErrUnexpectedNode
+			}
+		}
+		return
+	}
+	return nil, ErrUnexpectedNode
+}
+
+func (p NodeSet) UnquotedStringElts__0() (ret []string, err error) {
+	return p.UnquotedStringElts__1(false)
 }
 
 // -----------------------------------------------------------------------------
@@ -50,7 +77,7 @@ func (p NodeSet) Ident__1(exactly bool) (ret string, err error) {
 	if ident, ok := item.Obj().(*ast.Ident); ok {
 		return ident.Name, nil
 	}
-	return "", ErrNotFound
+	return "", ErrUnexpectedNode
 }
 
 func (p NodeSet) Ident__0() (ret string, err error) {

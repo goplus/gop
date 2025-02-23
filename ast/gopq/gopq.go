@@ -40,6 +40,8 @@ var (
 	ErrBreak = syscall.ELOOP
 	// ErrTooManyNodes - too may nodes
 	ErrTooManyNodes = errors.New("too many nodes")
+	// ErrUnexpectedNode - unexpected node
+	ErrUnexpectedNode = errors.New("unexpected node")
 )
 
 // Node - node interface
