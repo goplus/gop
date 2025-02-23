@@ -1,0 +1,11 @@
+import (
+	"gop/ast/gopq"
+	"gop/env"
+	"gop/parser"
+	"gop/token"
+)
+
+root := env.GOPROOT()
+fset := token.newFileSet
+doc := gopq.fromFile(fset, "${root}/cl/builtin.go", nil, parser.ParseComments)!
+_ = doc

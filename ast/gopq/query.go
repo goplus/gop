@@ -23,6 +23,7 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/parser"
+	"github.com/goplus/gop/parser/fsx"
 	"github.com/goplus/gop/token"
 )
 
@@ -55,7 +56,27 @@ type NodeSet struct {
 	Err  error
 }
 
-// NewSource calls ParseFile for all files with names ending in ".gop" in the
+// FromFile calls ParseFile for a single file and returns *ast.File node set.
+func FromFile(fset *token.FileSet, filename string, src interface{}, mode parser.Mode) (doc NodeSet, err error) {
+	file, err := parser.ParseFile(fset, filename, src, mode)
+	if err != nil {
+		return
+	}
+	return NodeSet{Data: &oneNode{astFile{file}}}, nil
+}
+
+// FromFSFile calls ParseFSFile for a single file and returns *ast.File node set.
+func FromFSFile(
+	fset *token.FileSet, fs fsx.FileSystem,
+	filename string, src interface{}, mode parser.Mode) (doc NodeSet, err error) {
+	file, err := parser.ParseFSFile(fset, fs, filename, src, mode)
+	if err != nil {
+		return
+	}
+	return NodeSet{Data: &oneNode{astFile{file}}}, nil
+}
+
+// FromDir calls ParseFile for all files with names ending in ".gop" in the
 // directory specified by path and returns a map of package name -> package
 // AST with all the packages found.
 //
@@ -67,7 +88,7 @@ type NodeSet struct {
 // If the directory couldn't be read, a nil map and the respective error are
 // returned. If a parse error occurred, a non-nil but incomplete map and the
 // first error encountered are returned.
-func NewSource(
+func FromDir(
 	fset *token.FileSet, path string,
 	filter func(fs.FileInfo) bool, mode parser.Mode) (doc NodeSet, err error) {
 
@@ -78,7 +99,7 @@ func NewSource(
 	return NodeSet{Data: &oneNode{astPackages(pkgs)}}, nil
 }
 
-// NewSourceFrom calls ParseFile for all files with names ending in ".gop" in the
+// FromFSDir calls ParseFile for all files with names ending in ".gop" in the
 // directory specified by path and returns a map of package name -> package
 // AST with all the packages found.
 //
@@ -90,7 +111,7 @@ func NewSource(
 // If the directory couldn't be read, a nil map and the respective error are
 // returned. If a parse error occurred, a non-nil but incomplete map and the
 // first error encountered are returned.
-func NewSourceFrom(
+func FromFSDir(
 	fset *token.FileSet, fs parser.FileSystem, path string,
 	filter func(fs.FileInfo) bool, mode parser.Mode) (doc NodeSet, err error) {
 
@@ -122,6 +143,7 @@ func (p NodeSet) GenDecl(tok token.Token) NodeSet {
 	})
 }
 
+/*
 // TypeSpec returns *ast.TypeSpec node set.
 func (p NodeSet) TypeSpec() NodeSet {
 	return p.GenDecl(token.TYPE).Child()
@@ -141,6 +163,7 @@ func (p NodeSet) ConstSpec() NodeSet {
 func (p NodeSet) ImportSpec() NodeSet {
 	return p.GenDecl(token.IMPORT).Child()
 }
+*/
 
 // -----------------------------------------------------------------------------
 
@@ -245,7 +268,7 @@ func (p NodeSet) Any() (ret NodeSet) {
 }
 
 // -----------------------------------------------------------------------------
-
+/*
 type childNodes struct {
 	data NodeEnum
 }
@@ -263,7 +286,7 @@ func (p NodeSet) Child() NodeSet {
 	}
 	return NodeSet{Data: &childNodes{p.Data}}
 }
-
+*/
 // -----------------------------------------------------------------------------
 
 type matchedNodes struct {

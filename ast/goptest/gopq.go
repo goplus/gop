@@ -29,7 +29,7 @@ import (
 func New(script string) (gopq.NodeSet, error) {
 	fset := token.NewFileSet()
 	fs := memfs.SingleFile("/foo", "bar.gop", script)
-	return gopq.NewSourceFrom(fset, fs, "/foo", nil, 0)
+	return gopq.FromFSDir(fset, fs, "/foo", nil, 0)
 }
 
 // -----------------------------------------------------------------------------
