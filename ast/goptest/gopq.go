@@ -23,13 +23,17 @@ import (
 	"github.com/goplus/gop/parser/fsx/memfs"
 )
 
+const (
+	GopPackage = "github.com/goplus/gop/ast/gopq"
+)
+
 // -----------------------------------------------------------------------------
 
 // New creates a nodeset object that represents a Go+ dom tree.
 func New(script string) (gopq.NodeSet, error) {
 	fset := token.NewFileSet()
 	fs := memfs.SingleFile("/foo", "bar.gop", script)
-	return gopq.NewSourceFrom(fset, fs, "/foo", nil, 0)
+	return gopq.FromFSDir(fset, fs, "/foo", nil, 0)
 }
 
 // -----------------------------------------------------------------------------

@@ -120,19 +120,82 @@ func (p *astSpec) Obj() interface{} {
 
 // -----------------------------------------------------------------------------
 
+func visitStmt(stmt ast.Stmt, filter func(node Node) error) error {
+	if stmt != nil {
+		return filter(&astStmt{stmt})
+	}
+	return nil
+}
+
+type astStmt struct {
+	ast.Stmt
+}
+
+func (p *astStmt) ForEach(filter func(node Node) error) error {
+	switch stmt := p.Stmt.(type) {
+	case *ast.IfStmt:
+		if err := visitStmt(stmt.Init, filter); err == ErrBreak {
+			return err
+		}
+		if err := filter(&astStmt{stmt.Body}); err == ErrBreak {
+			return err
+		}
+		if err := visitStmt(stmt.Else, filter); err == ErrBreak {
+			return err
+		}
+	case *ast.BlockStmt:
+		for _, stmt := range stmt.List {
+			node := &astStmt{stmt}
+			if err := filter(node); err == ErrBreak {
+				return err
+			}
+		}
+	}
+	// TODO(xsw): visit other stmts
+	return nil
+}
+
+func (p *astStmt) Obj() interface{} {
+	return p.Stmt
+}
+
+// -----------------------------------------------------------------------------
+
+type astExpr struct {
+	ast.Expr
+}
+
+func (p *astExpr) ForEach(filter func(node Node) error) error {
+	return nil
+}
+
+func (p *astExpr) Obj() interface{} {
+	return p.Expr
+}
+
+// -----------------------------------------------------------------------------
+
 // NameOf returns name of an ast node.
 func NameOf(node Node) string {
-	switch v := node.Obj().(type) {
+	return getName(node.Obj())
+}
+
+func getName(v interface{}) string {
+	switch v := v.(type) {
 	case *ast.FuncDecl:
 		return v.Name.Name
 	case *ast.ImportSpec:
-		if v.Name == nil {
+		n := v.Name
+		if n == nil {
 			return ""
 		}
-		return v.Name.Name
-	default:
-		panic("node doesn't contain the `name` property")
+		return n.Name
+	case *ast.Ident:
+		return v.Name
+	case *ast.SelectorExpr:
+		return getName(v.X) + "." + v.Sel.Name
 	}
+	panic("node doesn't contain the `name` property")
 }
 
 // -----------------------------------------------------------------------------

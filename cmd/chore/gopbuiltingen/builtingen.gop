@@ -1,0 +1,22 @@
+import (
+	"gop/ast/gopq"
+	"gop/env"
+	"gop/parser"
+	"gop/token"
+)
+
+func collect(fn gopq.NodeSet) {
+	item := fn.body.any.exprStmt.x.callExpr("scope.Insert").arg(0).cache
+	for call <- item.callExpr("gogen.NewOverloadFunc") {
+		builtin := call.arg(2).unquotedString!
+		ref := call.arg(3).callExpr.one
+		pkg := ref.fun.x.ident!
+		name := ref.arg(0).unquotedString!
+		echo "builtin ${builtin} => ${pkg}.${name}"
+	}
+}
+
+root := env.GOPROOT()
+fset := token.newFileSet
+doc := gopq.fromFile(fset, "${root}/cl/builtin.go", nil, parser.ParseComments)!
+collect doc.any.funcDecl("initBuiltin").one

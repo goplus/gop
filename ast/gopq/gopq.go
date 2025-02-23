@@ -23,10 +23,15 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/parser"
+	"github.com/goplus/gop/parser/fsx"
 	"github.com/goplus/gop/token"
 )
 
 // -----------------------------------------------------------------------------
+
+const (
+	GopPackage = true
+)
 
 var (
 	// ErrNotFound - not found
@@ -55,7 +60,27 @@ type NodeSet struct {
 	Err  error
 }
 
-// NewSource calls ParseFile for all files with names ending in ".gop" in the
+// FromFile calls ParseFile for a single file and returns *ast.File node set.
+func FromFile(fset *token.FileSet, filename string, src interface{}, mode parser.Mode) (doc NodeSet, err error) {
+	file, err := parser.ParseFile(fset, filename, src, mode)
+	if err != nil {
+		return
+	}
+	return NodeSet{Data: &oneNode{astFile{file}}}, nil
+}
+
+// FromFSFile calls ParseFSFile for a single file and returns *ast.File node set.
+func FromFSFile(
+	fset *token.FileSet, fs fsx.FileSystem,
+	filename string, src interface{}, mode parser.Mode) (doc NodeSet, err error) {
+	file, err := parser.ParseFSFile(fset, fs, filename, src, mode)
+	if err != nil {
+		return
+	}
+	return NodeSet{Data: &oneNode{astFile{file}}}, nil
+}
+
+// FromDir calls ParseFile for all files with names ending in ".gop" in the
 // directory specified by path and returns a map of package name -> package
 // AST with all the packages found.
 //
@@ -67,7 +92,7 @@ type NodeSet struct {
 // If the directory couldn't be read, a nil map and the respective error are
 // returned. If a parse error occurred, a non-nil but incomplete map and the
 // first error encountered are returned.
-func NewSource(
+func FromDir(
 	fset *token.FileSet, path string,
 	filter func(fs.FileInfo) bool, mode parser.Mode) (doc NodeSet, err error) {
 
@@ -78,7 +103,7 @@ func NewSource(
 	return NodeSet{Data: &oneNode{astPackages(pkgs)}}, nil
 }
 
-// NewSourceFrom calls ParseFile for all files with names ending in ".gop" in the
+// FromFSDir calls ParseFile for all files with names ending in ".gop" in the
 // directory specified by path and returns a map of package name -> package
 // AST with all the packages found.
 //
@@ -90,7 +115,7 @@ func NewSource(
 // If the directory couldn't be read, a nil map and the respective error are
 // returned. If a parse error occurred, a non-nil but incomplete map and the
 // first error encountered are returned.
-func NewSourceFrom(
+func FromFSDir(
 	fset *token.FileSet, fs parser.FileSystem, path string,
 	filter func(fs.FileInfo) bool, mode parser.Mode) (doc NodeSet, err error) {
 
@@ -106,40 +131,124 @@ func (p NodeSet) Ok() bool {
 	return p.Err == nil
 }
 
+// -----------------------------------------------------------------------------
+
 // FuncDecl returns *ast.FuncDecl node set.
-func (p NodeSet) FuncDecl() NodeSet {
+func (p NodeSet) FuncDecl__0() NodeSet {
 	return p.Match(func(node Node) bool {
-		_, ok := node.Obj().(*ast.FuncDecl)
-		return ok
+		if node, ok := node.(*astDecl); ok {
+			_, ok = node.Decl.(*ast.FuncDecl)
+			return ok
+		}
+		return false
+	})
+}
+
+// FuncDecl returns *ast.FuncDecl node set.
+func (p NodeSet) FuncDecl__1(name string) NodeSet {
+	return p.Match(func(node Node) bool {
+		if node, ok := node.(*astDecl); ok {
+			if fn, ok := node.Decl.(*ast.FuncDecl); ok {
+				return fn.Name.Name == name
+			}
+		}
+		return false
 	})
 }
 
 // GenDecl returns *ast.GenDecl node set.
-func (p NodeSet) GenDecl(tok token.Token) NodeSet {
+func (p NodeSet) GenDecl__0(tok token.Token) NodeSet {
 	return p.Match(func(node Node) bool {
-		decl, ok := node.Obj().(*ast.GenDecl)
-		return ok && decl.Tok == tok
+		if node, ok := node.(*astDecl); ok {
+			if decl, ok := node.Decl.(*ast.GenDecl); ok {
+				return decl.Tok == tok
+			}
+		}
+		return false
 	})
 }
 
 // TypeSpec returns *ast.TypeSpec node set.
 func (p NodeSet) TypeSpec() NodeSet {
-	return p.GenDecl(token.TYPE).Child()
+	return p.Match(func(node Node) bool {
+		if node, ok := node.(*astSpec); ok {
+			_, ok = node.Spec.(*ast.TypeSpec)
+			return ok
+		}
+		return false
+	})
 }
 
-// VarSpec returns variables *ast.ValueSpec node set.
-func (p NodeSet) VarSpec() NodeSet {
-	return p.GenDecl(token.VAR).Child()
-}
-
-// ConstSpec returns constants *ast.ValueSpec node set.
-func (p NodeSet) ConstSpec() NodeSet {
-	return p.GenDecl(token.CONST).Child()
+// ValueSpec returns *ast.ValueSpec node set.
+func (p NodeSet) ValueSpec() NodeSet {
+	return p.Match(func(node Node) bool {
+		if node, ok := node.(*astSpec); ok {
+			_, ok = node.Spec.(*ast.ValueSpec)
+			return ok
+		}
+		return false
+	})
 }
 
 // ImportSpec returns *ast.ImportSpec node set.
 func (p NodeSet) ImportSpec() NodeSet {
-	return p.GenDecl(token.IMPORT).Child()
+	return p.Match(func(node Node) bool {
+		if node, ok := node.(*astSpec); ok {
+			_, ok = node.Spec.(*ast.ImportSpec)
+			return ok
+		}
+		return false
+	})
+}
+
+// ExprStmt returns *ast.ExprStmt node set.
+func (p NodeSet) ExprStmt() NodeSet {
+	return p.Match(func(node Node) bool {
+		if node, ok := node.(*astStmt); ok {
+			_, ok = node.Stmt.(*ast.ExprStmt)
+			return ok
+		}
+		return false
+	})
+}
+
+// CallExpr returns *ast.CallExpr node set.
+func (p NodeSet) CallExpr__0() NodeSet {
+	return p.Match(func(node Node) bool {
+		if node, ok := node.(*astExpr); ok {
+			_, ok = node.Expr.(*ast.CallExpr)
+			return ok
+		}
+		return false
+	})
+}
+
+// CallExpr returns *ast.CallExpr node set.
+func (p NodeSet) CallExpr__1(name string) NodeSet {
+	return p.Match(func(node Node) bool {
+		if node, ok := node.(*astExpr); ok {
+			if expr, ok := node.Expr.(*ast.CallExpr); ok {
+				return getName(expr.Fun) == name
+			}
+		}
+		return false
+	})
+}
+
+// -----------------------------------------------------------------------------
+
+func (p NodeSet) Gop_Enum(callback func(node NodeSet)) {
+	if p.Err == nil {
+		p.Data.ForEach(func(node Node) error {
+			t := NodeSet{Data: &oneNode{node}}
+			callback(t)
+			return nil
+		})
+	}
+}
+
+func (p NodeSet) ForEach(callback func(node NodeSet)) {
+	p.Gop_Enum(callback)
 }
 
 // -----------------------------------------------------------------------------
@@ -161,7 +270,7 @@ func (p NodeSet) One() NodeSet {
 	if _, ok := p.Data.(*oneNode); ok {
 		return p
 	}
-	node, err := p.CollectOne()
+	node, err := p.CollectOne__0()
 	if err != nil {
 		return NodeSet{Err: err}
 	}
@@ -266,6 +375,119 @@ func (p NodeSet) Child() NodeSet {
 
 // -----------------------------------------------------------------------------
 
+type bodyNodes struct {
+	data NodeEnum
+}
+
+func (p *bodyNodes) ForEach(filter func(node Node) error) error {
+	return p.data.ForEach(func(node Node) error {
+		switch node := node.(type) {
+		case *astDecl:
+			if fn, ok := node.Decl.(*ast.FuncDecl); ok && fn.Body != nil {
+				return filter(&astStmt{fn.Body})
+			}
+		}
+		return ErrNotFound
+	})
+}
+
+// Body returns body node set.
+func (p NodeSet) Body() NodeSet {
+	if p.Err != nil {
+		return p
+	}
+	return NodeSet{Data: &bodyNodes{p.Data}}
+}
+
+// -----------------------------------------------------------------------------
+
+type xNodes struct {
+	data NodeEnum
+}
+
+func (p *xNodes) ForEach(filter func(node Node) error) error {
+	return p.data.ForEach(func(node Node) error {
+		switch node := node.(type) {
+		case *astStmt:
+			switch stmt := node.Stmt.(type) {
+			case *ast.ExprStmt:
+				return filter(&astExpr{stmt.X})
+			}
+		case *astExpr:
+			switch expr := node.Expr.(type) {
+			case *ast.SelectorExpr:
+				return filter(&astExpr{expr.X})
+			}
+		}
+		return ErrNotFound
+	})
+}
+
+// X returns x node set.
+func (p NodeSet) X() NodeSet {
+	if p.Err != nil {
+		return p
+	}
+	return NodeSet{Data: &xNodes{p.Data}}
+}
+
+// -----------------------------------------------------------------------------
+
+type funNodes struct {
+	data NodeEnum
+}
+
+func (p *funNodes) ForEach(filter func(node Node) error) error {
+	return p.data.ForEach(func(node Node) error {
+		switch node := node.(type) {
+		case *astExpr:
+			switch expr := node.Expr.(type) {
+			case *ast.CallExpr:
+				return filter(&astExpr{expr.Fun})
+			}
+		}
+		return ErrNotFound
+	})
+}
+
+// Fun returns fun node set.
+func (p NodeSet) Fun() NodeSet {
+	if p.Err != nil {
+		return p
+	}
+	return NodeSet{Data: &funNodes{p.Data}}
+}
+
+// -----------------------------------------------------------------------------
+
+type argNodes struct {
+	data NodeEnum
+	i    int
+}
+
+func (p *argNodes) ForEach(filter func(node Node) error) error {
+	return p.data.ForEach(func(node Node) error {
+		switch node := node.(type) {
+		case *astExpr:
+			switch expr := node.Expr.(type) {
+			case *ast.CallExpr:
+				return filter(&astExpr{expr.Args[p.i]})
+			}
+		}
+		return ErrNotFound
+	})
+}
+
+// Arg returns args[i] node set.
+func (p NodeSet) Arg(i int) NodeSet {
+	if p.Err != nil {
+		return p
+	}
+	return NodeSet{Data: &argNodes{p.Data, i}}
+}
+
+// -----------------------------------------------------------------------------
+
 type matchedNodes struct {
 	data  NodeEnum
 	match func(node Node) bool
@@ -321,15 +543,12 @@ func (p NodeSet) Collect() (items []Node, err error) {
 
 // CollectOne collects one node of a node set.
 // If exactly is true, it returns ErrTooManyNodes when node set is more than one.
-func (p NodeSet) CollectOne(exactly ...bool) (item Node, err error) {
+func (p NodeSet) CollectOne__1(exactly bool) (item Node, err error) {
 	if p.Err != nil {
 		return nil, p.Err
 	}
 	err = ErrNotFound
-	if exactly != nil {
-		if !exactly[0] {
-			panic("please call `CollectOne()` instead of `CollectOne(false)`")
-		}
+	if exactly {
 		p.Data.ForEach(func(node Node) error {
 			if err == ErrNotFound {
 				item, err = node, nil
@@ -345,6 +564,11 @@ func (p NodeSet) CollectOne(exactly ...bool) (item Node, err error) {
 		})
 	}
 	return
+}
+
+// CollectOne returns the first node.
+func (p NodeSet) CollectOne__0() (item Node, err error) {
+	return p.CollectOne__1(false)
 }
 
 // -----------------------------------------------------------------------------
