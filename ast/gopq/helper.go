@@ -20,6 +20,7 @@ import (
 	"strconv"
 
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/token"
 )
 
 // -----------------------------------------------------------------------------
@@ -29,7 +30,7 @@ func (p NodeSet) UnquotedString__1(exactly bool) (ret string, err error) {
 	if err != nil {
 		return
 	}
-	if lit, ok := item.Obj().(*ast.BasicLit); ok {
+	if lit, ok := item.Obj().(*ast.BasicLit); ok && lit.Kind == token.STRING {
 		return strconv.Unquote(lit.Value)
 	}
 	return "", ErrNotFound
@@ -37,6 +38,23 @@ func (p NodeSet) UnquotedString__1(exactly bool) (ret string, err error) {
 
 func (p NodeSet) UnquotedString__0() (ret string, err error) {
 	return p.UnquotedString__1(false)
+}
+
+// -----------------------------------------------------------------------------
+
+func (p NodeSet) Ident__1(exactly bool) (ret string, err error) {
+	item, err := p.CollectOne__1(exactly)
+	if err != nil {
+		return
+	}
+	if ident, ok := item.Obj().(*ast.Ident); ok {
+		return ident.Name, nil
+	}
+	return "", ErrNotFound
+}
+
+func (p NodeSet) Ident__0() (ret string, err error) {
+	return p.Ident__1(false)
 }
 
 // -----------------------------------------------------------------------------

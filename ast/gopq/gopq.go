@@ -413,6 +413,11 @@ func (p *xNodes) ForEach(filter func(node Node) error) error {
 			case *ast.ExprStmt:
 				return filter(&astExpr{stmt.X})
 			}
+		case *astExpr:
+			switch expr := node.Expr.(type) {
+			case *ast.SelectorExpr:
+				return filter(&astExpr{expr.X})
+			}
 		}
 		return ErrNotFound
 	})

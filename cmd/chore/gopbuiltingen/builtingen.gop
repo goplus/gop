@@ -8,7 +8,11 @@ import (
 func collect(fn gopq.NodeSet) {
 	item := fn.body.any.exprStmt.x.callExpr("scope.Insert").arg(0).cache
 	for call <- item.callExpr("gogen.NewOverloadFunc") {
-		echo call.arg(2).unquotedString!
+		builtin := call.arg(2).unquotedString!
+		ref := call.arg(3).callExpr.one
+		pkg := ref.fun.x.ident!
+		name := ref.arg(0).unquotedString!
+		echo "builtin ${builtin} => ${pkg}.${name}"
 	}
 }
 
