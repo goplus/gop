@@ -1280,7 +1280,7 @@ func foo(script string) {
 		}
 		return
 	}()
-	fmt.Println(doc.Any().FuncDecl().Name())
+	fmt.Println(doc.Any().FuncDecl__0().Name())
 	fmt.Println(doc.Any().ImportSpec().Name())
 }
 `)

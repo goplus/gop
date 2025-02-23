@@ -270,7 +270,7 @@ func (p NodeSet) One() NodeSet {
 	if _, ok := p.Data.(*oneNode); ok {
 		return p
 	}
-	node, err := p.CollectOne()
+	node, err := p.CollectOne__0()
 	if err != nil {
 		return NodeSet{Err: err}
 	}
@@ -538,15 +538,12 @@ func (p NodeSet) Collect() (items []Node, err error) {
 
 // CollectOne collects one node of a node set.
 // If exactly is true, it returns ErrTooManyNodes when node set is more than one.
-func (p NodeSet) CollectOne(exactly ...bool) (item Node, err error) {
+func (p NodeSet) CollectOne__1(exactly bool) (item Node, err error) {
 	if p.Err != nil {
 		return nil, p.Err
 	}
 	err = ErrNotFound
-	if exactly != nil {
-		if !exactly[0] {
-			panic("please call `CollectOne()` instead of `CollectOne(false)`")
-		}
+	if exactly {
 		p.Data.ForEach(func(node Node) error {
 			if err == ErrNotFound {
 				item, err = node, nil
@@ -562,6 +559,11 @@ func (p NodeSet) CollectOne(exactly ...bool) (item Node, err error) {
 		})
 	}
 	return
+}
+
+// CollectOne returns the first node.
+func (p NodeSet) CollectOne__0() (item Node, err error) {
+	return p.CollectOne__1(false)
 }
 
 // -----------------------------------------------------------------------------

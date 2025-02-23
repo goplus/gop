@@ -8,7 +8,7 @@ import (
 func collect(fn gopq.NodeSet) {
 	item := fn.body.any.exprStmt.x.callExpr("scope.Insert").arg(0).cache
 	for call <- item.callExpr("gogen.NewOverloadFunc") {
-		echo call.fun.name
+		echo call.arg(2).unquotedString!
 	}
 }
 

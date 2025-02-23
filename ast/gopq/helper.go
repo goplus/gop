@@ -16,6 +16,29 @@
 
 package gopq
 
+import (
+	"strconv"
+
+	"github.com/goplus/gop/ast"
+)
+
+// -----------------------------------------------------------------------------
+
+func (p NodeSet) UnquotedString__1(exactly bool) (ret string, err error) {
+	item, err := p.CollectOne__1(exactly)
+	if err != nil {
+		return
+	}
+	if lit, ok := item.Obj().(*ast.BasicLit); ok {
+		return strconv.Unquote(lit.Value)
+	}
+	return "", ErrNotFound
+}
+
+func (p NodeSet) UnquotedString__0() (ret string, err error) {
+	return p.UnquotedString__1(false)
+}
+
 // -----------------------------------------------------------------------------
 
 /*
