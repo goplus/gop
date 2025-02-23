@@ -29,6 +29,10 @@ import (
 
 // -----------------------------------------------------------------------------
 
+const (
+	GopPackage = true
+)
+
 var (
 	// ErrNotFound - not found
 	ErrNotFound = syscall.ENOENT
@@ -127,8 +131,10 @@ func (p NodeSet) Ok() bool {
 	return p.Err == nil
 }
 
+// -----------------------------------------------------------------------------
+
 // FuncDecl returns *ast.FuncDecl node set.
-func (p NodeSet) FuncDecl() NodeSet {
+func (p NodeSet) FuncDecl__0() NodeSet {
 	return p.Match(func(node Node) bool {
 		if node, ok := node.(*astDecl); ok {
 			_, ok = node.Decl.(*ast.FuncDecl)
@@ -138,8 +144,20 @@ func (p NodeSet) FuncDecl() NodeSet {
 	})
 }
 
+// FuncDecl returns *ast.FuncDecl node set.
+func (p NodeSet) FuncDecl__1(name string) NodeSet {
+	return p.Match(func(node Node) bool {
+		if node, ok := node.(*astDecl); ok {
+			if fn, ok := node.Decl.(*ast.FuncDecl); ok {
+				return fn.Name.Name == name
+			}
+		}
+		return false
+	})
+}
+
 // GenDecl returns *ast.GenDecl node set.
-func (p NodeSet) GenDecl(tok token.Token) NodeSet {
+func (p NodeSet) GenDecl__0(tok token.Token) NodeSet {
 	return p.Match(func(node Node) bool {
 		if node, ok := node.(*astDecl); ok {
 			if decl, ok := node.Decl.(*ast.GenDecl); ok {
@@ -161,7 +179,7 @@ func (p NodeSet) TypeSpec() NodeSet {
 	})
 }
 
-// ValueSpec returns variables *ast.ValueSpec node set.
+// ValueSpec returns *ast.ValueSpec node set.
 func (p NodeSet) ValueSpec() NodeSet {
 	return p.Match(func(node Node) bool {
 		if node, ok := node.(*astSpec); ok {
@@ -172,7 +190,7 @@ func (p NodeSet) ValueSpec() NodeSet {
 	})
 }
 
-// ImportSpec returns variables *ast.ImportSpec node set.
+// ImportSpec returns *ast.ImportSpec node set.
 func (p NodeSet) ImportSpec() NodeSet {
 	return p.Match(func(node Node) bool {
 		if node, ok := node.(*astSpec); ok {
@@ -181,6 +199,56 @@ func (p NodeSet) ImportSpec() NodeSet {
 		}
 		return false
 	})
+}
+
+// ExprStmt returns *ast.ExprStmt node set.
+func (p NodeSet) ExprStmt() NodeSet {
+	return p.Match(func(node Node) bool {
+		if node, ok := node.(*astStmt); ok {
+			_, ok = node.Stmt.(*ast.ExprStmt)
+			return ok
+		}
+		return false
+	})
+}
+
+// CallExpr returns *ast.CallExpr node set.
+func (p NodeSet) CallExpr__0() NodeSet {
+	return p.Match(func(node Node) bool {
+		if node, ok := node.(*astExpr); ok {
+			_, ok = node.Expr.(*ast.CallExpr)
+			return ok
+		}
+		return false
+	})
+}
+
+// CallExpr returns *ast.CallExpr node set.
+func (p NodeSet) CallExpr__1(name string) NodeSet {
+	return p.Match(func(node Node) bool {
+		if node, ok := node.(*astExpr); ok {
+			if expr, ok := node.Expr.(*ast.CallExpr); ok {
+				return getName(expr.Fun) == name
+			}
+		}
+		return false
+	})
+}
+
+// -----------------------------------------------------------------------------
+
+func (p NodeSet) Gop_Enum(callback func(node NodeSet)) {
+	if p.Err == nil {
+		p.Data.ForEach(func(node Node) error {
+			t := NodeSet{Data: &oneNode{node}}
+			callback(t)
+			return nil
+		})
+	}
+}
+
+func (p NodeSet) ForEach(callback func(node NodeSet)) {
+	p.Gop_Enum(callback)
 }
 
 // -----------------------------------------------------------------------------
@@ -303,6 +371,114 @@ func (p NodeSet) Child() NodeSet {
 		return p
 	}
 	return NodeSet{Data: &childNodes{p.Data}}
+}
+
+// -----------------------------------------------------------------------------
+
+type bodyNodes struct {
+	data NodeEnum
+}
+
+func (p *bodyNodes) ForEach(filter func(node Node) error) error {
+	return p.data.ForEach(func(node Node) error {
+		switch node := node.(type) {
+		case *astDecl:
+			if fn, ok := node.Decl.(*ast.FuncDecl); ok && fn.Body != nil {
+				return filter(&astStmt{fn.Body})
+			}
+		}
+		return ErrNotFound
+	})
+}
+
+// Body returns body node set.
+func (p NodeSet) Body() NodeSet {
+	if p.Err != nil {
+		return p
+	}
+	return NodeSet{Data: &bodyNodes{p.Data}}
+}
+
+// -----------------------------------------------------------------------------
+
+type xNodes struct {
+	data NodeEnum
+}
+
+func (p *xNodes) ForEach(filter func(node Node) error) error {
+	return p.data.ForEach(func(node Node) error {
+		switch node := node.(type) {
+		case *astStmt:
+			switch stmt := node.Stmt.(type) {
+			case *ast.ExprStmt:
+				return filter(&astExpr{stmt.X})
+			}
+		}
+		return ErrNotFound
+	})
+}
+
+// X returns x node set.
+func (p NodeSet) X() NodeSet {
+	if p.Err != nil {
+		return p
+	}
+	return NodeSet{Data: &xNodes{p.Data}}
+}
+
+// -----------------------------------------------------------------------------
+
+type funNodes struct {
+	data NodeEnum
+}
+
+func (p *funNodes) ForEach(filter func(node Node) error) error {
+	return p.data.ForEach(func(node Node) error {
+		switch node := node.(type) {
+		case *astExpr:
+			switch expr := node.Expr.(type) {
+			case *ast.CallExpr:
+				return filter(&astExpr{expr.Fun})
+			}
+		}
+		return ErrNotFound
+	})
+}
+
+// Fun returns fun node set.
+func (p NodeSet) Fun() NodeSet {
+	if p.Err != nil {
+		return p
+	}
+	return NodeSet{Data: &funNodes{p.Data}}
+}
+
+// -----------------------------------------------------------------------------
+
+type argNodes struct {
+	data NodeEnum
+	i    int
+}
+
+func (p *argNodes) ForEach(filter func(node Node) error) error {
+	return p.data.ForEach(func(node Node) error {
+		switch node := node.(type) {
+		case *astExpr:
+			switch expr := node.Expr.(type) {
+			case *ast.CallExpr:
+				return filter(&astExpr{expr.Args[p.i]})
+			}
+		}
+		return ErrNotFound
+	})
+}
+
+// Arg returns args[i] node set.
+func (p NodeSet) Arg(i int) NodeSet {
+	if p.Err != nil {
+		return p
+	}
+	return NodeSet{Data: &argNodes{p.Data, i}}
 }
 
 // -----------------------------------------------------------------------------

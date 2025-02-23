@@ -16,6 +16,8 @@
 
 package gopq
 
+// -----------------------------------------------------------------------------
+
 /*
 // VarSpec returns variables *ast.ValueSpec node set.
 func (p NodeSet) VarSpec() NodeSet {
@@ -27,3 +29,5 @@ func (p NodeSet) ConstSpec() NodeSet {
 	return p.GenDecl(token.CONST).Child()
 }
 */
+
+// -----------------------------------------------------------------------------

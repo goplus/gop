@@ -5,7 +5,14 @@ import (
 	"gop/token"
 )
 
+func collect(fn gopq.NodeSet) {
+	item := fn.body.any.exprStmt.x.callExpr("scope.Insert").arg(0).cache
+	for call <- item.callExpr("gogen.NewOverloadFunc") {
+		echo call.fun.name
+	}
+}
+
 root := env.GOPROOT()
 fset := token.newFileSet
 doc := gopq.fromFile(fset, "${root}/cl/builtin.go", nil, parser.ParseComments)!
-_ = doc
+collect doc.any.funcDecl("initBuiltin").one

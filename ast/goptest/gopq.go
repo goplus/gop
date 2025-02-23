@@ -23,6 +23,10 @@ import (
 	"github.com/goplus/gop/parser/fsx/memfs"
 )
 
+const (
+	GopPackage = "github.com/goplus/gop/ast/gopq"
+)
+
 // -----------------------------------------------------------------------------
 
 // New creates a nodeset object that represents a Go+ dom tree.
