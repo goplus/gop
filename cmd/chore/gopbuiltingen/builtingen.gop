@@ -1,4 +1,5 @@
 import (
+	"encoding/json"
 	"gop/ast/gopq"
 	"gop/env"
 	"gop/parser"
@@ -19,14 +20,14 @@ type builtinTI struct {
 
 type builtinPkg struct {
 	Builtins []builtin
-	Types    []builtinTI
+	Types    []*builtinTI
 }
 
-func (p *builtinPkg) initBuiltinTIs(fn gopq.NodeSet) {
+func (p *builtinPkg) initBuiltinTIs(fn gopq.NodeSet) (tistr *builtinTI) {
 	ti := fn.body.any.assignStmt.rhs(0).x.compositeLit("BuiltinTI")
 	methods := ti.elt("methods").cache
 	for method <- methods {
-		var aTI builtinTI
+		aTI := &builtinTI{}
 		for item <- method.elt {
 			mthd := item.elt(0).unquotedString!
 			fn := item.elt(1).one
@@ -40,21 +41,31 @@ func (p *builtinPkg) initBuiltinTIs(fn gopq.NodeSet) {
 			}
 		}
 		p.Types <- aTI
+		if len(aTI.Methods) > 10 {
+			tistr = aTI
+		}
 	}
+	return
 }
 
-func (p *builtinPkg) newBuiltinDefault(fn gopq.NodeSet) {
+func (p *builtinPkg) newBuiltinDefault(fn gopq.NodeSet, tistr *builtinTI) {
 	methods := fn.body.any.exprStmt.x.callExpr("ti.AddMethods").cache
 	for method <- methods {
-		var aTI builtinTI
+		aTI := &builtinTI{}
 		for arg <- method.varg(0).x {
 			mthd := arg.elt("Name").unquotedString!
 			ref := arg.elt("Fn").callExpr.one
 			pkg := ref.fun.x.ident!
 			name := ref.arg(0).unquotedString!
-			aTI.Methods <- builtin{mthd, {pkg, name}}
+			if pkg == "strx" {
+				tistr.Methods <- builtin{mthd, {pkg, name}}
+			} else {
+				aTI.Methods <- builtin{mthd, {pkg, name}}
+			}
 		}
-		p.Types <- aTI
+		if len(aTI.Methods) > 0 {
+			p.Types <- aTI
+		}
 	}
 }
 
@@ -81,16 +92,12 @@ var pkg builtinPkg
 
 root := env.GOPROOT()
 fset := token.newFileSet
-fns := gopq.fromFile(fset, "${root}/cl/builtin.go", nil, parser.ParseComments)!.funcs
+
+fns := gopq.fromFile(fset, "${root}/../gogen/builtin.go", nil, parser.ParseComments)!.funcs
+tistr := pkg.initBuiltinTIs(fns.funcDecl("initBuiltinTIs").one)
+
+fns = gopq.fromFile(fset, "${root}/cl/builtin.go", nil, parser.ParseComments)!.funcs
 pkg.initBuiltin fns.funcDecl("initBuiltin").one
-pkg.newBuiltinDefault fns.funcDecl("newBuiltinDefault").one
+pkg.newBuiltinDefault fns.funcDecl("newBuiltinDefault").one, tistr
 
-fns = gopq.fromFile(fset, "${root}/../gogen/builtin.go", nil, parser.ParseComments)!.funcs
-pkg.initBuiltinTIs fns.funcDecl("initBuiltinTIs").one
-
-for built <- pkg.Builtins {
-	echo built
-}
-for ti <- pkg.Types {
-	echo ti.Methods
-}
+echo string(json.marshalIndent(&pkg, "", "  ")!)
