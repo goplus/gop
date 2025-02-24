@@ -1,0 +1,50 @@
+import (
+	"go/ast"
+)
+
+func importSpec(path string) *ast.ImportSpec {
+	return {
+		Path: {
+			Value: path.quote,
+		},
+	}
+}
+
+func toParams(params *ast.FieldList, at string) *ast.FieldList {
+	if params == nil {
+		return nil
+	}
+	if at == "buil" {
+		at = "builtin"
+	}
+	list := make([]*ast.Field, len(params.List))
+	for i, p <- params.List {
+		typ := p.Type
+		switch t := typ.(type) {
+		case *ast.Ident:
+			if t.isExported {
+				typ = &ast.SelectorExpr{
+					X:   ast.newIdent(at),
+					Sel: t,
+				}
+			}
+		case *ast.StarExpr:
+			if x, ok := t.X.(*ast.Ident); ok && x.isExported {
+				typ = &ast.StarExpr{
+					X: &ast.SelectorExpr{
+						X:   ast.newIdent(at),
+						Sel: x,
+					},
+				}
+			}
+		}
+		list[i] = {
+			Doc:     p.Doc,
+			Names:   p.Names,
+			Type:    typ,
+			Tag:     p.Tag,
+			Comment: p.Comment,
+		}
+	}
+	return {List: list}
+}

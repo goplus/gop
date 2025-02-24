@@ -2,6 +2,7 @@ import (
 	"bytes"
 	"go/ast"
 	"go/format"
+	"go/token"
 	"gop/ast/gopq"
 	"gop/parser"
 	"os"
@@ -20,6 +21,16 @@ func gen() []byte {
 	f := &ast.File{
 		Name:  ast.newIdent("builtin"),
 		Decls: make([]ast.Decl, 0, 128),
+	}
+	f.Decls <- &ast.GenDecl{
+		Tok: token.IMPORT,
+		Specs: []ast.Spec{
+			importSpec("gop/builtin"),
+			importSpec("gop/builtin/iox"),
+			importSpec("io"),
+			importSpec("os"),
+			importSpec("reflect"),
+		},
 	}
 	genDecls f
 	b := new(bytes.Buffer)

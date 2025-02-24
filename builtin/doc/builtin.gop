@@ -1,31 +1,39 @@
 package builtin
 
-// echo formats using the default formats for its operands and writes to standard output.
+import (
+	"gop/builtin"
+	"gop/builtin/iox"
+	"io"
+	"os"
+	"reflect"
+)
+
+// Echo formats using the default formats for its operands and writes to standard output.
 // Spaces are always added between operands and a newline is appended.
 // It returns the number of bytes written and any write error encountered.
 func Echo(a ...any) (n int, err error)
-func Blines(r io.Reader) BLineReader
+func Blines(r io.Reader) iox.BLineReader
 
-// type returns the reflection [Type] that represents the dynamic type of i.
-// If i is a nil interface value, type returns nil.
-func Type(i any) Type
-func NewRange(start, end, step int) *IntRange
+// Type returns the reflection [Type] that represents the dynamic type of i.
+// If i is a nil interface value, Type returns nil.
+func Type(i any) reflect.Type
+func NewRange(start, end, step int) *builtin.IntRange
 
-// print formats using the default formats for its operands and writes to standard output.
+// Print formats using the default formats for its operands and writes to standard output.
 // Spaces are added between operands when neither is a string.
 // It returns the number of bytes written and any write error encountered.
 func Print(a ...any) (n int, err error)
 
-// println formats using the default formats for its operands and writes to standard output.
+// Println formats using the default formats for its operands and writes to standard output.
 // Spaces are always added between operands and a newline is appended.
 // It returns the number of bytes written and any write error encountered.
 func Println(a ...any) (n int, err error)
 
-// printf formats according to a format specifier and writes to standard output.
+// Printf formats according to a format specifier and writes to standard output.
 // It returns the number of bytes written and any write error encountered.
 func Printf(format string, a ...any) (n int, err error)
 
-// errorf formats according to a format specifier and returns the string as a
+// Errorf formats according to a format specifier and returns the string as a
 // value that satisfies error.
 //
 // If the format specifier includes a %w verb with an error operand,
@@ -37,45 +45,45 @@ func Printf(format string, a ...any) (n int, err error)
 // the error interface. The %w verb is otherwise a synonym for %v.
 func Errorf(format string, a ...any) error
 
-// fprint formats using the default formats for its operands and writes to w.
+// Fprint formats using the default formats for its operands and writes to w.
 // Spaces are added between operands when neither is a string.
 // It returns the number of bytes written and any write error encountered.
 func Fprint(w io.Writer, a ...any) (n int, err error)
 
-// fprintln formats using the default formats for its operands and writes to w.
+// Fprintln formats using the default formats for its operands and writes to w.
 // Spaces are always added between operands and a newline is appended.
 // It returns the number of bytes written and any write error encountered.
 func Fprintln(w io.Writer, a ...any) (n int, err error)
 
-// fprintf formats according to a format specifier and writes to w.
+// Fprintf formats according to a format specifier and writes to w.
 // It returns the number of bytes written and any write error encountered.
 func Fprintf(w io.Writer, format string, a ...any) (n int, err error)
 
-// sprint formats using the default formats for its operands and returns the resulting string.
+// Sprint formats using the default formats for its operands and returns the resulting string.
 // Spaces are added between operands when neither is a string.
 func Sprint(a ...any) string
 
-// sprintln formats using the default formats for its operands and returns the resulting string.
+// Sprintln formats using the default formats for its operands and returns the resulting string.
 // Spaces are always added between operands and a newline is appended.
 func Sprintln(a ...any) string
 
-// sprintf formats according to a format specifier and returns the resulting string.
+// Sprintf formats according to a format specifier and returns the resulting string.
 func Sprintf(format string, a ...any) string
 
-// open opens the named file for reading. If successful, methods on
+// Open opens the named file for reading. If successful, methods on
 // the returned file can be used for reading; the associated file
 // descriptor has mode O_RDONLY.
 // If there is an error, it will be of type *PathError.
-func Open(name string) (*File, error)
+func Open(name string) (*os.File, error)
 
-// create creates or truncates the named file. If the file already exists,
+// Create creates or truncates the named file. If the file already exists,
 // it is truncated. If the file does not exist, it is created with mode 0666
 // (before umask). If successful, methods on the returned File can
 // be used for I/O; the associated file descriptor has mode O_RDWR.
 // If there is an error, it will be of type *PathError.
-func Create(name string) (*File, error)
-func Lines(r io.Reader) LineReader
-func (io.Reader) Gop_Enum() LineIter
+func Create(name string) (*os.File, error)
+func Lines(r io.Reader) iox.LineReader
+func (io.Reader) Gop_Enum() iox.LineIter
 
 // String converts the floating-point number f to a string,
 // according to the format fmt and precision prec. It rounds the

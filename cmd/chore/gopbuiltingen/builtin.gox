@@ -9,17 +9,19 @@ var (
 
 func genAST() *ast.FuncDecl {
 	ref := Fn.getAST()
+	newName := Name.capitalize
 	return {
-		Doc:  reference.docFor(ref.Doc, Fn.Name, Name),
-		Name: ast.newIdent(Name.capitalize),
-		Type: ref.Type,
+		Doc:  reference.docFor(ref.Doc, Fn.Name, newName),
+		Name: ast.newIdent(newName),
+		Type: reference.toType(ref.Type, Fn.Pkg),
 	}
 }
 
 func genMethodAST(methods []builtin) *ast.FuncDecl {
+	at := Fn.Pkg
 	ref := Fn.getAST()
-	mt, recvType := reference.toMethodType(ref.Type)
-	if Fn.Pkg == "" { // builtin
+	mt, recvType := reference.toMethodType(ref.Type, at)
+	if at == "" { // builtin
 		recvType = methods[methods.len-1].genAST().Type.Params.List[0].Type
 	}
 	return {

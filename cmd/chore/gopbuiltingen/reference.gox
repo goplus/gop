@@ -11,7 +11,14 @@ var (
 	Name string
 )
 
-func .toMethodType(t *ast.FuncType) (mt *ast.FuncType, recvType ast.Expr) {
+func .toType(t *ast.FuncType, at string) *ast.FuncType {
+	return {
+		Params:  t.Params,
+		Results: toParams(t.Results, at),
+	}
+}
+
+func .toMethodType(t *ast.FuncType, at string) (mt *ast.FuncType, recvType ast.Expr) {
 	list := t.Params.List
 	first := list[0]
 	recvType = first.Type
@@ -27,7 +34,7 @@ func .toMethodType(t *ast.FuncType) (mt *ast.FuncType, recvType ast.Expr) {
 	}
 	mt = {
 		Params:  {List: list},
-		Results: t.Results,
+		Results: toParams(t.Results, at),
 	}
 	return
 }
