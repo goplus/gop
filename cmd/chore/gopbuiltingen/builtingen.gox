@@ -6,18 +6,6 @@ import (
 	"gop/token"
 )
 
-type builtin struct {
-	Name string
-	Fn   struct {
-		Pkg  string
-		Name string
-	}
-}
-
-type builtinTI struct {
-	Methods []builtin
-}
-
 var (
 	Builtins []builtin
 	Types    []*builtinTI

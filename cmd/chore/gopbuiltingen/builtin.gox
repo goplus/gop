@@ -1,0 +1,7 @@
+var (
+	Name string
+	Fn   struct {
+		Pkg  string
+		Name string
+	}
+)
