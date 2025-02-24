@@ -119,6 +119,7 @@ func (this *Rect) Main() {
 	fmt.Println("Go+")
 }
 func main() {
+	new(Rect).Main()
 }
 `)
 	gopClTestEx(t, "Rect.gox", `
@@ -146,6 +147,7 @@ func (this *Rect) Main() {
 	fmt.Println("Go+")
 }
 func main() {
+	new(Rect).Main()
 }
 `)
 	gopClTestEx(t, "Rect.gox", `
@@ -173,6 +175,7 @@ func (this *Rect) Main() {
 	fmt.Println("Go+")
 }
 func main() {
+	new(Rect).Main()
 }
 `)
 	gopClTestEx(t, "Rect.gox", `
@@ -198,6 +201,7 @@ func (this *Rect) Main() {
 	fmt.Println("Go+")
 }
 func main() {
+	new(Rect).Main()
 }
 `)
 	gopClTestEx(t, "Rect.gox", `
@@ -223,6 +227,7 @@ func (this *Rect) Main() {
 	fmt.Println("Go+")
 }
 func main() {
+	new(Rect).Main()
 }
 `)
 }
