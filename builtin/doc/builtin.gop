@@ -1,7 +1,6 @@
 package builtin
 
 import (
-	"gop/builtin"
 	"gop/builtin/iox"
 	"io"
 	"os"
@@ -17,7 +16,6 @@ func Blines(r io.Reader) iox.BLineReader
 // Type returns the reflection [Type] that represents the dynamic type of i.
 // If i is a nil interface value, Type returns nil.
 func Type(i any) reflect.Type
-func NewRange(start, end, step int) *builtin.IntRange
 
 // Print formats using the default formats for its operands and writes to standard output.
 // Spaces are added between operands when neither is a string.
