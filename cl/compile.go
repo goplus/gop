@@ -342,6 +342,9 @@ type pkgCtx struct {
 	generics map[string]bool // generic type record
 	idents   []*ast.Ident    // toType ident recored
 	inInst   int             // toType in generic instance
+
+	goxMain      int // normal gox files with main func
+	goxMainClass string
 }
 
 type pkgImp struct {
@@ -595,7 +598,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 
 	// genMain = true if it is main package and no main func
 	var genMain bool
-	var gen func()
+	var mainClass string
 	if pkg.Name == "main" {
 		_, hasMain := ctx.syms["main"]
 		genMain = !hasMain
@@ -608,8 +611,12 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 	}
 
 	if genMain { // make classfile main func if need
-		if proj != nil && !multi { // only one project file
-			gen = gmxMainFunc(p, proj)
+		if proj != nil {
+			if !multi { // only one project file
+				mainClass = proj.gameClass
+			}
+		} else if ctx.goxMain == 1 {
+			mainClass = ctx.goxMainClass // main func in normal gox file
 		}
 	}
 
@@ -631,8 +638,8 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 	}
 	err = ctx.complete()
 
-	if gen != nil { // generate classfile main func
-		gen()
+	if mainClass != "" { // generate classfile main func
+		genMainFunc(p, mainClass)
 	} else if genMain && !conf.NoAutoGenMain { // generate empty main func
 		old, _ := p.SetCurFile(defaultGoFile, false)
 		p.NewFunc(nil, "main", nil, nil, false).BodyStart(p).End()
@@ -725,6 +732,10 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 			classType, _, _ = ClassNameAndExt(file)
 			if classType == "main" {
 				classType = "_main"
+			}
+			if f.ShadowEntry != nil {
+				parent.goxMainClass = classType
+				parent.goxMain++
 			}
 		} else {
 			c = parent.classes[f]
