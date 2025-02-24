@@ -38,7 +38,7 @@ func initBuiltinFns(builtin *types.Package, scope *types.Scope, pkg gogen.PkgRef
 	}
 }
 
-func initBuiltin(_ *gogen.Package, builtin *types.Package, os, fmt, ng, iox, reflect gogen.PkgRef) {
+func initBuiltin(_ *gogen.Package, builtin *types.Package, os, fmt, ng, iox, buil, reflect gogen.PkgRef) {
 	scope := builtin.Scope()
 	if ng.Types != nil {
 		typs := []string{"bigint", "bigrat", "bigfloat"}
@@ -71,6 +71,9 @@ func initBuiltin(_ *gogen.Package, builtin *types.Package, os, fmt, ng, iox, ref
 	if reflect.Types != nil {
 		scope.Insert(gogen.NewOverloadFunc(token.NoPos, builtin, "type", reflect.Ref("TypeOf")))
 	}
+	if buil.Types != nil {
+		scope.Insert(gogen.NewOverloadFunc(token.NoPos, builtin, "newRange", buil.Ref("NewRange__0")))
+	}
 	scope.Insert(types.NewTypeName(token.NoPos, builtin, "any", gogen.TyEmptyInterface))
 }
 
@@ -79,6 +82,7 @@ func newBuiltinDefault(pkg *gogen.Package, conf *gogen.Config) *types.Package {
 	fmt := pkg.TryImport("fmt")
 	os := pkg.TryImport("os")
 	reflect := pkg.TryImport("reflect")
+	buil := pkg.TryImport("github.com/goplus/gop/builtin")
 	ng := pkg.TryImport("github.com/goplus/gop/builtin/ng")
 	iox := pkg.TryImport("github.com/goplus/gop/builtin/iox")
 	strx := pkg.TryImport("github.com/qiniu/x/stringutil")
@@ -88,7 +92,7 @@ func newBuiltinDefault(pkg *gogen.Package, conf *gogen.Config) *types.Package {
 	if ng.Types != nil {
 		initMathBig(pkg, conf, ng)
 	}
-	initBuiltin(pkg, builtin, os, fmt, ng, iox, reflect)
+	initBuiltin(pkg, builtin, os, fmt, ng, iox, buil, reflect)
 	gogen.InitBuiltin(pkg, builtin, conf)
 	if strx.Types != nil {
 		ti := pkg.BuiltinTI(types.Typ[types.String])
