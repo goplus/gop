@@ -10,6 +10,28 @@ func importSpec(path string) *ast.ImportSpec {
 	}
 }
 
+func rmExargs(list []*ast.Field, exargs int) []*ast.Field {
+	if exargs == 0 {
+		return list
+	}
+	n := len(list)
+	ret := make([]*ast.Field, n)
+	for i, f <- list {
+		ret[i] = f
+	}
+	for n > 0 {
+		f := ret[n-1]
+		if c := len(f.Names); c > exargs {
+			f.Names = f.Names[:c-exargs]
+			break
+		} else {
+			exargs -= c
+		}
+		n--
+	}
+	return ret[:n]
+}
+
 func toParams(params *ast.FieldList, at string) *ast.FieldList {
 	if params == nil {
 		return nil
