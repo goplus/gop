@@ -61,10 +61,14 @@ func initBuiltinTIs(fn gopq.NodeSet) (tistr *builtinTI) {
 			if ref := fn.callExpr.one; ref.ok {
 				pkg := ref.fun.x.ident!
 				name := ref.arg(0).unquotedString!
-				aTI.Methods <- builtin{mthd, {pkg, name}}
+				exargs := 0
+				if ex := item.elt(2).compositeLit("bmExargs").one; ex.ok {
+					exargs = ex.eltLen!
+				}
+				aTI.Methods <- builtin{mthd, {pkg, name, exargs}}
 			} else {
 				name := fn.ident!
-				aTI.Methods <- builtin{mthd, {"", name}}
+				aTI.Methods <- builtin{mthd, {"", name, 0}}
 			}
 		}
 		Types <- aTI
@@ -85,9 +89,9 @@ func newBuiltinDefault(fn gopq.NodeSet, tistr *builtinTI) {
 			pkg := ref.fun.x.ident!
 			name := ref.arg(0).unquotedString!
 			if pkg == "strx" {
-				tistr.Methods <- builtin{mthd, {pkg, name}}
+				tistr.Methods <- builtin{mthd, {pkg, name, 0}}
 			} else {
-				aTI.Methods <- builtin{mthd, {pkg, name}}
+				aTI.Methods <- builtin{mthd, {pkg, name, 0}}
 			}
 		}
 		if len(aTI.Methods) > 0 {
@@ -104,13 +108,13 @@ func initBuiltin(fn gopq.NodeSet) {
 		ref := call.arg(3).callExpr.one
 		pkg := ref.fun.x.ident!
 		name := ref.arg(0).unquotedString!
-		Builtins <- builtin{built, {pkg, name}}
+		Builtins <- builtin{built, {pkg, name, 0}}
 	}
 	for call <- stmt.callExpr("initBuiltinFns") {
 		pkg := call.arg(2).ident!
 		builtins := call.arg(3).unquotedStringElts!
 		for built <- builtins {
-			Builtins <- builtin{built, {pkg, built.capitalize}}
+			Builtins <- builtin{built, {pkg, built.capitalize, 0}}
 		}
 	}
 }

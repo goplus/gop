@@ -107,7 +107,7 @@ func (io.Reader) Gop_Enum() iox.LineIter
 // zeros are removed).
 // The special precision -1 uses the smallest number of digits
 // necessary such that ParseFloat will return f exactly.
-func (float64) String(fmt byte, prec, bitSize int) string
+func (float64) String() string
 
 // String is equivalent to FormatInt(int64(i), 10).
 func (int) String() string
@@ -115,12 +115,12 @@ func (int) String() string
 // String returns the string representation of i in the given base,
 // for 2 <= base <= 36. The result uses the lower-case letters 'a' to 'z'
 // for digit values >= 10.
-func (int64) String(base int) string
+func (int64) String() string
 
 // String returns the string representation of i in the given base,
 // for 2 <= base <= 36. The result uses the lower-case letters 'a' to 'z'
 // for digit values >= 10.
-func (uint64) String(base int) string
+func (uint64) String() string
 
 // The len built-in function returns the length of v, according to its type:
 //
@@ -168,12 +168,12 @@ func (string) Int() (int, error)
 // appropriate bitSize and sign.
 //
 // [integer literals]: https://go.dev/ref/spec#Integer_literals
-func (string) Int64(base int, bitSize int) (i int64, err error)
+func (string) Int64() (i int64, err error)
 
 // Uint64 is like ParseInt but for unsigned numbers.
 //
 // A sign prefix is not permitted.
-func (string) Uint64(base int, bitSize int) (uint64, error)
+func (string) Uint64() (uint64, error)
 
 // Float converts the string s to a floating-point number
 // with the precision specified by bitSize: 32 for float32, or 64 for float64.
@@ -202,7 +202,7 @@ func (string) Uint64(base int, bitSize int) (uint64, error)
 // as their respective special floating point values. It ignores case when matching.
 //
 // [floating-point literals]: https://go.dev/ref/spec#Floating-point_literals
-func (string) Float(bitSize int) (float64, error)
+func (string) Float() (float64, error)
 
 // Index returns the index of the first instance of substr in s, or -1 if substr is not present in s.
 func (string) Index(substr string) int

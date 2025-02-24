@@ -76,6 +76,23 @@ func (p NodeSet) UnquotedStringElts__0() (ret []string, err error) {
 
 // -----------------------------------------------------------------------------
 
+func (p NodeSet) EltLen__1(exactly bool) (ret int, err error) {
+	item, err := p.CollectOne__1(exactly)
+	if err != nil {
+		return
+	}
+	if lit, ok := item.Obj().(*ast.CompositeLit); ok {
+		return len(lit.Elts), nil
+	}
+	return 0, ErrUnexpectedNode
+}
+
+func (p NodeSet) EltLen__0() (ret int, err error) {
+	return p.EltLen__1(false)
+}
+
+// -----------------------------------------------------------------------------
+
 func (p NodeSet) Ident__1(exactly bool) (ret string, err error) {
 	item, err := p.CollectOne__1(exactly)
 	if err != nil {

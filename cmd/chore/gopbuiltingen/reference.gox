@@ -7,8 +7,9 @@ import (
 )
 
 var (
-	Pkg  string
-	Name string
+	Pkg    string
+	Name   string
+	Exargs int
 )
 
 func .toType(t *ast.FuncType, at string) *ast.FuncType {
@@ -18,7 +19,7 @@ func .toType(t *ast.FuncType, at string) *ast.FuncType {
 	}
 }
 
-func .toMethodType(t *ast.FuncType, at string) (mt *ast.FuncType, recvType ast.Expr) {
+func .toMethodType(t *ast.FuncType, exargs int, at string) (mt *ast.FuncType, recvType ast.Expr) {
 	list := t.Params.List
 	first := list[0]
 	recvType = first.Type
@@ -33,7 +34,7 @@ func .toMethodType(t *ast.FuncType, at string) (mt *ast.FuncType, recvType ast.E
 		}
 	}
 	mt = {
-		Params:  {List: list},
+		Params:  {List: rmExargs(list, exargs)},
 		Results: toParams(t.Results, at),
 	}
 	return
