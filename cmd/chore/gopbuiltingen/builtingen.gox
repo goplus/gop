@@ -1,18 +1,11 @@
 import (
-	"encoding/json"
+	"bytes"
+	"go/ast"
+	"go/format"
 	"gop/ast/gopq"
-	"gop/env"
 	"gop/parser"
-	"gop/token"
+	"os"
 )
-
-type builtin struct {
-	Name string
-	Fn   struct {
-		Pkg  string
-		Name string
-	}
-}
 
 type builtinTI struct {
 	Methods []builtin
@@ -22,6 +15,29 @@ var (
 	Builtins []builtin
 	Types    []*builtinTI
 )
+
+func gen() []byte {
+	f := &ast.File{
+		Name:  ast.newIdent("builtin"),
+		Decls: make([]ast.Decl, 0, 128),
+	}
+	genDecls f
+	b := new(bytes.Buffer)
+	format.node! b, fset, f
+	return format.source(b.bytes)!
+}
+
+func genDecls(f *ast.File) {
+	for built <- Builtins {
+		f.Decls <- built.genAST()
+	}
+	for t <- Types {
+		mthds := t.Methods
+		for m <- mthds {
+			f.Decls <- m.genMethodAST(mthds)
+		}
+	}
+}
 
 func initBuiltinTIs(fn gopq.NodeSet) (tistr *builtinTI) {
 	ti := fn.body.any.assignStmt.rhs(0).x.compositeLit("BuiltinTI")
@@ -88,9 +104,6 @@ func initBuiltin(fn gopq.NodeSet) {
 	}
 }
 
-root := env.GOPROOT()
-fset := token.newFileSet
-
 fns := gopq.fromFile(fset, "${root}/../gogen/builtin.go", nil, parser.ParseComments)!.funcs
 tistr := initBuiltinTIs(fns.funcDecl("initBuiltinTIs").one)
 
@@ -98,4 +111,6 @@ fns = gopq.fromFile(fset, "${root}/cl/builtin.go", nil, parser.ParseComments)!.f
 initBuiltin fns.funcDecl("initBuiltin").one
 newBuiltinDefault fns.funcDecl("newBuiltinDefault").one, tistr
 
-echo string(json.marshalIndent(this, "", "  ")!)
+b := gen()
+os.Stdout.write b
+os.writeFile "${root}/builtin/doc/builtin.gop", b, 0777

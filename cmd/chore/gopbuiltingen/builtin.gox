@@ -1,0 +1,31 @@
+import (
+	"go/ast"
+)
+
+var (
+	Name string
+	Fn   reference
+)
+
+func genAST() *ast.FuncDecl {
+	ref := Fn.getAST()
+	return {
+		Doc:  reference.docFor(ref.Doc, Fn.Name, Name),
+		Name: ast.newIdent(Name.capitalize),
+		Type: ref.Type,
+	}
+}
+
+func genMethodAST(methods []builtin) *ast.FuncDecl {
+	ref := Fn.getAST()
+	mt, recvType := reference.toMethodType(ref.Type)
+	if Fn.Pkg == "" { // builtin
+		recvType = methods[methods.len-1].genAST().Type.Params.List[0].Type
+	}
+	return {
+		Doc:  reference.docFor(ref.Doc, Fn.Name, Name),
+		Name: ast.newIdent(Name),
+		Type: mt,
+		Recv: {List: {{Type: recvType}}},
+	}
+}
