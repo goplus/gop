@@ -34,12 +34,17 @@ const (
 )
 
 var (
-	// ErrNotFound - not found
-	ErrNotFound = syscall.ENOENT
 	// ErrBreak - break
 	ErrBreak = syscall.ELOOP
+
+	// ErrNotFound - not found
+	ErrNotFound = errors.New("not found")
+
 	// ErrTooManyNodes - too may nodes
 	ErrTooManyNodes = errors.New("too many nodes")
+
+	// ErrUnexpectedNode - unexpected node
+	ErrUnexpectedNode = errors.New("unexpected node")
 )
 
 // Node - node interface
@@ -417,6 +422,8 @@ func (p *xNodes) ForEach(filter func(node Node) error) error {
 			switch expr := node.Expr.(type) {
 			case *ast.SelectorExpr:
 				return filter(&astExpr{expr.X})
+			case *ast.UnaryExpr:
+				return filter(&astExpr{expr.X})
 			}
 		}
 		return ErrNotFound
@@ -463,6 +470,7 @@ func (p NodeSet) Fun() NodeSet {
 type argNodes struct {
 	data NodeEnum
 	i    int
+	varg bool
 }
 
 func (p *argNodes) ForEach(filter func(node Node) error) error {
@@ -471,7 +479,17 @@ func (p *argNodes) ForEach(filter func(node Node) error) error {
 		case *astExpr:
 			switch expr := node.Expr.(type) {
 			case *ast.CallExpr:
-				return filter(&astExpr{expr.Args[p.i]})
+				args := expr.Args
+				if p.varg {
+					for i, n := p.i, len(args); i < n; i++ {
+						if err := filter(&astExpr{args[i]}); err == ErrBreak {
+							return err
+						}
+					}
+					return nil
+				} else {
+					return filter(&astExpr{args[p.i]})
+				}
 			}
 		}
 		return ErrNotFound
@@ -483,7 +501,73 @@ func (p NodeSet) Arg(i int) NodeSet {
 	if p.Err != nil {
 		return p
 	}
-	return NodeSet{Data: &argNodes{p.Data, i}}
+	return NodeSet{Data: &argNodes{p.Data, i, false}}
+}
+
+// Varg returns args[i:] node set.
+func (p NodeSet) Varg(i int) NodeSet {
+	if p.Err != nil {
+		return p
+	}
+	return NodeSet{Data: &argNodes{p.Data, i, true}}
+}
+
+// -----------------------------------------------------------------------------
+
+type ieltNodes struct {
+	data NodeEnum
+	i    int
+}
+
+func (p *ieltNodes) ForEach(filter func(node Node) error) error {
+	return p.data.ForEach(func(node Node) error {
+		switch node := node.(type) {
+		case *astExpr:
+			switch expr := node.Expr.(type) {
+			case *ast.CompositeLit:
+				return filter(&astExpr{expr.Elts[p.i]})
+			}
+		}
+		return ErrNotFound
+	})
+}
+
+// Elt returns elts[i] node set.
+func (p NodeSet) Elt__0(i int) NodeSet {
+	if p.Err != nil {
+		return p
+	}
+	return NodeSet{Data: &ieltNodes{p.Data, i}}
+}
+
+// -----------------------------------------------------------------------------
+
+type eltNodes struct {
+	data NodeEnum
+	name string
+}
+
+func (p *eltNodes) ForEach(filter func(node Node) error) error {
+	return p.data.ForEach(func(node Node) error {
+		switch node := node.(type) {
+		case *astExpr:
+			switch expr := node.Expr.(type) {
+			case *ast.CompositeLit:
+				if elt, ok := getElt(expr.Elts, p.name); ok {
+					return filter(&astExpr{elt})
+				}
+			}
+		}
+		return ErrNotFound
+	})
+}
+
+// Elt returns elts[name] node set.
+func (p NodeSet) Elt__1(name string) NodeSet {
+	if p.Err != nil {
+		return p
+	}
+	return NodeSet{Data: &eltNodes{p.Data, name}}
 }
 
 // -----------------------------------------------------------------------------

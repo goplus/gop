@@ -174,28 +174,3 @@ func (p *astExpr) Obj() interface{} {
 }
 
 // -----------------------------------------------------------------------------
-
-// NameOf returns name of an ast node.
-func NameOf(node Node) string {
-	return getName(node.Obj())
-}
-
-func getName(v interface{}) string {
-	switch v := v.(type) {
-	case *ast.FuncDecl:
-		return v.Name.Name
-	case *ast.ImportSpec:
-		n := v.Name
-		if n == nil {
-			return ""
-		}
-		return n.Name
-	case *ast.Ident:
-		return v.Name
-	case *ast.SelectorExpr:
-		return getName(v.X) + "." + v.Sel.Name
-	}
-	panic("node doesn't contain the `name` property")
-}
-
-// -----------------------------------------------------------------------------
