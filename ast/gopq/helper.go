@@ -25,6 +25,13 @@ import (
 
 // -----------------------------------------------------------------------------
 
+// Funcs returns all `*ast.FuncDecl` nodes.
+func (p NodeSet) Funcs() NodeSet {
+	return p.Any().FuncDecl__0().Cache()
+}
+
+// -----------------------------------------------------------------------------
+
 func (p NodeSet) UnquotedString__1(exactly bool) (ret string, err error) {
 	item, err := p.CollectOne__1(exactly)
 	if err != nil {
@@ -101,10 +108,10 @@ func getElt(elts []ast.Expr, name string) (ast.Expr, bool) {
 
 // NameOf returns name of an ast node.
 func NameOf(node Node) string {
-	return getName(node.Obj())
+	return getName(node.Obj(), false)
 }
 
-func getName(v interface{}) string {
+func getName(v interface{}, useEmpty bool) string {
 	switch v := v.(type) {
 	case *ast.FuncDecl:
 		return v.Name.Name
@@ -117,7 +124,10 @@ func getName(v interface{}) string {
 	case *ast.Ident:
 		return v.Name
 	case *ast.SelectorExpr:
-		return getName(v.X) + "." + v.Sel.Name
+		return getName(v.X, useEmpty) + "." + v.Sel.Name
+	}
+	if useEmpty {
+		return ""
 	}
 	panic("node doesn't contain the `name` property")
 }
