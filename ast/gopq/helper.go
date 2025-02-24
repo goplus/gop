@@ -86,16 +86,40 @@ func (p NodeSet) Ident__0() (ret string, err error) {
 
 // -----------------------------------------------------------------------------
 
-/*
-// VarSpec returns variables *ast.ValueSpec node set.
-func (p NodeSet) VarSpec() NodeSet {
-	return p.GenDecl(token.VAR).Child()
+func getElt(elts []ast.Expr, name string) (ast.Expr, bool) {
+	for _, elt := range elts {
+		if kv, ok := elt.(*ast.KeyValueExpr); ok {
+			if ident, ok := kv.Key.(*ast.Ident); ok && ident.Name == name {
+				return kv.Value, true
+			}
+		}
+	}
+	return nil, false
 }
 
-// ConstSpec returns constants *ast.ValueSpec node set.
-func (p NodeSet) ConstSpec() NodeSet {
-	return p.GenDecl(token.CONST).Child()
+// -----------------------------------------------------------------------------
+
+// NameOf returns name of an ast node.
+func NameOf(node Node) string {
+	return getName(node.Obj())
 }
-*/
+
+func getName(v interface{}) string {
+	switch v := v.(type) {
+	case *ast.FuncDecl:
+		return v.Name.Name
+	case *ast.ImportSpec:
+		n := v.Name
+		if n == nil {
+			return ""
+		}
+		return n.Name
+	case *ast.Ident:
+		return v.Name
+	case *ast.SelectorExpr:
+		return getName(v.X) + "." + v.Sel.Name
+	}
+	panic("node doesn't contain the `name` property")
+}
 
 // -----------------------------------------------------------------------------

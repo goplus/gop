@@ -5,8 +5,19 @@ import (
 	"gop/token"
 )
 
-func collect(fn gopq.NodeSet) {
-	stmt := fn.body.any.exprStmt.cache.x
+func newBuiltinDefault(fn gopq.NodeSet) {
+	addMthds := fn.body.any.exprStmt.x.callExpr("ti.AddMethods").cache
+	for arg <- addMthds.varg(0).x {
+		mthd := arg.elt("Name").unquotedString!
+		ref := arg.elt("Fn").callExpr.one
+		pkg := ref.fun.x.ident!
+		name := ref.arg(0).unquotedString!
+		echo "method ${mthd} => ${pkg}.${name}"
+	}
+}
+
+func initBuiltin(fn gopq.NodeSet) {
+	stmt := fn.body.any.exprStmt.x.cache
 	item := stmt.callExpr("scope.Insert").arg(0).cache
 	for call <- item.callExpr("gogen.NewOverloadFunc") {
 		builtin := call.arg(2).unquotedString!
@@ -27,4 +38,6 @@ func collect(fn gopq.NodeSet) {
 root := env.GOPROOT()
 fset := token.newFileSet
 doc := gopq.fromFile(fset, "${root}/cl/builtin.go", nil, parser.ParseComments)!
-collect doc.any.funcDecl("initBuiltin").one
+decl := doc.any.funcDecl.cache
+initBuiltin decl.funcDecl("initBuiltin").one
+newBuiltinDefault decl.funcDecl("newBuiltinDefault").one
