@@ -1,0 +1,584 @@
+{
+  "Builtins": [
+    {
+      "Name": "echo",
+      "Fn": {
+        "Pkg": "fmt",
+        "Name": "Println"
+      }
+    },
+    {
+      "Name": "blines",
+      "Fn": {
+        "Pkg": "iox",
+        "Name": "BLines"
+      }
+    },
+    {
+      "Name": "type",
+      "Fn": {
+        "Pkg": "reflect",
+        "Name": "TypeOf"
+      }
+    },
+    {
+      "Name": "newRange",
+      "Fn": {
+        "Pkg": "buil",
+        "Name": "NewRange__0"
+      }
+    },
+    {
+      "Name": "print",
+      "Fn": {
+        "Pkg": "fmt",
+        "Name": "Print"
+      }
+    },
+    {
+      "Name": "println",
+      "Fn": {
+        "Pkg": "fmt",
+        "Name": "Println"
+      }
+    },
+    {
+      "Name": "printf",
+      "Fn": {
+        "Pkg": "fmt",
+        "Name": "Printf"
+      }
+    },
+    {
+      "Name": "errorf",
+      "Fn": {
+        "Pkg": "fmt",
+        "Name": "Errorf"
+      }
+    },
+    {
+      "Name": "fprint",
+      "Fn": {
+        "Pkg": "fmt",
+        "Name": "Fprint"
+      }
+    },
+    {
+      "Name": "fprintln",
+      "Fn": {
+        "Pkg": "fmt",
+        "Name": "Fprintln"
+      }
+    },
+    {
+      "Name": "fprintf",
+      "Fn": {
+        "Pkg": "fmt",
+        "Name": "Fprintf"
+      }
+    },
+    {
+      "Name": "sprint",
+      "Fn": {
+        "Pkg": "fmt",
+        "Name": "Sprint"
+      }
+    },
+    {
+      "Name": "sprintln",
+      "Fn": {
+        "Pkg": "fmt",
+        "Name": "Sprintln"
+      }
+    },
+    {
+      "Name": "sprintf",
+      "Fn": {
+        "Pkg": "fmt",
+        "Name": "Sprintf"
+      }
+    },
+    {
+      "Name": "open",
+      "Fn": {
+        "Pkg": "os",
+        "Name": "Open"
+      }
+    },
+    {
+      "Name": "create",
+      "Fn": {
+        "Pkg": "os",
+        "Name": "Create"
+      }
+    },
+    {
+      "Name": "lines",
+      "Fn": {
+        "Pkg": "iox",
+        "Name": "Lines"
+      }
+    }
+  ],
+  "Types": [
+    {
+      "Methods": [
+        {
+          "Name": "Gop_Enum",
+          "Fn": {
+            "Pkg": "iox",
+            "Name": "EnumLines"
+          }
+        }
+      ]
+    },
+    {
+      "Methods": [
+        {
+          "Name": "String",
+          "Fn": {
+            "Pkg": "strconv",
+            "Name": "FormatFloat"
+          }
+        }
+      ]
+    },
+    {
+      "Methods": [
+        {
+          "Name": "String",
+          "Fn": {
+            "Pkg": "strconv",
+            "Name": "Itoa"
+          }
+        }
+      ]
+    },
+    {
+      "Methods": [
+        {
+          "Name": "String",
+          "Fn": {
+            "Pkg": "strconv",
+            "Name": "FormatInt"
+          }
+        }
+      ]
+    },
+    {
+      "Methods": [
+        {
+          "Name": "String",
+          "Fn": {
+            "Pkg": "strconv",
+            "Name": "FormatUint"
+          }
+        }
+      ]
+    },
+    {
+      "Methods": [
+        {
+          "Name": "Len",
+          "Fn": {
+            "Pkg": "",
+            "Name": "btoLen"
+          }
+        },
+        {
+          "Name": "Count",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "Count"
+          }
+        },
+        {
+          "Name": "Int",
+          "Fn": {
+            "Pkg": "strconv",
+            "Name": "Atoi"
+          }
+        },
+        {
+          "Name": "Int64",
+          "Fn": {
+            "Pkg": "strconv",
+            "Name": "ParseInt"
+          }
+        },
+        {
+          "Name": "Uint64",
+          "Fn": {
+            "Pkg": "strconv",
+            "Name": "ParseUint"
+          }
+        },
+        {
+          "Name": "Float",
+          "Fn": {
+            "Pkg": "strconv",
+            "Name": "ParseFloat"
+          }
+        },
+        {
+          "Name": "Index",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "Index"
+          }
+        },
+        {
+          "Name": "IndexAny",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "IndexAny"
+          }
+        },
+        {
+          "Name": "IndexByte",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "IndexByte"
+          }
+        },
+        {
+          "Name": "IndexRune",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "IndexRune"
+          }
+        },
+        {
+          "Name": "LastIndex",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "LastIndex"
+          }
+        },
+        {
+          "Name": "LastIndexAny",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "LastIndexAny"
+          }
+        },
+        {
+          "Name": "LastIndexByte",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "LastIndexByte"
+          }
+        },
+        {
+          "Name": "Contains",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "Contains"
+          }
+        },
+        {
+          "Name": "ContainsAny",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "ContainsAny"
+          }
+        },
+        {
+          "Name": "ContainsRune",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "ContainsRune"
+          }
+        },
+        {
+          "Name": "Compare",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "Compare"
+          }
+        },
+        {
+          "Name": "EqualFold",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "EqualFold"
+          }
+        },
+        {
+          "Name": "HasPrefix",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "HasPrefix"
+          }
+        },
+        {
+          "Name": "HasSuffix",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "HasSuffix"
+          }
+        },
+        {
+          "Name": "Quote",
+          "Fn": {
+            "Pkg": "strconv",
+            "Name": "Quote"
+          }
+        },
+        {
+          "Name": "Unquote",
+          "Fn": {
+            "Pkg": "strconv",
+            "Name": "Unquote"
+          }
+        },
+        {
+          "Name": "ToTitle",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "ToTitle"
+          }
+        },
+        {
+          "Name": "ToUpper",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "ToUpper"
+          }
+        },
+        {
+          "Name": "ToLower",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "ToLower"
+          }
+        },
+        {
+          "Name": "Fields",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "Fields"
+          }
+        },
+        {
+          "Name": "Repeat",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "Repeat"
+          }
+        },
+        {
+          "Name": "Split",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "Split"
+          }
+        },
+        {
+          "Name": "SplitAfter",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "SplitAfter"
+          }
+        },
+        {
+          "Name": "SplitN",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "SplitN"
+          }
+        },
+        {
+          "Name": "SplitAfterN",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "SplitAfterN"
+          }
+        },
+        {
+          "Name": "Replace",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "Replace"
+          }
+        },
+        {
+          "Name": "ReplaceAll",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "ReplaceAll"
+          }
+        },
+        {
+          "Name": "Trim",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "Trim"
+          }
+        },
+        {
+          "Name": "TrimSpace",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "TrimSpace"
+          }
+        },
+        {
+          "Name": "TrimLeft",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "TrimLeft"
+          }
+        },
+        {
+          "Name": "TrimRight",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "TrimRight"
+          }
+        },
+        {
+          "Name": "TrimPrefix",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "TrimPrefix"
+          }
+        },
+        {
+          "Name": "TrimSuffix",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "TrimSuffix"
+          }
+        },
+        {
+          "Name": "Capitalize",
+          "Fn": {
+            "Pkg": "strx",
+            "Name": "Capitalize"
+          }
+        }
+      ]
+    },
+    {
+      "Methods": [
+        {
+          "Name": "Len",
+          "Fn": {
+            "Pkg": "",
+            "Name": "btoLen"
+          }
+        },
+        {
+          "Name": "Cap",
+          "Fn": {
+            "Pkg": "",
+            "Name": "btoCap"
+          }
+        },
+        {
+          "Name": "Join",
+          "Fn": {
+            "Pkg": "strings",
+            "Name": "Join"
+          }
+        }
+      ]
+    },
+    {
+      "Methods": [
+        {
+          "Name": "Capitalize",
+          "Fn": {
+            "Pkg": "stringslice",
+            "Name": "Capitalize"
+          }
+        },
+        {
+          "Name": "ToTitle",
+          "Fn": {
+            "Pkg": "stringslice",
+            "Name": "ToTitle"
+          }
+        },
+        {
+          "Name": "ToUpper",
+          "Fn": {
+            "Pkg": "stringslice",
+            "Name": "ToUpper"
+          }
+        },
+        {
+          "Name": "ToLower",
+          "Fn": {
+            "Pkg": "stringslice",
+            "Name": "ToLower"
+          }
+        },
+        {
+          "Name": "Repeat",
+          "Fn": {
+            "Pkg": "stringslice",
+            "Name": "Repeat"
+          }
+        },
+        {
+          "Name": "Replace",
+          "Fn": {
+            "Pkg": "stringslice",
+            "Name": "Replace"
+          }
+        },
+        {
+          "Name": "ReplaceAll",
+          "Fn": {
+            "Pkg": "stringslice",
+            "Name": "ReplaceAll"
+          }
+        },
+        {
+          "Name": "Trim",
+          "Fn": {
+            "Pkg": "stringslice",
+            "Name": "Trim"
+          }
+        },
+        {
+          "Name": "TrimSpace",
+          "Fn": {
+            "Pkg": "stringslice",
+            "Name": "TrimSpace"
+          }
+        },
+        {
+          "Name": "TrimLeft",
+          "Fn": {
+            "Pkg": "stringslice",
+            "Name": "TrimLeft"
+          }
+        },
+        {
+          "Name": "TrimRight",
+          "Fn": {
+            "Pkg": "stringslice",
+            "Name": "TrimRight"
+          }
+        },
+        {
+          "Name": "TrimPrefix",
+          "Fn": {
+            "Pkg": "stringslice",
+            "Name": "TrimPrefix"
+          }
+        },
+        {
+          "Name": "TrimSuffix",
+          "Fn": {
+            "Pkg": "stringslice",
+            "Name": "TrimSuffix"
+          }
+        }
+      ]
+    }
+  ]
+}
