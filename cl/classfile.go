@@ -394,14 +394,12 @@ func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {
 	})
 }
 
-func gmxMainFunc(pkg *gogen.Package, proj *gmxProject) func() {
-	return func() {
-		if o := pkg.TryRef(proj.gameClass); o != nil {
-			// new(gameClass).Main()
-			new := pkg.Builtin().Ref("new")
-			pkg.NewFunc(nil, "main", nil, nil, false).
-				BodyStart(pkg).Val(new).Val(o).Call(1).MemberVal("Main").Call(0).EndStmt().End()
-		}
+func genMainFunc(pkg *gogen.Package, gameClass string) {
+	if o := pkg.TryRef(gameClass); o != nil {
+		// new(gameClass).Main()
+		new := pkg.Builtin().Ref("new")
+		pkg.NewFunc(nil, "main", nil, nil, false).
+			BodyStart(pkg).Val(new).Val(o).Call(1).MemberVal("Main").Call(0).EndStmt().End()
 	}
 }
 
