@@ -83,7 +83,9 @@ func Create(name string) (*os.File, error)
 func Lines(r io.Reader) iox.LineReader
 func (r io.Reader) Gop_Enum() iox.LineIter
 
-// String converts the floating-point number f to a string,
+// String is equivalent to strconv.FormatFloat(f, 'g', -1, 64)
+//
+// FormatFloat converts the floating-point number f to a string,
 // according to the format fmt and precision prec. It rounds the
 // result assuming that the original was obtained from a floating-point
 // value of bitSize bits (32 for float32, 64 for float64).
@@ -110,12 +112,16 @@ func (f float64) String() string
 // String is equivalent to FormatInt(int64(i), 10).
 func (i int) String() string
 
-// String returns the string representation of i in the given base,
+// String is equivalent to strconv.FormatInt(i, 10)
+//
+// FormatInt returns the string representation of i in the given base,
 // for 2 <= base <= 36. The result uses the lower-case letters 'a' to 'z'
 // for digit values >= 10.
 func (i int64) String() string
 
-// String returns the string representation of i in the given base,
+// String is equivalent to strconv.FormatUint(u, 10)
+//
+// FormatUint returns the string representation of i in the given base,
 // for 2 <= base <= 36. The result uses the lower-case letters 'a' to 'z'
 // for digit values >= 10.
 func (u uint64) String() string
@@ -141,7 +147,9 @@ func (s string) Count(substr string) int
 // Int is equivalent to ParseInt(s, 10, 0), converted to type int.
 func (s string) Int() (int, error)
 
-// Int64 interprets a string s in the given base (0, 2 to 36) and
+// Int64 is equivalent to strconv.ParseInt(s, 10, 64)
+//
+// ParseInt interprets a string s in the given base (0, 2 to 36) and
 // bit size (0 to 64) and returns the corresponding value i.
 //
 // The string may begin with a leading sign: "+" or "-".
@@ -157,7 +165,7 @@ func (s string) Int() (int, error)
 // correspond to int, int8, int16, int32, and int64.
 // If bitSize is below 0 or above 64, an error is returned.
 //
-// The errors that Int64 returns have concrete type *NumError
+// The errors that ParseInt returns have concrete type *NumError
 // and include err.Num = s. If s is empty or contains invalid
 // digits, err.Err = ErrSyntax and the returned value is 0;
 // if the value corresponding to s cannot be represented by a
@@ -168,35 +176,39 @@ func (s string) Int() (int, error)
 // [integer literals]: https://go.dev/ref/spec#Integer_literals
 func (s string) Int64() (i int64, err error)
 
-// Uint64 is like ParseInt but for unsigned numbers.
+// Uint64 is equivalent to strconv.ParseUint(s, 10, 64)
+//
+// ParseUint is like ParseInt but for unsigned numbers.
 //
 // A sign prefix is not permitted.
 func (s string) Uint64() (uint64, error)
 
-// Float converts the string s to a floating-point number
+// Float is equivalent to strconv.ParseFloat(s, 64)
+//
+// ParseFloat converts the string s to a floating-point number
 // with the precision specified by bitSize: 32 for float32, or 64 for float64.
 // When bitSize=32, the result still has type float64, but it will be
 // convertible to float32 without changing its value.
 //
-// Float accepts decimal and hexadecimal floating-point numbers
+// ParseFloat accepts decimal and hexadecimal floating-point numbers
 // as defined by the Go syntax for [floating-point literals].
 // If s is well-formed and near a valid floating-point number,
-// Float returns the nearest floating-point number rounded
+// ParseFloat returns the nearest floating-point number rounded
 // using IEEE754 unbiased rounding.
 // (Parsing a hexadecimal floating-point value only rounds when
 // there are more bits in the hexadecimal representation than
 // will fit in the mantissa.)
 //
-// The errors that Float returns have concrete type *NumError
+// The errors that ParseFloat returns have concrete type *NumError
 // and include err.Num = s.
 //
-// If s is not syntactically well-formed, Float returns err.Err = ErrSyntax.
+// If s is not syntactically well-formed, ParseFloat returns err.Err = ErrSyntax.
 //
 // If s is syntactically well-formed but is more than 1/2 ULP
 // away from the largest floating point number of the given size,
-// Float returns f = ±Inf, err.Err = ErrRange.
+// ParseFloat returns f = ±Inf, err.Err = ErrRange.
 //
-// Float recognizes the string "NaN", and the (possibly signed) strings "Inf" and "Infinity"
+// ParseFloat recognizes the string "NaN", and the (possibly signed) strings "Inf" and "Infinity"
 // as their respective special floating point values. It ignores case when matching.
 //
 // [floating-point literals]: https://go.dev/ref/spec#Floating-point_literals
@@ -345,8 +357,13 @@ func (s string) SplitN(sep string, n int) []string
 // as described in the documentation for SplitAfter.
 func (s string) SplitAfterN(sep string, n int) []string
 
-// Replace returns a copy of s with all replacements performed.
-func (s string) Replace() string
+// Replace returns a copy of the string s with the first n
+// non-overlapping instances of old replaced by new.
+// If old is empty, it matches at the beginning of the string
+// and after each UTF-8 sequence, yielding up to k+1 replacements
+// for a k-rune string.
+// If n < 0, there is no limit on the number of replacements.
+func (s string) Replace(old, new string, n int) string
 
 // ReplaceAll returns a copy of the string s with all
 // non-overlapping instances of old replaced by new.
