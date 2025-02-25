@@ -6,10 +6,15 @@ import (
 	"runtime"
 )
 
+type exargs struct {
+	N    int
+	Code string
+}
+
 var (
 	Pkg    string
 	Name   string
-	Exargs int
+	Exargs *exargs
 )
 
 func .toType(t *ast.FuncType, at string) *ast.FuncType {
@@ -19,7 +24,7 @@ func .toType(t *ast.FuncType, at string) *ast.FuncType {
 	}
 }
 
-func .toMethodType(t *ast.FuncType, exargs int, at string) (mt *ast.FuncType, recvType ast.Expr) {
+func .toMethodType(t *ast.FuncType, ex *exargs, at string) (mt *ast.FuncType, recvType ast.Expr) {
 	list := t.Params.List
 	first := list[0]
 	recvType = first.Type
@@ -34,7 +39,7 @@ func .toMethodType(t *ast.FuncType, exargs int, at string) (mt *ast.FuncType, re
 		}
 	}
 	mt = {
-		Params:  {List: rmExargs(list, exargs)},
+		Params:  {List: rmExargs(list, ex)},
 		Results: toParams(t.Results, at),
 	}
 	return

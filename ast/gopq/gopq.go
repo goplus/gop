@@ -317,8 +317,18 @@ func (p NodeSet) One() NodeSet {
 }
 
 // One creates a node set that only contains a signle node.
-func One(node Node) NodeSet {
+func One__0(node Node) NodeSet {
 	return NodeSet{Data: &oneNode{node}}
+}
+
+// One creates a node set that only contains a signle node.
+func One__1(f *ast.File) NodeSet {
+	return NodeSet{Data: &oneNode{astFile{f}}}
+}
+
+// One creates a node set that only contains a signle node.
+func One__2(pkg *ast.Package) NodeSet {
+	return NodeSet{Data: &oneNode{astPackage{pkg}}}
 }
 
 // -----------------------------------------------------------------------------

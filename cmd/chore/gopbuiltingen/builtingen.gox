@@ -2,7 +2,9 @@ import (
 	"bytes"
 	"go/ast"
 	"go/format"
+	"go/parser"
 	"go/token"
+	gopast "gop/ast"
 	"gop/ast/gopq"
 	"gop/parser"
 	"os"
@@ -49,7 +51,7 @@ func genDecls(f *ast.File) {
 	}
 }
 
-func initBuiltinTIs(fn gopq.NodeSet) (tistr *builtinTI) {
+func initBuiltinTIs(fn gopq.NodeSet, f *gopast.File) (tistr *builtinTI) {
 	ti := fn.body.any.assignStmt.rhs(0).x.compositeLit("BuiltinTI")
 	methods := ti.elt("methods").cache
 	for method <- methods {
@@ -60,14 +62,16 @@ func initBuiltinTIs(fn gopq.NodeSet) (tistr *builtinTI) {
 			if ref := fn.callExpr.one; ref.ok {
 				pkg := ref.fun.x.ident!
 				name := ref.arg(0).unquotedString!
-				exargs := 0
-				if ex := item.elt(2).compositeLit("bmExargs").one; ex.ok {
-					exargs = ex.eltLen!
+				var ex *exargs
+				if e := item.elt(2).compositeLit("bmExargs").one; e.ok {
+					pos := e.positions!
+					code := gopq.codeOf(fset, f, pos[2]+1, pos[3])
+					ex = &exargs{e.eltLen!, code}
 				}
-				aTI.Methods <- builtin{mthd, {pkg, name, exargs}}
+				aTI.Methods <- builtin{mthd, {pkg, name, ex}}
 			} else {
 				name := fn.ident!
-				aTI.Methods <- builtin{mthd, {"", name, 0}}
+				aTI.Methods <- builtin{mthd, {"", name, nil}}
 			}
 		}
 		Types <- aTI
@@ -88,9 +92,9 @@ func newBuiltinDefault(fn gopq.NodeSet, tistr *builtinTI) {
 			pkg := ref.fun.x.ident!
 			name := ref.arg(0).unquotedString!
 			if pkg == "strx" {
-				tistr.Methods <- builtin{mthd, {pkg, name, 0}}
+				tistr.Methods <- builtin{mthd, {pkg, name, nil}}
 			} else {
-				aTI.Methods <- builtin{mthd, {pkg, name, 0}}
+				aTI.Methods <- builtin{mthd, {pkg, name, nil}}
 			}
 		}
 		if len(aTI.Methods) > 0 {
@@ -108,25 +112,27 @@ func initBuiltin(fn gopq.NodeSet) {
 			ref := call.arg(3).callExpr.one
 			pkg := ref.fun.x.ident!
 			name := ref.arg(0).unquotedString!
-			Builtins <- builtin{built, {pkg, name, 0}}
+			Builtins <- builtin{built, {pkg, name, nil}}
 		}
 	}
 	for call <- stmt.callExpr("initBuiltinFns") {
 		pkg := call.arg(2).ident!
 		builtins := call.arg(3).unquotedStringElts!
 		for built <- builtins {
-			Builtins <- builtin{built, {pkg, built.capitalize, 0}}
+			Builtins <- builtin{built, {pkg, built.capitalize, nil}}
 		}
 	}
 }
 
-fns := gopq.fromFile(fset, "${root}/../gogen/builtin.go", nil, parser.ParseComments)!.funcs
-tistr := initBuiltinTIs(fns.funcDecl("initBuiltinTIs").one)
+f := parser.parseFile(fset, "${root}/../gogen/builtin.go", nil, parser.ParseComments)!
+fns := gopq.one(f).funcs
+tistr := initBuiltinTIs(fns.funcDecl("initBuiltinTIs").one, f)
 
 fns = gopq.fromFile(fset, "${root}/cl/builtin.go", nil, parser.ParseComments)!.funcs
 initBuiltin fns.funcDecl("initBuiltin").one
 newBuiltinDefault fns.funcDecl("newBuiltinDefault").one, tistr
 
 b := gen()
-os.Stdout.write b
 os.writeFile "${root}/builtin/doc/builtin.gop", b, 0777
+
+// os.Stdout.write b
