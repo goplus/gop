@@ -76,6 +76,26 @@ func (p NodeSet) UnquotedStringElts__0() (ret []string, err error) {
 
 // -----------------------------------------------------------------------------
 
+func (p NodeSet) Positions__1(exactly bool) (ret []token.Pos, err error) {
+	item, err := p.CollectOne__1(exactly)
+	if err != nil {
+		return
+	}
+	switch o := item.Obj().(type) {
+	case *ast.CompositeLit:
+		return []token.Pos{o.Pos(), o.End(), o.Lbrace, o.Rbrace}, nil
+	case ast.Node:
+		return []token.Pos{o.Pos(), o.End()}, nil
+	}
+	return nil, ErrUnexpectedNode
+}
+
+func (p NodeSet) Positions__0() (ret []token.Pos, err error) {
+	return p.Positions__1(false)
+}
+
+// -----------------------------------------------------------------------------
+
 func (p NodeSet) EltLen__1(exactly bool) (ret int, err error) {
 	item, err := p.CollectOne__1(exactly)
 	if err != nil {
@@ -147,6 +167,14 @@ func getName(v interface{}, useEmpty bool) string {
 		return ""
 	}
 	panic("node doesn't contain the `name` property")
+}
+
+// -----------------------------------------------------------------------------
+
+func CodeOf(fset *token.FileSet, f *ast.File, start, end token.Pos) string {
+	pos := fset.Position(start)
+	n := int(end - start)
+	return string(f.Code[pos.Offset : pos.Offset+n])
 }
 
 // -----------------------------------------------------------------------------

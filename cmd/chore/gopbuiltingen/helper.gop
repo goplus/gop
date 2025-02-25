@@ -10,8 +10,8 @@ func importSpec(path string) *ast.ImportSpec {
 	}
 }
 
-func rmExargs(list []*ast.Field, exargs int) []*ast.Field {
-	if exargs == 0 {
+func rmExargs(list []*ast.Field, ex *exargs) []*ast.Field {
+	if ex == nil {
 		return list
 	}
 	n := len(list)
@@ -19,7 +19,8 @@ func rmExargs(list []*ast.Field, exargs int) []*ast.Field {
 	for i, f <- list {
 		ret[i] = f
 	}
-	for n > 0 {
+	exargs := ex.N
+	for n > 0 && exargs > 0 {
 		f := ret[n-1]
 		if c := len(f.Names); c > exargs {
 			f.Names = f.Names[:c-exargs]
