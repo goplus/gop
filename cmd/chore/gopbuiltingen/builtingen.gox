@@ -25,7 +25,6 @@ func gen() []byte {
 	f.Decls <- &ast.GenDecl{
 		Tok: token.IMPORT,
 		Specs: []ast.Spec{
-			importSpec("gop/builtin"),
 			importSpec("gop/builtin/iox"),
 			importSpec("io"),
 			importSpec("os"),
@@ -105,10 +104,12 @@ func initBuiltin(fn gopq.NodeSet) {
 	item := stmt.callExpr("scope.Insert").arg(0).cache
 	for call <- item.callExpr("gogen.NewOverloadFunc") {
 		built := call.arg(2).unquotedString!
-		ref := call.arg(3).callExpr.one
-		pkg := ref.fun.x.ident!
-		name := ref.arg(0).unquotedString!
-		Builtins <- builtin{built, {pkg, name, 0}}
+		if built != "newRange" { // hide builtin `newRange`
+			ref := call.arg(3).callExpr.one
+			pkg := ref.fun.x.ident!
+			name := ref.arg(0).unquotedString!
+			Builtins <- builtin{built, {pkg, name, 0}}
+		}
 	}
 	for call <- stmt.callExpr("initBuiltinFns") {
 		pkg := call.arg(2).ident!
