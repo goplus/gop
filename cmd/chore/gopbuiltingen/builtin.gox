@@ -8,12 +8,13 @@ var (
 )
 
 func genAST() *ast.FuncDecl {
-	ref := Fn.getAST()
+	f := Fn
+	ref := f.getAST()
 	newName := Name.capitalize
 	return {
-		Doc:  reference.docFor(ref.Doc, Fn.Name, newName),
+		Doc:  reference.docForFunc(ref.Doc, f.Name, newName),
 		Name: ast.newIdent(newName),
-		Type: reference.toType(ref.Type, Fn.Pkg),
+		Type: reference.toFuncType(ref.Type, f.Pkg),
 	}
 }
 
@@ -25,10 +26,14 @@ func genMethodAST(methods []builtin) *ast.FuncDecl {
 	if at == "" { // builtin
 		recvType = methods[methods.len-1].genAST().Type.Params.List[0].Type
 	}
+	recvName := recvNameOf(recvType)
 	return {
-		Doc:  reference.docFor(ref.Doc, f.Name, Name),
+		Doc:  reference.docForMethod(ref.Doc, f.Name, Name),
 		Name: ast.newIdent(Name),
 		Type: mt,
-		Recv: {List: {{Type: recvType}}},
+		Recv: {List: {{
+			Names: []*ast.Ident{ast.newIdent(recvName)},
+			Type:  recvType,
+		}}},
 	}
 }

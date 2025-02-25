@@ -133,6 +133,5 @@ initBuiltin fns.funcDecl("initBuiltin").one
 newBuiltinDefault fns.funcDecl("newBuiltinDefault").one, tistr
 
 b := gen()
+os.Stdout.write b
 os.writeFile "${root}/builtin/doc/builtin.gop", b, 0777
-
-// os.Stdout.write b

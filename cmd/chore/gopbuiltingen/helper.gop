@@ -2,6 +2,19 @@ import (
 	"go/ast"
 )
 
+func recvNameOf(recvType ast.Expr) string {
+	var name string
+	switch t := recvType.(type) {
+	case *ast.Ident:
+		name = t.Name[:1]
+	case *ast.SelectorExpr:
+		name = t.Sel.Name[:1]
+	default:
+		return "v"
+	}
+	return name.toLower
+}
+
 func importSpec(path string) *ast.ImportSpec {
 	return {
 		Path: {
