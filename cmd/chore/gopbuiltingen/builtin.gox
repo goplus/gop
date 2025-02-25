@@ -12,7 +12,7 @@ func genAST() *ast.FuncDecl {
 	ref := f.getAST()
 	newName := Name.capitalize
 	return {
-		Doc:  reference.docForFunc(ref.Doc, f.Name, newName),
+		Doc:  docForFunc(ref.Doc, f.Name, newName),
 		Name: ast.newIdent(newName),
 		Type: reference.toFuncType(ref.Type, f.Pkg),
 	}
@@ -22,13 +22,14 @@ func genMethodAST(methods []builtin) *ast.FuncDecl {
 	f := Fn
 	at := f.Pkg
 	ref := f.getAST()
-	mt, recvType := reference.toMethodType(ref.Type, f.Exargs, at)
+	ex := f.Exargs
+	mt, recvType := reference.toMethodType(ref.Type, ex, at)
 	if at == "" { // builtin
 		recvType = methods[methods.len-1].genAST().Type.Params.List[0].Type
 	}
 	recvName := recvNameOf(recvType)
 	return {
-		Doc:  reference.docForMethod(ref.Doc, f.Name, Name),
+		Doc:  docForMethod(ref.Doc, at, f.Name, Name, recvName, ex),
 		Name: ast.newIdent(Name),
 		Type: mt,
 		Recv: {List: {{

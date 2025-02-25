@@ -81,3 +81,31 @@ func toParams(params *ast.FieldList, at string) *ast.FieldList {
 	}
 	return {List: list}
 }
+
+func docForFunc(doc *ast.CommentGroup, oldName, newName string) *ast.CommentGroup {
+	if doc == nil {
+		return nil
+	}
+	list := make([]*ast.Comment, len(doc.List))
+	for i, c := range doc.List {
+		text := c.Text.replaceAll(oldName, newName)
+		list[i] = {Text: text}
+	}
+	return {List: list}
+}
+
+func docForMethod(doc *ast.CommentGroup, at, oldName, newName, recvName string, ex *exargs) *ast.CommentGroup {
+	if doc == nil {
+		return nil
+	}
+	if ex == nil {
+		return docForFunc(doc, oldName, newName)
+	}
+	list := make([]*ast.Comment, 0, len(doc.List)+2)
+	list <- &ast.Comment{Text: "// ${newName} is equivalent to ${at}.${oldName}(${recvName}, ${ex.Code})"}
+	list <- &ast.Comment{Text: "//"}
+	for _, c := range doc.List {
+		list <- &ast.Comment{Text: c.Text}
+	}
+	return {List: list}
+}
