@@ -19,25 +19,28 @@ package tpl
 import (
 	"bytes"
 	"fmt"
-	"go/token"
 	"path/filepath"
 	"strconv"
 	"unicode"
 	"unicode/utf8"
-)
 
-type Pos = token.Pos
+	"github.com/goplus/gop/tpl/token"
+)
 
 // A Token is a lexical unit returned by Scan.
 type Token struct {
-	Tok Tok
-	Pos Pos
+	Tok token.Tok
+	Pos token.Pos
 	Lit string
 }
 
 // End returns end position of this token.
-func (p *Token) End() Pos {
-	return p.Pos + Pos(len(p.Lit)+TokLen(p.Tok))
+func (p *Token) End() token.Pos {
+	n := len(p.Lit)
+	if n == 0 {
+		n = token.TokLen(p.Tok)
+	}
+	return p.Pos + token.Pos(n)
 }
 
 // An ScanErrorHandler may be provided to Scanner.Init. If a syntax error is
@@ -309,14 +312,14 @@ func (s *Scanner) scanMantissa(base int) {
 	}
 }
 
-func (s *Scanner) scanNumber(seenDecimalPoint bool) (Tok, string) {
+func (s *Scanner) scanNumber(seenDecimalPoint bool) (token.Tok, string) {
 	// digitVal(s.ch) < 10
 	offs := s.offset
-	tok := INT
+	tok := token.INT
 
 	if seenDecimalPoint {
 		offs--
-		tok = FLOAT
+		tok = token.FLOAT
 		s.scanMantissa(10)
 		goto exponent
 	}
@@ -358,14 +361,14 @@ func (s *Scanner) scanNumber(seenDecimalPoint bool) (Tok, string) {
 
 fraction:
 	if s.ch == '.' {
-		tok = FLOAT
+		tok = token.FLOAT
 		s.next()
 		s.scanMantissa(10)
 	}
 
 exponent:
 	if s.ch == 'e' || s.ch == 'E' {
-		tok = FLOAT
+		tok = token.FLOAT
 		s.next()
 		if s.ch == '-' || s.ch == '+' {
 			s.next()
@@ -374,7 +377,7 @@ exponent:
 	}
 
 	if s.ch == 'i' {
-		tok = IMAG
+		tok = token.IMAG
 		s.next()
 	}
 
@@ -564,7 +567,7 @@ func (s *Scanner) skipWhitespace() {
 // respectively. Otherwise, the result is tok0 if there was no other
 // matching character, or tok2 if the matching character was ch2.
 
-func (s *Scanner) switch2(tok0, tok1 Tok) Tok {
+func (s *Scanner) switch2(tok0, tok1 token.Tok) token.Tok {
 	if s.ch == '=' {
 		s.next()
 		return tok1
@@ -572,7 +575,7 @@ func (s *Scanner) switch2(tok0, tok1 Tok) Tok {
 	return tok0
 }
 
-func (s *Scanner) switch3(tok0, tok1 Tok, ch2 rune, tok2 Tok) Tok {
+func (s *Scanner) switch3(tok0, tok1 token.Tok, ch2 rune, tok2 token.Tok) token.Tok {
 	if s.ch == '=' {
 		s.next()
 		return tok1
@@ -584,7 +587,7 @@ func (s *Scanner) switch3(tok0, tok1 Tok, ch2 rune, tok2 Tok) Tok {
 	return tok0
 }
 
-func (s *Scanner) switch4(tok0, tok1 Tok, ch2 rune, tok2, tok3 Tok) Tok {
+func (s *Scanner) switch4(tok0, tok1 token.Tok, ch2 rune, tok2, tok3 token.Tok) token.Tok {
 	if s.ch == '=' {
 		s.next()
 		return tok1
@@ -639,7 +642,7 @@ scanAgain:
 	switch ch := s.ch; {
 	case isLetter(ch):
 		t.Lit = s.scanIdentifier()
-		t.Tok = IDENT
+		t.Tok = token.IDENT
 		insertSemi = true
 	case '0' <= ch && ch <= '9':
 		insertSemi = true
@@ -650,31 +653,31 @@ scanAgain:
 		case -1:
 			if s.insertSemi {
 				s.insertSemi = false // EOF consumed
-				t.Tok, t.Lit = SEMICOLON, "\n"
+				t.Tok, t.Lit = token.SEMICOLON, "\n"
 				return
 			}
-			t.Tok = EOF
+			t.Tok = token.EOF
 		case '\n':
 			// we only reach here if s.insertSemi was
 			// set in the first place and exited early
 			// from s.skipWhitespace()
 			s.insertSemi = false // newline consumed
-			t.Tok, t.Lit = SEMICOLON, "\n"
+			t.Tok, t.Lit = token.SEMICOLON, "\n"
 			return
 		case '"':
 			insertSemi = true
-			t.Tok = STRING
+			t.Tok = token.STRING
 			t.Lit = s.scanString()
 		case '\'':
 			insertSemi = true
-			t.Tok = CHAR
+			t.Tok = token.CHAR
 			t.Lit = s.scanRune()
 		case '`':
 			insertSemi = true
-			t.Tok = STRING
+			t.Tok = token.STRING
 			t.Lit = s.scanRawString()
 		case ':':
-			t.Tok = s.switch2(COLON, DEFINE)
+			t.Tok = s.switch2(token.COLON, token.DEFINE)
 		case '.':
 			if '0' <= s.ch && s.ch <= '9' {
 				insertSemi = true
@@ -683,43 +686,43 @@ scanAgain:
 				s.next()
 				if s.ch == '.' {
 					s.next()
-					t.Tok = ELLIPSIS
+					t.Tok = token.ELLIPSIS
 				}
 			} else {
-				t.Tok = PERIOD
+				t.Tok = token.PERIOD
 			}
 		case ',':
-			t.Tok = COMMA
+			t.Tok = token.COMMA
 		case ';':
-			t.Tok = SEMICOLON
+			t.Tok = token.SEMICOLON
 			t.Lit = ";"
 		case '(':
-			t.Tok = LPAREN
+			t.Tok = token.LPAREN
 		case ')':
 			insertSemi = true
-			t.Tok = RPAREN
+			t.Tok = token.RPAREN
 		case '[':
-			t.Tok = LBRACK
+			t.Tok = token.LBRACK
 		case ']':
 			insertSemi = true
-			t.Tok = RBRACK
+			t.Tok = token.RBRACK
 		case '{':
-			t.Tok = LBRACE
+			t.Tok = token.LBRACE
 		case '}':
 			insertSemi = true
-			t.Tok = RBRACE
+			t.Tok = token.RBRACE
 		case '+':
-			t.Tok = s.switch3(ADD, ADD_ASSIGN, '+', INC)
-			if t.Tok == INC {
+			t.Tok = s.switch3(token.ADD, token.ADD_ASSIGN, '+', token.INC)
+			if t.Tok == token.INC {
 				insertSemi = true
 			}
 		case '-':
-			t.Tok = s.switch3(SUB, SUB_ASSIGN, '-', DEC)
-			if t.Tok == DEC {
+			t.Tok = s.switch3(token.SUB, token.SUB_ASSIGN, '-', token.DEC)
+			if t.Tok == token.DEC {
 				insertSemi = true
 			}
 		case '*':
-			t.Tok = s.switch2(MUL, MUL_ASSIGN)
+			t.Tok = s.switch2(token.MUL, token.MUL_ASSIGN)
 		case '/':
 			if s.ch == '/' || s.ch == '*' {
 				// comment
@@ -729,7 +732,7 @@ scanAgain:
 					s.offset = s.file.Offset(t.Pos)
 					s.rdOffset = s.offset + 1
 					s.insertSemi = false // newline consumed
-					t.Tok, t.Lit = SEMICOLON, "\n"
+					t.Tok, t.Lit = token.SEMICOLON, "\n"
 					return
 				}
 				comment := s.scanComment()
@@ -738,10 +741,10 @@ scanAgain:
 					s.insertSemi = false // newline consumed
 					goto scanAgain
 				}
-				t.Tok = COMMENT
+				t.Tok = token.COMMENT
 				t.Lit = comment
 			} else {
-				t.Tok = s.switch2(QUO, QUO_ASSIGN)
+				t.Tok = s.switch2(token.QUO, token.QUO_ASSIGN)
 			}
 		case '#':
 			if s.insertSemi {
@@ -749,54 +752,54 @@ scanAgain:
 				s.offset = s.file.Offset(t.Pos)
 				s.rdOffset = s.offset + 1
 				s.insertSemi = false
-				t.Tok, t.Lit = SEMICOLON, "\n"
+				t.Tok, t.Lit = token.SEMICOLON, "\n"
 				return
 			}
 			comment := s.scanSharpComment()
 			if s.mode&ScanComments == 0 { // skip comment
 				goto scanAgain
 			}
-			t.Tok = COMMENT
+			t.Tok = token.COMMENT
 			t.Lit = comment
 		case '%':
-			t.Tok = s.switch2(REM, REM_ASSIGN)
+			t.Tok = s.switch2(token.REM, token.REM_ASSIGN)
 		case '^':
-			t.Tok = s.switch2(XOR, XOR_ASSIGN)
+			t.Tok = s.switch2(token.XOR, token.XOR_ASSIGN)
 		case '<':
 			if s.ch == '-' {
 				s.next()
-				t.Tok = ARROW
+				t.Tok = token.ARROW
 			} else {
-				t.Tok = s.switch4(LT, LE, '<', SHL, SHL_ASSIGN)
+				t.Tok = s.switch4(token.LT, token.LE, '<', token.SHL, token.SHL_ASSIGN)
 			}
 		case '>':
-			t.Tok = s.switch4(GT, GE, '>', SHR, SHR_ASSIGN)
+			t.Tok = s.switch4(token.GT, token.GE, '>', token.SHR, token.SHR_ASSIGN)
 		case '=':
-			t.Tok = s.switch2(ASSIGN, EQ)
+			t.Tok = s.switch2(token.ASSIGN, token.EQ)
 		case '!':
-			t.Tok = s.switch2(NOT, NE)
+			t.Tok = s.switch2(token.NOT, token.NE)
 		case '&':
 			if s.ch == '^' {
 				s.next()
-				t.Tok = s.switch2(AND_NOT, AND_NOT_ASSIGN)
+				t.Tok = s.switch2(token.AND_NOT, token.AND_NOT_ASSIGN)
 			} else {
-				t.Tok = s.switch3(AND, AND_ASSIGN, '&', LAND)
+				t.Tok = s.switch3(token.AND, token.AND_ASSIGN, '&', token.LAND)
 			}
 		case '|':
-			t.Tok = s.switch3(OR, OR_ASSIGN, '|', LOR)
+			t.Tok = s.switch3(token.OR, token.OR_ASSIGN, '|', token.LOR)
 		case '?':
-			t.Tok = QUESTION
+			t.Tok = token.QUESTION
 		case '~':
-			t.Tok = TILDE
+			t.Tok = token.TILDE
 		case '@':
-			t.Tok = AT
+			t.Tok = token.AT
 		default:
 			// next reports unexpected BOMs - don't repeat
 			if ch != bom {
 				s.error(s.file.Offset(t.Pos), fmt.Sprintf("illegal character %#U", ch))
 			}
 			insertSemi = s.insertSemi // preserve insertSemi info
-			t.Tok = ILLEGAL
+			t.Tok = token.ILLEGAL
 			t.Lit = string(ch)
 		}
 	}

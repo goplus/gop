@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tpl
+package token
 
 import (
 	"testing"
@@ -26,6 +26,12 @@ func TestTok(t *testing.T) {
 	}
 	if Tok(' ').String() != "token(32)" {
 		t.Fatal("token(32)")
+	}
+	if TokLen(IDENT) != 0 {
+		t.Fatal("TokLen IDENT")
+	}
+	if TokLen('+') != 1 {
+		t.Fatal("TokLen +")
 	}
 }
 

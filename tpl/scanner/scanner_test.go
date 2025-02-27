@@ -17,89 +17,90 @@
 package tpl
 
 import (
-	"go/token"
 	"testing"
+
+	"github.com/goplus/gop/tpl/token"
 )
 
 type tokenTest struct {
-	Pos     Pos
-	Kind    Tok
+	Pos     token.Pos
+	Kind    token.Tok
 	Literal string
 }
 
 func TestScanner(t *testing.T) {
 	var expected = []tokenTest{
-		{3, IDENT, `term`},
+		{3, token.IDENT, `term`},
 		{8, '=', ``},
-		{10, IDENT, `factor`},
+		{10, token.IDENT, `factor`},
 		{17, '*', ``},
 		{18, '(', ``},
-		{19, CHAR, `'*'`},
-		{23, IDENT, `factor`},
+		{19, token.CHAR, `'*'`},
+		{23, token.IDENT, `factor`},
 		{29, '/', ``},
-		{30, IDENT, `mul`},
+		{30, token.IDENT, `mul`},
 		{34, '|', ``},
-		{36, CHAR, `'/'`},
-		{40, IDENT, `factor`},
+		{36, token.CHAR, `'/'`},
+		{40, token.IDENT, `factor`},
 		{46, '/', ``},
-		{47, IDENT, `div`},
+		{47, token.IDENT, `div`},
 		{50, ')', ``},
 		{51, ';', "\n"},
-		{53, IDENT, `expr`},
+		{53, token.IDENT, `expr`},
 		{58, '=', ``},
-		{60, IDENT, `term`},
+		{60, token.IDENT, `term`},
 		{65, '*', ``},
 		{66, '(', ``},
-		{67, CHAR, `'+'`},
-		{71, IDENT, `term`},
+		{67, token.CHAR, `'+'`},
+		{71, token.IDENT, `term`},
 		{75, '/', ``},
-		{76, IDENT, `add`},
+		{76, token.IDENT, `add`},
 		{80, '|', ``},
-		{82, CHAR, `'-'`},
-		{86, IDENT, `term`},
+		{82, token.CHAR, `'-'`},
+		{86, token.IDENT, `term`},
 		{90, '/', ``},
-		{91, IDENT, `sub`},
+		{91, token.IDENT, `sub`},
 		{94, ')', ``},
 		{95, ';', "\n"},
-		{97, IDENT, `factor`},
+		{97, token.IDENT, `factor`},
 		{104, '=', ``},
-		{107, IDENT, `FLOAT`},
+		{107, token.IDENT, `FLOAT`},
 		{112, '/', ``},
-		{113, IDENT, `push`},
+		{113, token.IDENT, `push`},
 		{118, '|', ``},
-		{121, CHAR, `'-'`},
-		{125, IDENT, `factor`},
+		{121, token.CHAR, `'-'`},
+		{125, token.IDENT, `factor`},
 		{131, '/', ``},
-		{132, IDENT, `neg`},
+		{132, token.IDENT, `neg`},
 		{136, '|', ``},
-		{139, CHAR, `'('`},
-		{143, IDENT, `expr`},
-		{148, CHAR, `')'`},
+		{139, token.CHAR, `'('`},
+		{143, token.IDENT, `expr`},
+		{148, token.CHAR, `')'`},
 		{152, '|', ``},
 		{155, '(', ``},
-		{156, IDENT, `IDENT`},
-		{162, CHAR, `'('`},
-		{166, IDENT, `expr`},
+		{156, token.IDENT, `IDENT`},
+		{162, token.CHAR, `'('`},
+		{166, token.IDENT, `expr`},
 		{171, '%', ``},
-		{173, CHAR, `','`},
+		{173, token.CHAR, `','`},
 		{176, '/', ``},
-		{177, IDENT, `arity`},
-		{183, CHAR, `')'`},
+		{177, token.IDENT, `arity`},
+		{183, token.CHAR, `')'`},
 		{186, ')', ``},
 		{187, '/', ``},
-		{188, IDENT, `call`},
+		{188, token.IDENT, `call`},
 		{193, '|', ``},
-		{196, CHAR, `'+'`},
-		{200, IDENT, `factor`},
+		{196, token.CHAR, `'+'`},
+		{200, token.IDENT, `factor`},
 		{206, ';', "\n"},
-		{208, IDENT, `hello`},
+		{208, token.IDENT, `hello`},
 		{214, ';', "\n"},
-		{214, COMMENT, "#!/user/bin/env tpl 中文"},
-		{241, IDENT, `hello`},
+		{214, token.COMMENT, "#!/user/bin/env tpl 中文"},
+		{241, token.IDENT, `hello`},
 		{247, ';', "\n"},
-		{247, COMMENT, "//!/user/bin/env tpl 中文"},
-		{275, IDENT, `world`},
-		{281, NE, ``},
+		{247, token.COMMENT, "//!/user/bin/env tpl 中文"},
+		{275, token.IDENT, `world`},
+		{281, token.NE, ``},
 	}
 
 	const grammar = `
@@ -127,13 +128,13 @@ world !=
 	s.Init(file, []byte(grammar), nil /* no error handler */, ScanComments|InsertSemis)
 	i := 0
 	for {
-		token := s.Scan()
-		if token.Tok == EOF {
+		c := s.Scan()
+		if c.Tok == token.EOF {
 			break
 		}
 		expect := Token{expected[i].Kind, expected[i].Pos, expected[i].Literal}
-		if token != expect {
-			t.Fatal("Scan failed:", token, expect)
+		if c != expect {
+			t.Fatal("Scan failed:", c, expect)
 		}
 		i++
 	}
@@ -144,24 +145,24 @@ world !=
 	s.Init(file, []byte(grammar), nil, 0)
 	i = 0
 	for {
-		token := s.Scan()
-		if token.Tok == EOF {
+		c := s.Scan()
+		if c.Tok == token.EOF {
 			break
 		}
 		if expected[i].Kind == ';' {
 			i++
 		}
-		if expected[i].Kind == COMMENT {
+		if expected[i].Kind == token.COMMENT {
 			i++
 		}
 		expect := Token{expected[i].Kind, expected[i].Pos, expected[i].Literal}
-		if token != expect {
-			t.Fatal("Scan failed:", token.Pos, token.Lit, expect)
+		if c != expect {
+			t.Fatal("Scan failed:", c.Pos, c.Lit, expect)
 		}
-		switch TokLen(token.Tok) {
+		switch token.TokLen(c.Tok) {
 		case 0, 1, 2, 3:
 		default:
-			t.Fatal("TokenLen failed:", TokLen(token.Tok))
+			t.Fatal("TokenLen failed:", token.TokLen(c.Tok))
 		}
 		i++
 	}
@@ -175,16 +176,16 @@ world !=
 	s.Init(file, []byte(grammar), nil, InsertSemis)
 	i = 0
 	for {
-		token := s.Scan()
-		if token.Tok == EOF {
+		c := s.Scan()
+		if c.Tok == token.EOF {
 			break
 		}
-		if expected[i].Kind == COMMENT {
+		if expected[i].Kind == token.COMMENT {
 			i++
 		}
 		expect := Token{expected[i].Kind, expected[i].Pos, expected[i].Literal}
-		if token != expect {
-			t.Fatal("Scan failed:", token.Pos, token.Lit, expect)
+		if c != expect {
+			t.Fatal("Scan failed:", c.Pos, c.Lit, expect)
 		}
 		i++
 	}
