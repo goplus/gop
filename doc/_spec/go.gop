@@ -32,15 +32,17 @@ node ImportSpec : Spec {
 
 // -----------------------------------------------------------------
 
-File = ("package" Name:Ident ";") Decls:(*(importDecl ";") *(toplevelDecl ";"))
+File = (pkg:"package" Name:Ident ";") Decls:(*(importDecl ";") *(toplevelDecl ";")) {
+	Package: pkg.Pos
+}
 
 toplevelDecl = valueDecl | typeDecl | FuncDecl
 
 // -----------------------------------------------------------------
 
-importDecl = "import" Specs:(ImportSpec | lp:"(" *(ImportSpec ";") rp:")") as GenDecl {
-	TokPos: import.Pos
-	Tok: import.Tok
+importDecl = i:"import" Specs:(ImportSpec | lp:"(" *(ImportSpec ";") rp:")") as GenDecl {
+	TokPos: i.Pos
+	Tok: i.Tok
 	Lparen: lp.Pos
 	Rparen: rp.Pos
 }
@@ -54,10 +56,10 @@ dotPkgName = dot:"." as Ident {
 	Name: "."
 }
 
-stringLit = string as BasicLit {
-	ValuePos: string.Pos
-	Kind: string.Tok
-	Value: string.Lit
+stringLit = s:STRING as BasicLit {
+	ValuePos: s.Pos
+	Kind: s.Tok
+	Value: s.Lit
 }
 
 // -----------------------------------------------------------------
@@ -75,9 +77,9 @@ ValueSpec = Names:identList ?Type ?Values:exprList
 
 identList = Ident % ","
 
-Ident = ident {
-	NamePos: ident.Pos
-	Name: ident.Lit
+Ident = i:IDENT {
+	NamePos: i.Pos
+	Name: i.Lit
 }
 
 // -----------------------------------------------------------------
