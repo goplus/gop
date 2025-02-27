@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package tpl
+package token
 
-import "strconv"
+import (
+	"strconv"
+)
 
 // -----------------------------------------------------------------------------
 
@@ -31,6 +33,8 @@ func (tok Tok) String() (s string) {
 	}
 	return
 }
+
+// -----------------------------------------------------------------------------
 
 const (
 	ILLEGAL Tok = iota
@@ -197,34 +201,13 @@ func TokLen(tok Tok) int {
 	return 0
 }
 
-// -----------------------------------------------------------------------------
-
-/*
-var rtokens map[string]uint
-
-func init() {
-	rtokens = make(map[string]uint, 64)
+// ForEach iterates all tokens.
+func ForEach(f func(tok Tok, lit string)) {
 	for i, s := range tokens {
 		if s != "" {
-			rtokens[s] = uint(i)
+			f(Tok(i), s)
 		}
 	}
 }
-
-// Lit2Tok: literal => token
-func Lit2Tok(lit string) (tok uint) {
-	return rtokens[lit]
-}
-
-// Tok2Lit: token => literal
-func Tok2Lit(tok Tok) (s string) {
-	if tok < Tok(len(tokens)) {
-		s = tokens[tok]
-	} else {
-		panic("unknown token: " + strconv.Itoa(int(tok)))
-	}
-	return
-}
-*/
 
 // -----------------------------------------------------------------------------
