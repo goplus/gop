@@ -5,11 +5,11 @@ node Decl {
 }
 
 node Spec {
-    specNode()
+	specNode()
 }
 
 node Stmt {
-    stmtNode()
+	stmtNode()
 }
 
 node Expr {
@@ -25,9 +25,9 @@ node GenDecl : Decl {
 }
 
 node ImportSpec : Spec {
-    Name Expr
-    Path BasicLit
-    EndPos pos
+	Name Expr
+	Path BasicLit
+	EndPos pos
 }
 
 // -----------------------------------------------------------------
@@ -100,9 +100,24 @@ qualifiedIdent = X:Ident "." Sel:Ident as SelectorExpr
 
 // -----------------------------------------------------------------
 
-ArrayType = lp:"[" Len:expr "]" Elt:Type {
+ArrayType = lp:"[" ?Len:expr "]" Elt:Type {
 	Lbrack: lp.Pos
 }
+
+StructType = "struct" Fields:structBody {
+	Struct: struct.Pos
+}
+
+structBody = lp:"{" List:(structField % ";") ?";" rp:"}" as FieldList {
+	Opening: lp.Pos
+	Closing: rp.Pos
+}
+
+structField = (Names:identList Type | Type:embeddedField) ?Tag:stringLit as Field
+
+embeddedField = typeNameEx | (op:"*" X:typeNameEx as StarExpr {
+	Star: op.Pos
+})
 
 // -----------------------------------------------------------------
 
