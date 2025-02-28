@@ -66,8 +66,9 @@ func (p *File) End() token.Pos {
 
 // Rule: IDENT '=' Expr
 type Rule struct {
-	Name *Ident
-	Expr Expr
+	Name   *Ident
+	TokPos token.Pos // position of '='
+	Expr   Expr
 }
 
 func (p *Rule) Pos() token.Pos { return p.Name.Pos() }
