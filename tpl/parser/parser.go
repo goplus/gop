@@ -230,7 +230,7 @@ func (p *parser) parseTermList() ast.Expr {
 		return terms[0]
 	case 0:
 		p.error(p.pos, "expected factor")
-		fallthrough // TODO: BadExpr
+		fallthrough // TODO(xsw): BadExpr
 	default:
 		return &ast.Sequence{Items: terms}
 	}

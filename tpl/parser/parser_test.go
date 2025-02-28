@@ -45,7 +45,7 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 		}
 		t.Fatal("ParseFile failed:", err, reflect.TypeOf(err))
 	}
-	b, err := os.ReadFile(pkgDir + "/out.exp")
+	b, err := os.ReadFile(pkgDir + "/out.expect")
 	if err != nil {
 		t.Fatal("Parsing", pkgDir, "-", err)
 	}
