@@ -11,19 +11,19 @@ node (
 	BinaryExpr Expr
 )
 
-expr = termExpr *(binOp:("+" | "-") Y:termExpr as BinaryExpr {
-	X: termExpr
+expr = x:termExpr *(binOp:("+" | "-") Y:termExpr as BinaryExpr {
+	X: x
 	OpPos: binOp.Pos
 	Op: binOp.Tok
 })
 
-termExpr = unaryExpr *(binOp:("*" | "/" | "%") Y:unaryExpr as BinaryExpr {
-	X: unaryExpr
+termExpr = x:unaryExpr *(binOp:("*" | "/" | "%") Y:unaryExpr as BinaryExpr {
+	X: x
 	OpPos: binOp.Pos
 	Op: binOp.Tok
 })
 
-unaryExpr = primaryExpr | (uOp:("+" | "-" | "!" | "^") X:unaryExpr as UnaryExpr {
+unaryExpr = primaryExpr | (uOp:("+" | "-" | "!" | "^") X:primaryExpr as UnaryExpr {
 	OpPos: uOp.Pos
 	Op: uOp.Tok
 })
