@@ -20,7 +20,10 @@ import (
 	"testing"
 
 	"github.com/goplus/gop/tpl/token"
+	"github.com/goplus/gop/tpl/types"
 )
+
+type Token = types.Token
 
 type tokenTest struct {
 	Pos     token.Pos
@@ -132,7 +135,7 @@ world !=
 		if c.Tok == token.EOF {
 			break
 		}
-		expect := Token{expected[i].Kind, expected[i].Pos, expected[i].Literal}
+		expect := Token{Tok: expected[i].Kind, Pos: expected[i].Pos, Lit: expected[i].Literal}
 		if c != expect {
 			t.Fatal("Scan failed:", c, expect)
 		}
@@ -155,7 +158,7 @@ world !=
 		if expected[i].Kind == token.COMMENT {
 			i++
 		}
-		expect := Token{expected[i].Kind, expected[i].Pos, expected[i].Literal}
+		expect := Token{Tok: expected[i].Kind, Pos: expected[i].Pos, Lit: expected[i].Literal}
 		if c != expect {
 			t.Fatal("Scan failed:", c.Pos, c.Lit, expect)
 		}
@@ -183,7 +186,7 @@ world !=
 		if expected[i].Kind == token.COMMENT {
 			i++
 		}
-		expect := Token{expected[i].Kind, expected[i].Pos, expected[i].Literal}
+		expect := Token{Tok: expected[i].Kind, Pos: expected[i].Pos, Lit: expected[i].Literal}
 		if c != expect {
 			t.Fatal("Scan failed:", c.Pos, c.Lit, expect)
 		}
