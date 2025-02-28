@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tpl
+package ast
 
 import (
 	"github.com/goplus/gop/tpl/token"
@@ -90,8 +90,8 @@ func (p *Ident) exprNode()      {}
 
 // BasicLit: STRING | CHAR
 type BasicLit struct {
-	ValuePos token.Pos // literal position
-	Kind     token.Tok // token.STRING or token.CHAR
+	ValuePos token.Pos   // literal position
+	Kind     token.Token // token.STRING or token.CHAR
 	Value    string
 }
 
@@ -125,9 +125,9 @@ func (p *Sequence) exprNode()      {}
 
 // UnaryExpr: *R, +R or ?R
 type UnaryExpr struct {
-	OpPos token.Pos // operator position
-	Op    token.Tok // operator: token.MUL, token.ADD or token.QUESTION
-	X     Expr      // operand
+	OpPos token.Pos   // operator position
+	Op    token.Token // operator: token.MUL, token.ADD or token.QUESTION
+	X     Expr        // operand
 }
 
 func (p *UnaryExpr) Pos() token.Pos { return p.OpPos }
@@ -138,10 +138,10 @@ func (p *UnaryExpr) exprNode()      {}
 
 // BinaryExpr: R1 % R2
 type BinaryExpr struct {
-	X     Expr      // left operand
-	OpPos token.Pos // operator position
-	Op    token.Tok // operator: token.REM (list operator)
-	Y     Expr      // right operand
+	X     Expr        // left operand
+	OpPos token.Pos   // operator position
+	Op    token.Token // operator: token.REM (list operator)
+	Y     Expr        // right operand
 }
 
 func (p *BinaryExpr) Pos() token.Pos { return p.X.Pos() }

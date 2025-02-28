@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tpl
+package scanner
 
 import (
 	"testing"
@@ -24,7 +24,7 @@ import (
 
 type tokenTest struct {
 	Pos     token.Pos
-	Kind    token.Tok
+	Kind    token.Token
 	Literal string
 }
 
@@ -159,10 +159,10 @@ world !=
 		if c != expect {
 			t.Fatal("Scan failed:", c.Pos, c.Lit, expect)
 		}
-		switch token.TokLen(c.Tok) {
+		switch c.Tok.Len() {
 		case 0, 1, 2, 3:
 		default:
-			t.Fatal("TokenLen failed:", token.TokLen(c.Tok))
+			t.Fatal("TokenLen failed:", c.Tok.Len())
 		}
 		i++
 	}

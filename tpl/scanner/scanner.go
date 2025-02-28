@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package tpl
+package scanner
 
 import (
 	"bytes"
@@ -29,7 +29,7 @@ import (
 
 // A Token is a lexical unit returned by Scan.
 type Token struct {
-	Tok token.Tok
+	Tok token.Token
 	Pos token.Pos
 	Lit string
 }
@@ -38,7 +38,7 @@ type Token struct {
 func (p *Token) End() token.Pos {
 	n := len(p.Lit)
 	if n == 0 {
-		n = token.TokLen(p.Tok)
+		n = p.Tok.Len()
 	}
 	return p.Pos + token.Pos(n)
 }
@@ -312,7 +312,7 @@ func (s *Scanner) scanMantissa(base int) {
 	}
 }
 
-func (s *Scanner) scanNumber(seenDecimalPoint bool) (token.Tok, string) {
+func (s *Scanner) scanNumber(seenDecimalPoint bool) (token.Token, string) {
 	// digitVal(s.ch) < 10
 	offs := s.offset
 	tok := token.INT
@@ -567,7 +567,7 @@ func (s *Scanner) skipWhitespace() {
 // respectively. Otherwise, the result is tok0 if there was no other
 // matching character, or tok2 if the matching character was ch2.
 
-func (s *Scanner) switch2(tok0, tok1 token.Tok) token.Tok {
+func (s *Scanner) switch2(tok0, tok1 token.Token) token.Token {
 	if s.ch == '=' {
 		s.next()
 		return tok1
@@ -575,7 +575,7 @@ func (s *Scanner) switch2(tok0, tok1 token.Tok) token.Tok {
 	return tok0
 }
 
-func (s *Scanner) switch3(tok0, tok1 token.Tok, ch2 rune, tok2 token.Tok) token.Tok {
+func (s *Scanner) switch3(tok0, tok1 token.Token, ch2 rune, tok2 token.Token) token.Token {
 	if s.ch == '=' {
 		s.next()
 		return tok1
@@ -587,7 +587,7 @@ func (s *Scanner) switch3(tok0, tok1 token.Tok, ch2 rune, tok2 token.Tok) token.
 	return tok0
 }
 
-func (s *Scanner) switch4(tok0, tok1 token.Tok, ch2 rune, tok2, tok3 token.Tok) token.Tok {
+func (s *Scanner) switch4(tok0, tok1 token.Token, ch2 rune, tok2, tok3 token.Token) token.Token {
 	if s.ch == '=' {
 		s.next()
 		return tok1
