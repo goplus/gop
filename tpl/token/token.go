@@ -22,10 +22,10 @@ import (
 
 // -----------------------------------------------------------------------------
 
-type Tok uint
+type Token uint
 
-func (tok Tok) String() (s string) {
-	if tok < Tok(len(tokens)) {
+func (tok Token) String() (s string) {
+	if tok < Token(len(tokens)) {
 		s = tokens[tok]
 	}
 	if s == "" {
@@ -34,10 +34,20 @@ func (tok Tok) String() (s string) {
 	return
 }
 
+// Len returns
+// 1) len of is token literal, if token is an operator.
+// 2) 0 for else.
+func (tok Token) Len() int {
+	if tok > ' ' && tok <= Token(len(tokens)) {
+		return len(tokens[tok])
+	}
+	return 0
+}
+
 // -----------------------------------------------------------------------------
 
 const (
-	ILLEGAL Tok = iota
+	ILLEGAL Token = iota
 	EOF
 	COMMENT
 
@@ -80,7 +90,7 @@ const (
 )
 
 const (
-	operator_beg Tok = 0x80 + iota
+	operator_beg Token = 0x80 + iota
 
 	SHL     // <<
 	SHR     // >>
@@ -191,21 +201,11 @@ var tokens = [...]string{
 	ELLIPSIS: "...",
 }
 
-// TokLen returns:
-// 1) len of is token literal, if token is an operator.
-// 2) 0 for else.
-func TokLen(tok Tok) int {
-	if tok > ' ' && tok <= Tok(len(tokens)) {
-		return len(tokens[tok])
-	}
-	return 0
-}
-
 // ForEach iterates all tokens.
-func ForEach(f func(tok Tok, lit string)) {
+func ForEach(f func(tok Token, lit string)) {
 	for i, s := range tokens {
 		if s != "" {
-			f(Tok(i), s)
+			f(Token(i), s)
 		}
 	}
 }
