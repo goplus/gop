@@ -11,28 +11,29 @@ node (
 	BinaryExpr Expr
 )
 
-expr = termExpr | (X:expr binOp Y:expr as BinaryExpr {
+expr = x:termExpr *(binOp:("+" | "-") Y:termExpr as BinaryExpr {
+	X: x
 	OpPos: binOp.Pos
 	Op: binOp.Tok
 })
 
-binOp = "+" | "-"
-
-termExpr = unaryExpr | (X:termExpr termOp Y:termExpr as BinaryExpr {
-	OpPos: termOp.Pos
-	Op: termOp.Tok
+termExpr = x:unaryExpr *(binOp:("*" | "/" | "%") Y:unaryExpr as BinaryExpr {
+	X: x
+	OpPos: binOp.Pos
+	Op: binOp.Tok
 })
 
-termOp = "*" | "/" | "%"
-
-unaryExpr = primaryExpr | (unaryOp X:unaryExpr as UnaryExpr {
-	OpPos: unaryOp.Pos
-	Op: unaryOp.Tok
+unaryExpr = primaryExpr | (uOp:("+" | "-" | "!" | "^") X:primaryExpr as UnaryExpr {
+	OpPos: uOp.Pos
+	Op: uOp.Tok
 })
 
-unaryOp = "+" | "-" | "!" | "^"
-
-primaryExpr = operand | CallExpr
+primaryExpr = operand *(lp:"(" ?(Args:(expr % ",") ?ell:"..." ?",") rp:")" as CallExpr {
+	Fun: operand
+	Lparen: lp.Pos
+	Ellipsis: ell != nil ? ell.Pos : 0
+	Rparen: rp.Pos
+})
 
 operand = BasicLit | Ident | ParenExpr
 
@@ -49,12 +50,5 @@ Ident = i:IDENT {
 
 ParenExpr = lp:"(" X:expr rp:")" {
 	Lparen: lp.Pos
-	Rparen: rp.Pos
-}
-
-CallExpr = primaryExpr lp:"(" ?(Args:(expr % ",") ?ell:"..." ?",") rp:")" {
-	Fun: primaryExpr
-	Lparen: lp.Pos
-	Ellipsis: ell != nil ? ell.Pos : 0
 	Rparen: rp.Pos
 }

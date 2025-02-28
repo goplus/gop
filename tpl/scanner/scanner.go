@@ -25,23 +25,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/goplus/gop/tpl/token"
+	"github.com/goplus/gop/tpl/types"
 )
-
-// A Token is a lexical unit returned by Scan.
-type Token struct {
-	Tok token.Token
-	Pos token.Pos
-	Lit string
-}
-
-// End returns end position of this token.
-func (p *Token) End() token.Pos {
-	n := len(p.Lit)
-	if n == 0 {
-		n = p.Tok.Len()
-	}
-	return p.Pos + token.Pos(n)
-}
 
 // An ScanErrorHandler may be provided to Scanner.Init. If a syntax error is
 // encountered and a handler was installed, the handler is called with a
@@ -630,7 +615,7 @@ func (s *Scanner) switch4(tok0, tok1 token.Token, ch2 rune, tok2, tok3 token.Tok
 // Scan adds line information to the file added to the file
 // set with Init. Token positions are relative to that file
 // and thus relative to the file set.
-func (s *Scanner) Scan() (t Token) {
+func (s *Scanner) Scan() (t types.Token) {
 scanAgain:
 	s.skipWhitespace()
 
