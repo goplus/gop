@@ -34,10 +34,11 @@ func TestToken(t *testing.T) {
 		t.Fatal("TokLen +")
 	}
 	count := 0
-	ForEach(func(tok Token, name string) {
+	ForEach(0, func(tok Token, name string) int {
 		count++
+		return 0
 	})
-	if count != 59 {
+	if count != 25 {
 		t.Fatal("ForEach:", count)
 	}
 }

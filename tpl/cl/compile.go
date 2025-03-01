@@ -23,7 +23,6 @@ import (
 	"github.com/goplus/gop/tpl/ast"
 	"github.com/goplus/gop/tpl/matcher"
 	"github.com/goplus/gop/tpl/token"
-	"github.com/qiniu/x/ctype"
 	"github.com/qiniu/x/errors"
 )
 
@@ -138,25 +137,25 @@ func compileExpr(expr ast.Expr, ctx *context) (matcher.Matcher, bool) {
 				break
 			}
 			if tail != "" || multibyte {
-				ctx.addErrorf(expr.Pos(), "invalid literal %s", lit)
+				ctx.addError(expr.Pos(), "invalid literal "+lit)
 				break
 			}
-			return tokenExpr(v, expr, ctx)
+			return tokenExpr(token.Token(v), expr, ctx)
 		case token.STRING:
 			v, e := strconv.Unquote(lit)
-			if e != nil {
-				ctx.addErrorf(expr.Pos(), "invalid literal %s: %v", lit, e)
+			if e != nil || len(v) == 0 {
+				ctx.addError(expr.Pos(), "invalid literal "+lit)
 				break
 			}
-			if len(v) == 1 {
-				return tokenExpr(rune(v[0]), expr, ctx)
-			}
-			if ctype.IsCSymbol(v) {
+			if c := v[0]; c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_' {
 				return matcher.Literal(token.IDENT, v), true
+			}
+			if t, ok := checkToken(v); ok {
+				return tokenExpr(t, expr, ctx)
 			}
 			fallthrough
 		default:
-			ctx.addErrorf(expr.Pos(), "invalid literal %s", lit)
+			ctx.addError(expr.Pos(), "invalid literal "+lit)
 		}
 	case *ast.Sequence:
 		items := make([]matcher.Matcher, len(expr.Items))
@@ -208,11 +207,24 @@ func compileExpr(expr ast.Expr, ctx *context) (matcher.Matcher, bool) {
 	return nil, false
 }
 
-func tokenExpr(v rune, expr *ast.BasicLit, ctx *context) (matcher.Matcher, bool) {
-	tok := token.Token(v)
+func tokenExpr(tok token.Token, expr *ast.BasicLit, ctx *context) (matcher.Matcher, bool) {
 	if tok.Len() > 0 {
 		return matcher.Token(tok), true
 	}
 	ctx.addErrorf(expr.Pos(), "invalid token: %s", expr.Value)
 	return nil, false
+}
+
+func checkToken(v string) (ret token.Token, ok bool) {
+	if len(v) == 1 {
+		return token.Token(v[0]), true
+	}
+	token.ForEach(0, func(tok token.Token, lit string) int {
+		if lit == v {
+			ret, ok = tok, true
+			return token.Break
+		}
+		return 0
+	})
+	return
 }

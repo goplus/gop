@@ -116,23 +116,28 @@ type gChoice struct {
 func (p *gChoice) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
 	var nMax int
 	var errMax error
-	var multiErr = true
+	// var multiErr = true
 
 	for _, g := range p.options {
 		if n, result, err = g.Match(src, ctx); err == nil {
 			return
 		}
 		if n >= nMax {
-			if n == nMax {
-				multiErr = true
-			} else {
-				nMax, errMax, multiErr = n, err, false
-			}
+			nMax, errMax = n, err
+			/*
+				if n == nMax {
+					multiErr = true
+				} else {
+					nMax, errMax, multiErr = n, err, false
+				}
+			*/
 		}
 	}
-	if multiErr {
-		errMax = ctx.NewError(src[nMax].End(), "TODO: error msg") // TODO(xsw)
-	}
+	/*
+		if multiErr {
+			errMax = ctx.NewError(src[nMax].End(), "TODO: error msg") // TODO(xsw)
+		}
+	*/
 	return nMax, nil, errMax
 }
 
