@@ -1,0 +1,40 @@
+import (
+	"go/ast"
+)
+
+var (
+	Name string
+	Fn   reference
+)
+
+func genAST() *ast.FuncDecl {
+	f := Fn
+	ref := f.getAST()
+	newName := Name.capitalize
+	return {
+		Doc:  docForFunc(ref.Doc, f.Name, newName),
+		Name: ast.newIdent(newName),
+		Type: reference.toFuncType(ref.Type, f.Pkg),
+	}
+}
+
+func genMethodAST(methods []builtin) *ast.FuncDecl {
+	f := Fn
+	at := f.Pkg
+	ref := f.getAST()
+	ex := f.Exargs
+	mt, recvType := reference.toMethodType(ref.Type, ex, at)
+	if at == "" { // builtin
+		recvType = methods[methods.len-1].genAST().Type.Params.List[0].Type
+	}
+	recvName := recvNameOf(recvType)
+	return {
+		Doc:  docForMethod(ref.Doc, at, f.Name, Name, recvName, ex),
+		Name: ast.newIdent(Name),
+		Type: mt,
+		Recv: {List: {{
+			Names: []*ast.Ident{ast.newIdent(recvName)},
+			Type:  recvType,
+		}}},
+	}
+}

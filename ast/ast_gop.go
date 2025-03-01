@@ -59,6 +59,26 @@ func (*OverloadFuncDecl) declNode() {}
 
 // -----------------------------------------------------------------------------
 
+// A DomainTextLit node represents a domain text literal.
+//
+//	tpl`...`
+type DomainTextLit struct {
+	Domain   *Ident       // domain name
+	ValuePos token.Pos    // literal position
+	Value    string       // literal string; e.g. `\m\n\o`
+	Extra    *StringLitEx // optional
+}
+
+// Pos returns position of first character belonging to the node.
+func (x *DomainTextLit) Pos() token.Pos { return x.Domain.NamePos }
+
+// End returns position of first character immediately after the node.
+func (x *DomainTextLit) End() token.Pos { return token.Pos(int(x.ValuePos) + len(x.Value)) }
+
+func (*DomainTextLit) exprNode() {}
+
+// -----------------------------------------------------------------------------
+
 // A BasicLit node represents a literal of basic type.
 type BasicLit struct {
 	ValuePos token.Pos    // literal position
@@ -82,6 +102,14 @@ func NextPartPos(pos token.Pos, part any) (nextPos token.Pos) {
 	}
 	panic("NextPartPos: unexpected parameters")
 }
+
+// Pos returns position of first character belonging to the node.
+func (x *BasicLit) Pos() token.Pos { return x.ValuePos }
+
+// End returns position of first character immediately after the node.
+func (x *BasicLit) End() token.Pos { return token.Pos(int(x.ValuePos) + len(x.Value)) }
+
+func (*BasicLit) exprNode() {}
 
 // -----------------------------------------------------------------------------
 

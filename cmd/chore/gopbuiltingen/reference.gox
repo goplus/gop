@@ -1,0 +1,106 @@
+import (
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"gop/env"
+	"runtime"
+)
+
+type exargs struct {
+	N    int
+	Code string
+}
+
+var (
+	Pkg    string
+	Name   string
+	Exargs *exargs
+)
+
+func .toFuncType(t *ast.FuncType, at string) *ast.FuncType {
+	return {
+		Params:  t.Params,
+		Results: toParams(t.Results, at),
+	}
+}
+
+func .toMethodType(t *ast.FuncType, ex *exargs, at string) (mt *ast.FuncType, recvType ast.Expr) {
+	list := t.Params.List
+	first := list[0]
+	recvType = first.Type
+	if len(first.Names) == 1 {
+		list = list[1:]
+	} else {
+		list[0] = {
+			Doc:     first.Doc,
+			Names:   first.Names[1:],
+			Type:    recvType,
+			Comment: first.Comment,
+		}
+	}
+	mt = {
+		Params:  {List: rmExargs(list, ex)},
+		Results: toParams(t.Results, at),
+	}
+	return
+}
+
+var (
+	fset    = token.newFileSet
+	pkgs    = map[string]*ast.Package{}
+	root    = env.GOPROOT()
+	goroot  = runtime.GOROOT()
+	pkgDirs = {
+		"":        "${goroot}/src/builtin",
+		"fmt":     "${goroot}/src/fmt",
+		"os":      "${goroot}/src/os",
+		"reflect": "${goroot}/src/reflect",
+		"strconv": "${goroot}/src/strconv",
+		"strings": "${goroot}/src/strings",
+
+		"buil":        "${root}/builtin",
+		"iox":         "${root}/builtin/iox",
+		"stringslice": "${root}/builtin/stringslice",
+		"strx":        "${root}/../x/stringutil",
+	}
+)
+
+func getAST() *ast.FuncDecl {
+	name := Name
+	if Pkg == "" {
+		name = name.trimPrefix("bto").toLower
+	}
+	pkg := reference.pkgOf(Pkg)
+	return reference.funcDecl(pkg, name)
+}
+
+func .funcDecl(pkg *ast.Package, name string) *ast.FuncDecl {
+	for file <- pkg.Files {
+		for decl <- file.Decls {
+			if fn, ok := decl.(*ast.FuncDecl); ok && fn.Name.Name == name {
+				return fn
+			}
+		}
+	}
+	panic("function not found: ${pkg.Name}.${name}")
+}
+
+func .pkgOf(pkgPath string) *ast.Package {
+	if pkg, ok := pkgs[pkgPath]; ok {
+		return pkg
+	}
+
+	dir, ok := pkgDirs[pkgPath]
+	if !ok {
+		panic("unknown package: ${pkgPath}")
+	}
+
+	for name, pkg <- parser.parseDir(fset, dir, nil, parser.ParseComments)! {
+		if name.hasSuffix("_test") {
+			continue
+		}
+		pkgs[pkgPath] = pkg
+		return pkg
+	}
+	panic("package not found: ${pkgPath}")
+}

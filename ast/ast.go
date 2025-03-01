@@ -357,9 +357,6 @@ func (x *Ident) Pos() token.Pos { return x.NamePos }
 func (x *Ellipsis) Pos() token.Pos { return x.Ellipsis }
 
 // Pos returns position of first character belonging to the node.
-func (x *BasicLit) Pos() token.Pos { return x.ValuePos }
-
-// Pos returns position of first character belonging to the node.
 func (x *FuncLit) Pos() token.Pos { return x.Type.Pos() }
 
 // Pos returns position of first character belonging to the node.
@@ -441,9 +438,6 @@ func (x *Ellipsis) End() token.Pos {
 }
 
 // End returns position of first character immediately after the node.
-func (x *BasicLit) End() token.Pos { return token.Pos(int(x.ValuePos) + len(x.Value)) }
-
-// End returns position of first character immediately after the node.
 func (x *FuncLit) End() token.Pos { return x.Body.End() }
 
 // End returns position of first character immediately after the node.
@@ -520,7 +514,6 @@ func (x *ChanType) End() token.Pos { return x.Value.End() }
 func (*BadExpr) exprNode()        {}
 func (*Ident) exprNode()          {}
 func (*Ellipsis) exprNode()       {}
-func (*BasicLit) exprNode()       {}
 func (*FuncLit) exprNode()        {}
 func (*CompositeLit) exprNode()   {}
 func (*ParenExpr) exprNode()      {}

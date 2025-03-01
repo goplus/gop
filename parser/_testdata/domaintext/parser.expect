@@ -1,0 +1,37 @@
+package main
+
+file tpl.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: cl
+          Tok: :=
+          Rhs:
+            ast.ErrWrapExpr:
+              X:
+                ast.DomainTextLit:
+                  Domain:
+                    ast.Ident:
+                      Name: tpl
+                  Value: `
+expr = termExpr % ("+" | "-")
+
+termExpr = unaryExpr % ("*" | "/")
+
+unaryExpr = operand | "-" unaryExpr
+
+operand = INT | FLOAT | "(" expr ")"
+`
+              Tok: !

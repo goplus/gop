@@ -1,0 +1,187 @@
+// -----------------------------------------------------------------
+
+node Decl {
+	declNode()
+}
+
+node Spec {
+	specNode()
+}
+
+node Stmt {
+	stmtNode()
+}
+
+node Expr {
+	exprNode()
+}
+
+node GenDecl : Decl {
+	TokPos pos
+	Tok token
+	Lparen pos
+	Specs []Spec
+	Rparen pos
+}
+
+node ImportSpec : Spec {
+	Name Expr
+	Path BasicLit
+	EndPos pos
+}
+
+// -----------------------------------------------------------------
+
+File = (pkg:"package" Name:Ident ";") Decls:(*(importDecl ";") *(toplevelDecl ";")) {
+	Package: pkg.Pos
+}
+
+toplevelDecl = valueDecl | typeDecl | FuncDecl
+
+// -----------------------------------------------------------------
+
+importDecl = i:"import" Specs:(ImportSpec | lp:"(" *(ImportSpec ";") rp:")") as GenDecl {
+	TokPos: i.Pos
+	Tok: i.Tok
+	Lparen: lp.Pos
+	Rparen: rp.Pos
+}
+
+ImportSpec = ?Name:(dotPkgName | Ident) Path:stringLit {
+	EndPos: Path.End
+}
+
+dotPkgName = dot:"." as Ident {
+	NamePos: dot.Pos
+	Name: "."
+}
+
+stringLit = s:STRING as BasicLit {
+	ValuePos: s.Pos
+	Kind: s.Tok
+	Value: s.Lit
+}
+
+// -----------------------------------------------------------------
+
+valueDecl = valKw Specs:(ValueSpec | lp:"(" *(ValueSpec ";") rp:")") as GenDecl {
+	TokPos: valKw.Pos
+	Tok: valKw.Tok
+	Lparen: lp.Pos
+	Rparen: rp.Pos
+}
+
+valKw = "const" | "var"
+
+ValueSpec = Names:identList ?Type ?Values:exprList
+
+identList = Ident % ","
+
+Ident = i:IDENT {
+	NamePos: i.Pos
+	Name: i.Lit
+}
+
+// -----------------------------------------------------------------
+
+Type = typeNameEx | typeLit | "(" Type ")" as Expr
+
+typeLit = ArrayType | StructType | pointerType | FuncType | InterfaceType | MapType | ChanType
+
+typeNameEx = typeName ?(lp:"[" Indices:typeList rp:"]" as IndexListExpr {
+	X: typeName
+	Lbrack: lp.Pos
+	Rbrack: rp.Pos
+})
+
+typeName = Ident | qualifiedIdent as Expr
+
+typeList = Type % ","
+
+qualifiedIdent = X:Ident "." Sel:Ident as SelectorExpr
+
+// -----------------------------------------------------------------
+
+ArrayType = lp:"[" ?Len:expr "]" Elt:Type {
+	Lbrack: lp.Pos
+}
+
+StructType = "struct" Fields:structBody {
+	Struct: struct.Pos
+}
+
+structBody = lp:"{" List:(structField % ";") ?";" rp:"}" as FieldList {
+	Opening: lp.Pos
+	Closing: rp.Pos
+}
+
+structField = (Names:identList Type | Type:embeddedField) ?Tag:stringLit as Field
+
+embeddedField = typeNameEx | (op:"*" X:typeNameEx as StarExpr {
+	Star: op.Pos
+})
+
+// -----------------------------------------------------------------
+
+AssignStmt = Lhs:exprList assignOp Rhs:exprList {
+	TokPos: assignOp.Pos
+	Tok: assignOp.Tok
+}
+
+exprList = expr % ","
+
+assignOp = ":=" | "=" | "+=" | "-=" | "*=" | "/=" | "%="
+
+// -----------------------------------------------------------------
+
+expr = unaryExpr | BinaryExpr
+
+BinaryExpr = X:expr binOp Y:expr { // TODO: precedence
+	OpPos: binOp.Pos
+	Op: binOp.Tok
+}
+
+binOp = "||" | "&&" | relOp | addOp | mulOp
+
+relOp = "==" | "!=" | "<" | "<=" | ">" | ">="
+
+addOp = "+" | "-" | "|" | "^"
+
+mulOp = "*" | "/" | "%" | "<<" | ">>" | "&" | "&^"
+
+unaryExpr = primaryExpr | (unaryOp X:unaryExpr as UnaryExpr {
+	OpPos: unaryOp.Pos
+	Op: unaryOp.Tok
+})
+
+unaryOp = "+" | "-" | "!" | "^" | "*" | "&" | "<-"
+
+primaryExpr = operand | CallExpr | SelectorExpr | IndexExpr | SliceExpr | TypeAssertExpr
+
+operand = TODO
+
+CallExpr = Fun:primaryExpr lp:"(" Args:exprList ?el:"..." ?"," rp:")" {
+	Lparen: lp.Pos
+	Rparen: rp.Pos
+	Ellipsis: el != nil
+}
+
+SelectorExpr = X:primaryExpr "." Sel:Ident
+
+IndexExpr = X:primaryExpr lp:"[" Index:expr ?"," rp:"]" {
+	Lbrack: lp.Pos
+	Rbrack: rp.Pos
+}
+
+SliceExpr = X:primaryExpr lp:"[" ?Low:expr ":" ?High:expr ?(":" Max:expr) rp:"]" {
+	Lbrack: lp.Pos
+	Rbrack: rp.Pos
+	Slice3: Max != nil
+}
+
+TypeAssertExpr = X:primaryExpr "." lp:"(" Type rp:")" {
+	Lparen: lp.Pos
+	Rparen: rp.Pos
+}
+
+// -----------------------------------------------------------------

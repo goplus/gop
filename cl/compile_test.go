@@ -1224,8 +1224,8 @@ func TestAutoProperty(t *testing.T) {
 func foo(script string) {
 	doc := goptest.New(script)!
 
-	println(doc.any.funcDecl.name)
-	println(doc.any.importSpec.name)
+	echo doc.any.funcDecl.name
+	echo doc.any.importSpec.name
 }
 `, `package main
 
@@ -1246,7 +1246,7 @@ func foo(script string) {
 		}
 		return
 	}()
-	fmt.Println(doc.Any().FuncDecl().Name())
+	fmt.Println(doc.Any().FuncDecl__0().Name())
 	fmt.Println(doc.Any().ImportSpec().Name())
 }
 `)
@@ -1280,7 +1280,7 @@ func foo(script string) {
 		}
 		return
 	}()
-	fmt.Println(doc.Any().FuncDecl().Name())
+	fmt.Println(doc.Any().FuncDecl__0().Name())
 	fmt.Println(doc.Any().ImportSpec().Name())
 }
 `)

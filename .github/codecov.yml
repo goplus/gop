@@ -28,4 +28,5 @@ coverage:
     - "x/gocmd"
     - "x/gopenv"
     - "tool"
+    - "tpl"
   

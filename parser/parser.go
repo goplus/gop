@@ -1718,9 +1718,23 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTup
 
 	switch p.tok {
 	case token.IDENT:
-		x = p.parseIdent()
-		if !lhs {
-			p.resolve(x)
+		ident := p.parseIdent()
+		if p.tok == token.STRING && p.pos == ident.End() && strings.HasPrefix(p.lit, "`") {
+			// domain text: tpl`...`
+			x = &ast.DomainTextLit{
+				Domain:   ident,
+				ValuePos: p.pos,
+				Value:    p.lit,
+			}
+			if debugParseOutput {
+				log.Printf("ast.DomainTextLit{Domain: %s, Value: %s}\n", ident.Name, p.lit)
+			}
+			p.next()
+		} else {
+			x = ident
+			if !lhs {
+				p.resolve(x)
+			}
 		}
 		return
 
@@ -1800,8 +1814,8 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTup
 			break
 		}
 		fallthrough
-	case token.GOTO, token.BREAK, token.CONTINUE, token.FALLTHROUGH:
-		// token.RANGE, token.IMPORT, token.TYPE, token.SELECT, token.INTERFACE:
+	case token.GOTO, token.TYPE, token.BREAK, token.CONTINUE, token.FALLTHROUGH:
+		// token.RANGE, token.IMPORT, token.SELECT, token.INTERFACE:
 		// Go+: allow goto() as a function
 		p.tok = token.IDENT
 		x = p.parseIdent()
@@ -2182,7 +2196,6 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	case *ast.BadExpr:
 	case *ast.Ident:
 	case *ast.BasicLit:
-	case *ast.NumberUnitLit:
 	case *ast.FuncLit:
 	case *ast.CompositeLit:
 	case *ast.SliceLit:
@@ -2216,6 +2229,8 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 		x = &ast.BadExpr{From: v.opening, To: v.closing}
 	case *ast.EnvExpr:
 	case *ast.ElemEllipsis:
+	case *ast.NumberUnitLit:
+	case *ast.DomainTextLit:
 	default:
 		// all other nodes are not proper expressions
 		p.errorExpected(x.Pos(), "expression", 3)
@@ -2372,7 +2387,8 @@ func (p *parser) checkCmd() bool {
 	case token.IDENT, token.DRARROW,
 		token.STRING, token.CSTRING, token.PYSTRING,
 		token.INT, token.FLOAT, token.IMAG, token.CHAR, token.RAT,
-		token.FUNC, token.GOTO, token.MAP, token.INTERFACE, token.CHAN, token.STRUCT, token.ENV:
+		token.FUNC, token.GOTO, token.TYPE, token.MAP, token.INTERFACE,
+		token.CHAN, token.STRUCT, token.ENV:
 		return true
 	case token.SUB, token.AND, token.MUL, token.ARROW, token.XOR, token.ADD:
 		oldtok, oldpos := p.tok, p.pos

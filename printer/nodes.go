@@ -1135,6 +1135,10 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 		p.expr(x.Elt)
 		p.print(token.ELLIPSIS)
 
+	case *ast.DomainTextLit:
+		p.print(x.Domain)
+		p.print(&ast.BasicLit{Kind: token.STRING, Value: x.Value})
+
 	default:
 		log.Fatalf("unreachable %T\n", x)
 	}

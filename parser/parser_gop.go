@@ -17,11 +17,8 @@
 package parser
 
 import (
-	"bytes"
 	"errors"
-	"io"
 	"io/fs"
-	"os"
 	"path"
 	"strings"
 
@@ -30,6 +27,7 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/parser/fsx"
+	"github.com/goplus/gop/parser/iox"
 	"github.com/goplus/gop/token"
 )
 
@@ -340,40 +338,9 @@ func ParseFSFile(fset *token.FileSet, fs FileSystem, filename string, src interf
 	return parseFile(fset, filename, code, mode)
 }
 
-var (
-	errInvalidSource = errors.New("invalid source")
-)
-
-func readSource(src interface{}) ([]byte, error) {
-	switch s := src.(type) {
-	case string:
-		return []byte(s), nil
-	case []byte:
-		return s, nil
-	case *bytes.Buffer:
-		// is io.Reader, but src is already available in []byte form
-		if s != nil {
-			return s.Bytes(), nil
-		}
-	case io.Reader:
-		return io.ReadAll(s)
-	}
-	return nil, errInvalidSource
-}
-
-// If src != nil, readSource converts src to a []byte if possible;
-// otherwise it returns an error. If src == nil, readSource returns
-// the result of reading the file specified by filename.
-func readSourceLocal(filename string, src interface{}) ([]byte, error) {
-	if src != nil {
-		return readSource(src)
-	}
-	return os.ReadFile(filename)
-}
-
 func readSourceFS(fs FileSystem, filename string, src interface{}) ([]byte, error) {
 	if src != nil {
-		return readSource(src)
+		return iox.ReadSource(src)
 	}
 	return fs.ReadFile(filename)
 }
