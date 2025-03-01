@@ -17,30 +17,49 @@
 package matcher
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/goplus/gop/tpl/token"
 	"github.com/goplus/gop/tpl/types"
 )
 
 // -----------------------------------------------------------------------------
-// Matcher
 
-// Context represents the context of a matching process.
-type Context struct {
+// Error represents a matching error.
+type Error struct {
+	Fset *token.FileSet
+	Pos  token.Pos
+	Msg  string
 }
 
-// Matcher represents a matcher.
-type Matcher interface {
-	Match(src []*types.Token, ctx *Context) (n int, result any, err error)
+func (p *Error) Error() string {
+	pos := p.Fset.Position(p.Pos)
+	return fmt.Sprintf("%v: %s", pos, p.Msg)
 }
 
 // -----------------------------------------------------------------------------
 
-// Error represents a matching error.
-type Error struct {
+// Context represents the context of a matching process.
+type Context struct {
+	Fset    *token.FileSet
+	FileEnd token.Pos
 }
 
-func (p *Error) Error() string {
-	panic("todo")
+func (p *Context) NewError(pos token.Pos, msg string) *Error {
+	return &Error{p.Fset, pos, msg}
+}
+
+func (p *Context) NewErrorf(pos token.Pos, format string, args ...any) error {
+	return &Error{p.Fset, pos, fmt.Sprintf(format, args...)}
+}
+
+// -----------------------------------------------------------------------------
+// Matcher
+
+// Matcher represents a matcher.
+type Matcher interface {
+	Match(src []*types.Token, ctx *Context) (n int, result any, err error)
 }
 
 // -----------------------------------------------------------------------------
@@ -51,11 +70,11 @@ type gToken struct {
 
 func (p *gToken) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
 	if len(src) == 0 {
-		return 0, nil, &Error{} // TODO(xsw): err
+		return 0, nil, &Error{} // TODO(xsw): error
 	}
 	t := src[0]
 	if t.Tok != p.tok {
-		return 0, nil, &Error{} // TODO(xsw): err
+		return 0, nil, &Error{}
 	}
 	return 1, t, nil
 }
@@ -74,11 +93,11 @@ type gLiteral struct {
 
 func (p *gLiteral) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
 	if len(src) == 0 {
-		return 0, nil, &Error{} // TODO(xsw): err
+		return 0, nil, ctx.NewErrorf(ctx.FileEnd, "expect `%s`, but got EOF", p.lit)
 	}
 	t := src[0]
 	if t.Tok != p.tok || t.Lit != p.lit {
-		return 0, nil, &Error{} // TODO(xsw): err
+		return 0, nil, ctx.NewErrorf(t.Pos, "expect `%s`, but got `%s`", p.lit, t.Lit)
 	}
 	return 1, t, nil
 }
@@ -112,7 +131,7 @@ func (p *gChoice) Match(src []*types.Token, ctx *Context) (n int, result any, er
 		}
 	}
 	if multiErr {
-		errMax = &Error{} // TODO(xsw): err
+		errMax = ctx.NewError(src[nMax].End(), "TODO: error msg") // TODO(xsw)
 	}
 	return nMax, nil, errMax
 }
@@ -228,6 +247,41 @@ func Repeat01(r Matcher) Matcher {
 // List: R1 % R2 is equivalent to R1 *(R2 R1)
 func List(a, b Matcher) Matcher {
 	return Sequence(a, Repeat0(Sequence(b, a)))
+}
+
+// -----------------------------------------------------------------------------
+
+var (
+	// ErrVarAssigned error
+	ErrVarAssigned = errors.New("variable is already assigned")
+)
+
+type Var struct {
+	Elem Matcher
+	Name string
+	Pos  token.Pos
+}
+
+func (p *Var) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
+	g := p.Elem
+	if g == nil {
+		return 0, nil, ctx.NewErrorf(p.Pos, "variable `%s` not found", p.Name)
+	}
+	return g.Match(src, ctx)
+}
+
+// Assign assigns a value to this variable.
+func (p *Var) Assign(elem Matcher) error {
+	if p.Elem != nil {
+		return ErrVarAssigned
+	}
+	p.Elem = elem
+	return nil
+}
+
+// NewVar creates a new Var instance.
+func NewVar(pos token.Pos, name string) *Var {
+	return &Var{Pos: pos, Name: name}
 }
 
 // -----------------------------------------------------------------------------
