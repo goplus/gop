@@ -1,0 +1,8 @@
+cl := tpl`expr = *INT`!
+echo cl.parseExpr("1 2 3", nil)!
+
+cl = tpl`expr = INT % ","`!
+echo cl.parseExpr("1, 2, 3", nil)!
+
+cl = tpl`expr = INT % ("+" | "-")`!
+echo cl.parseExpr("1 + 2 - 3", nil)!
