@@ -1718,9 +1718,23 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTup
 
 	switch p.tok {
 	case token.IDENT:
-		x = p.parseIdent()
-		if !lhs {
-			p.resolve(x)
+		ident := p.parseIdent()
+		if p.tok == token.STRING && p.pos == ident.End() && strings.HasPrefix(p.lit, "`") {
+			// domain text: tpl`...`
+			x = &ast.DomainTextLit{
+				Domain:   ident,
+				ValuePos: p.pos,
+				Value:    p.lit,
+			}
+			if debugParseOutput {
+				log.Printf("ast.DomainTextLit{Domain: %s, Value: %s}\n", ident.Name, p.lit)
+			}
+			p.next()
+		} else {
+			x = ident
+			if !lhs {
+				p.resolve(x)
+			}
 		}
 		return
 
@@ -2182,7 +2196,6 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 	case *ast.BadExpr:
 	case *ast.Ident:
 	case *ast.BasicLit:
-	case *ast.NumberUnitLit:
 	case *ast.FuncLit:
 	case *ast.CompositeLit:
 	case *ast.SliceLit:
@@ -2216,6 +2229,8 @@ func (p *parser) checkExpr(x ast.Expr) ast.Expr {
 		x = &ast.BadExpr{From: v.opening, To: v.closing}
 	case *ast.EnvExpr:
 	case *ast.ElemEllipsis:
+	case *ast.NumberUnitLit:
+	case *ast.DomainTextLit:
 	default:
 		// all other nodes are not proper expressions
 		p.errorExpected(x.Pos(), "expression", 3)

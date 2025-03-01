@@ -18,30 +18,25 @@ func calc(e any) float64 {
 	case *tpl.Token:
 		return e.Lit.float!
 	case []any:
-		if len(e) == 2 {
-			if x, ok := e[0].(*tpl.Token); ok && x.Tok == '-' {
-				return -calc(e[1])
-			}
-			x := calc(e[0])
-			for _, r := range e[1].([]any) {
-				t := r.([]any)
-				op := t[0].(*tpl.Token)
-				y := calc(t[1])
-				switch op.Tok {
-				case '+':
-					x += y
-				case '-':
-					x -= y
-				case '*':
-					x *= y
-				case '/':
-					x /= y
-				default:
-					panic("unknown operator")
-				}
-			}
-			return x
+		if x, ok := e[0].(*tpl.Token); ok && x.Tok == '-' {
+			return -calc(e[1])
 		}
+		x := calc(e[0])
+		for r <- e[1].([]any) {
+			e := r.([]any)
+			y := calc(e[1])
+			switch e[0].(*tpl.Token).Tok {
+			case '+':
+				x += y
+			case '-':
+				x -= y
+			case '*':
+				x *= y
+			case '/':
+				x /= y
+			}
+		}
+		return x
 	}
 	panic("unknown expression")
 }
