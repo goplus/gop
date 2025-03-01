@@ -23,6 +23,7 @@ import (
 	"go/scanner"
 
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/parser/iox"
 	"github.com/goplus/gop/token"
 )
 
@@ -83,7 +84,7 @@ func parseFile(fset *token.FileSet, filename string, src interface{}, mode Mode)
 	}
 
 	// get source
-	text, err := readSourceLocal(filename, src)
+	text, err := iox.ReadSourceLocal(filename, src)
 	if err != nil {
 		return
 	}
@@ -133,7 +134,7 @@ func parseFile(fset *token.FileSet, filename string, src interface{}, mode Mode)
 // are returned via a scanner.ErrorList which is sorted by source position.
 func ParseExprFrom(fset *token.FileSet, filename string, src any, mode Mode) (expr ast.Expr, err error) {
 	// get source
-	text, err := readSourceLocal(filename, src)
+	text, err := iox.ReadSourceLocal(filename, src)
 	if err != nil {
 		return
 	}

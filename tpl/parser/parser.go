@@ -17,11 +17,7 @@
 package parser
 
 import (
-	"bytes"
-	"errors"
-	"io"
-	"os"
-
+	"github.com/goplus/gop/parser/iox"
 	"github.com/goplus/gop/tpl/ast"
 	"github.com/goplus/gop/tpl/scanner"
 	"github.com/goplus/gop/tpl/token"
@@ -36,7 +32,7 @@ type Mode uint
 
 // ParseFile parses a file and returns the AST.
 func ParseFile(fset *token.FileSet, filename string, src any, _ Mode) (f *ast.File, err error) {
-	b, err := readSourceLocal(filename, src)
+	b, err := iox.ReadSourceLocal(filename, src)
 	if err != nil {
 		return nil, err
 	}
@@ -52,39 +48,6 @@ func ParseFile(fset *token.FileSet, filename string, src any, _ Mode) (f *ast.Fi
 		err = p.errors
 	}
 	return
-}
-
-// -----------------------------------------------------------------------------
-
-var (
-	errInvalidSource = errors.New("invalid source")
-)
-
-func readSource(src any) ([]byte, error) {
-	switch s := src.(type) {
-	case string:
-		return []byte(s), nil
-	case []byte:
-		return s, nil
-	case *bytes.Buffer:
-		// is io.Reader, but src is already available in []byte form
-		if s != nil {
-			return s.Bytes(), nil
-		}
-	case io.Reader:
-		return io.ReadAll(s)
-	}
-	return nil, errInvalidSource
-}
-
-// If src != nil, readSource converts src to a []byte if possible;
-// otherwise it returns an error. If src == nil, readSource returns
-// the result of reading the file specified by filename.
-func readSourceLocal(filename string, src any) ([]byte, error) {
-	if src != nil {
-		return readSource(src)
-	}
-	return os.ReadFile(filename)
 }
 
 // -----------------------------------------------------------------------------
@@ -106,7 +69,7 @@ type parser struct {
 func (p *parser) init(fset *token.FileSet, filename string, src []byte) {
 	p.file = fset.AddFile(filename, -1, len(src))
 	eh := func(pos token.Position, msg string) { p.errors.Add(pos, msg) }
-	p.scanner.Init(p.file, src, eh, scanner.InsertSemis)
+	p.scanner.Init(p.file, src, eh, 0)
 	p.next() // initialize first token
 }
 

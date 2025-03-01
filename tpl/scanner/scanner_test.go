@@ -128,7 +128,7 @@ world !=
 	fset := token.NewFileSet()
 	file := fset.AddFile("", -1, len(grammar))
 
-	s.Init(file, []byte(grammar), nil /* no error handler */, ScanComments|InsertSemis)
+	s.Init(file, []byte(grammar), nil /* no error handler */, ScanComments)
 	i := 0
 	for {
 		c := s.Scan()
@@ -145,7 +145,7 @@ world !=
 		t.Fatalf("len(expected) != i: %d, %d\n", len(expected), i)
 	}
 
-	s.Init(file, []byte(grammar), nil, 0)
+	s.Init(file, []byte(grammar), nil, NoInsertSemis)
 	i = 0
 	for {
 		c := s.Scan()
@@ -176,7 +176,7 @@ world !=
 		t.Fatalf("len(expected) != i: %d, %d\n", len(expected), i)
 	}
 
-	s.Init(file, []byte(grammar), nil, InsertSemis)
+	s.Init(file, []byte(grammar), nil, 0)
 	i = 0
 	for {
 		c := s.Scan()

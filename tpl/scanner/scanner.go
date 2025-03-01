@@ -100,8 +100,8 @@ const (
 	// ScanComments means returning comments as COMMENT tokens
 	ScanComments ScanMode = 1 << iota
 
-	// InsertSemis means automatically insert semicolons
-	InsertSemis
+	// NoInsertSemis means don't automatically insert semicolons
+	NoInsertSemis
 )
 
 // Init prepares the scanner s to tokenize the text src by setting the
@@ -788,7 +788,7 @@ scanAgain:
 			t.Lit = string(ch)
 		}
 	}
-	if s.mode&InsertSemis != 0 {
+	if s.mode&NoInsertSemis == 0 {
 		s.insertSemi = insertSemi
 	}
 
