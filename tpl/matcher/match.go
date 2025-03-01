@@ -153,7 +153,8 @@ type gSequence struct {
 }
 
 func (p *gSequence) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
-	rets := make([]any, len(p.items))
+	nitems := len(p.items)
+	rets := make([]any, nitems)
 	for i, g := range p.items {
 		n1, ret1, err1 := g.Match(src[n:], ctx)
 		if err1 != nil {
@@ -161,6 +162,12 @@ func (p *gSequence) Match(src []*types.Token, ctx *Context) (n int, result any, 
 		}
 		rets[i] = ret1
 		n += n1
+	}
+	if nitems == 2 {
+		if _, ok := p.items[1].(*gRepeat0); ok && len(rets[1].([]any)) == 0 {
+			result = rets[0]
+			return
+		}
 	}
 	result = rets
 	return
