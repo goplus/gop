@@ -1,0 +1,58 @@
+import (
+	"gop/tpl"
+	"os"
+)
+
+const tplCalc = `
+expr = termExpr % ("+" | "-")
+
+termExpr = unaryExpr % ("*" | "/")
+
+unaryExpr = operand | "-" unaryExpr
+
+operand = INT | FLOAT | "(" expr ")"
+`
+
+func calc(e any) float64 {
+	switch e := e.(type) {
+	case *tpl.Token:
+		return e.Lit.float!
+	case []any:
+		if len(e) == 2 {
+			if x, ok := e[0].(*tpl.Token); ok && x.Tok == '-' {
+				return -calc(e[1])
+			}
+			x := calc(e[0])
+			for _, r := range e[1].([]any) {
+				t := r.([]any)
+				op := t[0].(*tpl.Token)
+				y := calc(t[1])
+				switch op.Tok {
+				case '+':
+					x += y
+				case '-':
+					x -= y
+				case '*':
+					x *= y
+				case '/':
+					x /= y
+				default:
+					panic("unknown operator")
+				}
+			}
+			return x
+		}
+	}
+	panic("unknown expression")
+}
+
+cl := tpl.new(tplCalc)!
+print "> "
+for line <- os.Stdin {
+	e, err := cl.parseExpr(line, nil)
+	if err != nil {
+		print "${err}\n> "
+	} else {
+		print "${calc(e)}\n> "
+	}
+}
