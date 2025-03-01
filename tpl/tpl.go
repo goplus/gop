@@ -156,7 +156,9 @@ func isEOL(tok token.Token) bool {
 func isPlain(result []any) bool {
 	for _, v := range result {
 		if _, ok := v.(*Token); !ok {
-			return false
+			if a, ok := v.([]any); !ok || len(a) != 0 {
+				return false
+			}
 		}
 	}
 	return true
