@@ -28,6 +28,7 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/parser/fsx"
 	"github.com/goplus/gop/parser/fsx/memfs"
+	"github.com/goplus/gop/parser/iox"
 	"github.com/goplus/gop/parser/parsertest"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
@@ -319,17 +320,17 @@ func TestParseExprFrom(t *testing.T) {
 
 func TestReadSource(t *testing.T) {
 	buf := bytes.NewBuffer(nil)
-	if _, err := readSource(buf); err != nil {
+	if _, err := iox.ReadSource(buf); err != nil {
 		t.Fatal("readSource failed:", err)
 	}
 	sr := strings.NewReader("")
-	if _, err := readSource(sr); err != nil {
+	if _, err := iox.ReadSource(sr); err != nil {
 		t.Fatal("readSource strings.Reader failed:", err)
 	}
-	if _, err := readSource(0); err == nil {
+	if _, err := iox.ReadSource(0); err == nil {
 		t.Fatal("readSource int failed: no error?")
 	}
-	if _, err := readSourceLocal("/foo/bar/not-exists", nil); err == nil {
+	if _, err := iox.ReadSourceLocal("/foo/bar/not-exists", nil); err == nil {
 		t.Fatal("readSourceLocal int failed: no error?")
 	}
 }
@@ -343,7 +344,7 @@ func TestParseFiles(t *testing.T) {
 
 func TestIparseFileInvalidSrc(t *testing.T) {
 	fset := token.NewFileSet()
-	if _, err := parseFile(fset, "/foo/bar/not-exists", 1, PackageClauseOnly); err != errInvalidSource {
+	if _, err := parseFile(fset, "/foo/bar/not-exists", 1, PackageClauseOnly); err != iox.ErrInvalidSource {
 		t.Fatal("ParseFile failed: not errInvalidSource?")
 	}
 }

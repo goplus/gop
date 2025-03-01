@@ -35,7 +35,7 @@ var (
 // Result represents the result of compiling a set of rules.
 type Result struct {
 	Doc   *matcher.Var
-	rules map[string]*matcher.Var
+	Rules map[string]*matcher.Var
 }
 
 type context struct {
