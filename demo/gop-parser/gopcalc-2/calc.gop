@@ -46,7 +46,7 @@ func calc(e any) float64 {
 	panic("unknown expression")
 }
 
-cl := tpl.new("", tplCalc, nil)!
+cl := tpl.new(tplCalc)!
 print "> "
 for line <- os.Stdin {
 	e, err := cl.parseExpr(line, nil)

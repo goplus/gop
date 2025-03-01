@@ -39,7 +39,12 @@ type Compiler struct {
 }
 
 // New creates a new TPL compiler.
-func New(filename string, src any, fset *token.FileSet) (ret Compiler, err error) {
+func New(src any) (ret Compiler, err error) {
+	return FromFile("", src, nil)
+}
+
+// FromFile creates a new TPL compiler from a file.
+func FromFile(filename string, src any, fset *token.FileSet) (ret Compiler, err error) {
 	if fset == nil {
 		fset = token.NewFileSet()
 	}
