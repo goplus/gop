@@ -1,0 +1,50 @@
+import (
+	"encoding/json"
+	"gop/tpl"
+	"os"
+)
+
+const tplCalc = `
+expr = termExpr % ("+" | "-")
+
+termExpr = unaryExpr % ("*" | "/")
+
+unaryExpr = operand | "-" unaryExpr
+
+operand = INT | FLOAT | "(" expr ")"
+`
+
+func calc(e any) string {
+	b, _ := json.marshalIndent(e, "", "  ")
+	return string(b)
+	/*
+		switch e := e.(type) {
+		case *tpl.Token:
+			return e.Lit.float!
+		case []any:
+			switch len(e) {
+			case 2:
+				switch x := e[0].(type) {
+				case *tpl.Token:
+					if x.Tok == '-' {
+						return -calc(e[1])
+					}
+				}
+			case 3: // ( expr )
+				return calc(e[1])
+			}
+		}
+		panic("unknown expression")
+	*/
+}
+
+cl := tpl.new("", tplCalc, nil)!
+print "> "
+for line <- os.Stdin {
+	e, err := cl.parseExpr(line, nil)
+	if err != nil {
+		print "${err}\n> "
+	} else {
+		print "${calc(e)}\n> "
+	}
+}

@@ -27,6 +27,15 @@ type Token struct {
 	Lit string
 }
 
+// String returns the string representation of a token.
+func (p *Token) String() string {
+	n := len(p.Lit)
+	if n == 0 {
+		return p.Tok.String()
+	}
+	return p.Lit
+}
+
 // End returns end position of this token.
 func (p *Token) End() token.Pos {
 	n := len(p.Lit)

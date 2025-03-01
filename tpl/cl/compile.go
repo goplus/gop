@@ -58,7 +58,6 @@ func (p *context) addError(pos token.Pos, msg string) {
 
 // New compiles a set of rules from the given files.
 func New(fset *token.FileSet, files ...*ast.File) (ret Result, err error) {
-	var doc *matcher.Var
 	rules := make(map[string]*matcher.Var)
 	ctx := &context{rules: rules, fset: fset}
 	for _, f := range files {
@@ -75,6 +74,18 @@ func New(fset *token.FileSet, files ...*ast.File) (ret Result, err error) {
 				}
 				v := matcher.NewVar(ident.Pos(), name)
 				rules[name] = v
+			default:
+				ctx.addError(decl.Pos(), "unknown declaration")
+			}
+		}
+	}
+	var doc *matcher.Var
+	for _, f := range files {
+		for _, decl := range f.Decls {
+			switch decl := decl.(type) {
+			case *ast.Rule:
+				ident := decl.Name
+				v := rules[ident.Name]
 				if r, ok := compileExpr(decl.Expr, ctx); ok {
 					if e := v.Assign(r); e != nil {
 						ctx.addError(ident.Pos(), e.Error())
@@ -83,8 +94,6 @@ func New(fset *token.FileSet, files ...*ast.File) (ret Result, err error) {
 						doc = v
 					}
 				}
-			default:
-				ctx.addError(decl.Pos(), "unknown declaration")
 			}
 		}
 	}
