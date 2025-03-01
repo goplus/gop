@@ -387,6 +387,8 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 		compileEnvExpr(ctx, v)
 	/* case *ast.MatrixLit:
 	compileMatrixLit(ctx, v) */
+	case *ast.DomainTextLit:
+		compileDomainTextLit(ctx, v)
 	default:
 		panic(ctx.newCodeErrorf(v.Pos(), "compileExpr failed: unknown - %T", v))
 	}
@@ -1068,6 +1070,19 @@ func compileStringLitEx(ctx *blockCtx, cb *gogen.CodeBuilder, lit *ast.BasicLit)
 	}
 	if n != 1 {
 		cb.CallWith(n, 0, lit)
+	}
+}
+
+const (
+	tplPkgPath = "github.com/goplus/gop/tpl"
+)
+
+func compileDomainTextLit(ctx *blockCtx, v *ast.DomainTextLit) {
+	switch v.Domain.Name {
+	case "tpl": // tpl`...` => tpl.new(`...`)
+		ctx.cb.Val(ctx.pkg.Import(tplPkgPath).Ref("New")).
+			Val(&goast.BasicLit{Kind: gotoken.STRING, Value: v.Value}, v).
+			Call(1)
 	}
 }
 

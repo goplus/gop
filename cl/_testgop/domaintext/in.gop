@@ -1,0 +1,2 @@
+cl := tpl`expr = INT % ("+" | "-")`!
+cl.parseExpr "1+2", nil
