@@ -38,7 +38,7 @@ func TestToken(t *testing.T) {
 		count++
 		return 0
 	})
-	if count != 25 {
+	if count != 28 {
 		t.Fatal("ForEach:", count)
 	}
 }
