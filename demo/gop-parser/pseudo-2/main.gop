@@ -31,13 +31,15 @@ untilStmt = "REPEAT" ";" doc "UNTIL" expr
 
 typeExpr = "INTEGER" | "REAL" | "STRING" | "BOOLEAN"
 
-expr = termExpr % ("+" | "-")
+expr = term2Expr % ("<" | "<=" | ">" | ">=" | "=" | "!=")
 
-termExpr = unaryExpr % ("*" | "/")
+term2Expr = term1Expr % ("+" | "-")
+
+term1Expr = unaryExpr % ("*" | "/")
 
 unaryExpr = operand | "-" unaryExpr
 
-operand = INT | FLOAT | "(" expr ")"
+operand = INT | FLOAT | STRING | IDENT | "(" expr ")"
 `!
 
 e := cl.parse(os.Args[1], nil, nil)!

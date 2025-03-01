@@ -70,11 +70,11 @@ type gToken struct {
 
 func (p *gToken) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
 	if len(src) == 0 {
-		return 0, nil, &Error{} // TODO(xsw): error
+		return 0, nil, ctx.NewErrorf(ctx.FileEnd, "expect `%s`, but got EOF", p.tok)
 	}
 	t := src[0]
 	if t.Tok != p.tok {
-		return 0, nil, &Error{}
+		return 0, nil, ctx.NewErrorf(t.Pos, "expect `%s`, but got `%s`", p.tok, t.Tok)
 	}
 	return 1, t, nil
 }
