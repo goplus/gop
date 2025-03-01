@@ -87,6 +87,7 @@ const (
 	QUESTION  = '?'
 	TILDE     = '~'
 	AT        = '@'
+	ENV       = '$'
 )
 
 const (
@@ -122,7 +123,11 @@ const (
 	DEFINE   // :=
 	ELLIPSIS // ...
 
-	_ = operator_beg
+	DRARROW   // =>
+	SRARROW   // ->
+	BIDIARROW // <>
+
+	operator_end
 )
 
 // -----------------------------------------------------------------------------
@@ -169,6 +174,7 @@ var tokens = [...]string{
 	QUESTION:  "?",
 	TILDE:     "~",
 	AT:        "@",
+	ENV:       "$",
 
 	SHL:     "<<",
 	SHR:     ">>",
@@ -199,14 +205,28 @@ var tokens = [...]string{
 	GE:       ">=",
 	DEFINE:   ":=",
 	ELLIPSIS: "...",
+
+	DRARROW:   "=>",
+	SRARROW:   "->",
+	BIDIARROW: "<>",
 }
 
-// ForEach iterates all tokens.
-func ForEach(f func(tok Token, lit string)) {
-	for i, s := range tokens {
-		if s != "" {
-			f(Token(i), s)
+const (
+	Break = -1
+)
+
+// ForEach iterates tokens.
+func ForEach(from Token, f func(tok Token, lit string) int) {
+	if from == 0 {
+		from = operator_beg + 1
+	}
+	for from < operator_end {
+		if s := tokens[from]; s != "" {
+			if f(Token(from), s) == Break {
+				break
+			}
 		}
+		from++
 	}
 }
 

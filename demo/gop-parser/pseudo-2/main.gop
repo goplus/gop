@@ -1,0 +1,46 @@
+import (
+	"gop/tpl"
+	"os"
+)
+
+if len(os.Args) < 2 {
+	println("Usage: pseudo <file>")
+	return
+}
+
+cl := tpl`
+doc = +(stmt ";")
+
+stmt = varStmt | constStmt | outputStmt | inputStmt | ifStmt | whileStmt | untilStmt | assignStmt
+
+varStmt = "DECLARE" IDENT % "," ":" typeExpr
+
+constStmt = "CONSTANT" IDENT "<-" expr
+
+assignStmt = IDENT "<-" expr
+
+outputStmt = "OUTPUT" expr
+
+inputStmt = "INPUT" IDENT % ","
+
+ifStmt = "IF" expr "THEN" ";" doc ?("ELSE" ";" doc) "ENDIF"
+
+whileStmt = "WHILE" expr "DO" ";" doc "ENDWHILE"
+
+untilStmt = "REPEAT" ";" doc "UNTIL" expr
+
+typeExpr = "INTEGER" | "REAL" | "STRING" | "BOOLEAN"
+
+expr = term2Expr % ("<" | "<=" | ">" | ">=" | "=" | "<>")
+
+term2Expr = term1Expr % ("+" | "-")
+
+term1Expr = unaryExpr % ("*" | "/")
+
+unaryExpr = operand | "-" unaryExpr
+
+operand = INT | FLOAT | STRING | IDENT | "(" expr ")"
+`!
+
+e := cl.parse(os.Args[1], nil, nil)!
+tpl.dump e
