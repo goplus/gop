@@ -1,0 +1,9 @@
+cl := tpl`
+expr = termExpr % ("+" | "-")
+
+termExpr = unaryExpr % ("*" | "/")
+
+unaryExpr = operand | "-" unaryExpr
+
+operand = INT | FLOAT | "(" expr ")"
+`!

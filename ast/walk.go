@@ -98,10 +98,20 @@ func Walk(v Visitor, node Node) {
 		}
 
 	// Expressions
-	case *BadExpr, *Ident:
+	case *BadExpr, *Ident, *NumberUnitLit:
 		// nothing to do
 
 	case *BasicLit:
+		if n.Extra != nil { // Go+ extended
+			for _, part := range n.Extra.Parts {
+				if e, ok := part.(Expr); ok {
+					Walk(v, e)
+				}
+			}
+		}
+
+	case *DomainTextLit:
+		Walk(v, n.Domain)
 		if n.Extra != nil { // Go+ extended
 			for _, part := range n.Extra.Parts {
 				if e, ok := part.(Expr); ok {
