@@ -1,0 +1,3 @@
+cl, err := tpl`expr = INT % ("+" | "-")`
+cl.parseExpr "1+2", nil
+_ = err

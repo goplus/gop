@@ -3,16 +3,6 @@ import (
 	"os"
 )
 
-const tplCalc = `
-expr = termExpr % ("+" | "-")
-
-termExpr = unaryExpr % ("*" | "/")
-
-unaryExpr = operand | "-" unaryExpr
-
-operand = INT | FLOAT | "(" expr ")"
-`
-
 func calc(e any) float64 {
 	switch e := e.(type) {
 	case *tpl.Token:
@@ -41,7 +31,16 @@ func calc(e any) float64 {
 	panic("unknown expression")
 }
 
-cl := tpl.new(tplCalc)!
+cl := tpl`
+expr = termExpr % ("+" | "-")
+
+termExpr = unaryExpr % ("*" | "/")
+
+unaryExpr = operand | "-" unaryExpr
+
+operand = INT | FLOAT | "(" expr ")"
+`!
+
 print "> "
 for line <- os.Stdin {
 	e, err := cl.parseExpr(line, nil)
