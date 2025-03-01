@@ -18,6 +18,8 @@ package tpl
 
 import (
 	"fmt"
+	"io"
+	"os"
 
 	"github.com/goplus/gop/parser/iox"
 	"github.com/goplus/gop/tpl/cl"
@@ -140,6 +142,27 @@ func (p *Compiler) Match(filename string, src any, conf *Config) (next []*Token,
 
 func isEOL(tok token.Token) bool {
 	return tok == token.SEMICOLON || tok == token.EOF
+}
+
+// -----------------------------------------------------------------------------
+
+func Dump(result any) {
+	Fdump(os.Stdout, result, "", "  ")
+}
+
+func Fdump(w io.Writer, result any, prefix, indent string) {
+	switch result := result.(type) {
+	case *Token:
+		fmt.Fprint(w, prefix, result, "\n")
+	case []any:
+		fmt.Print(prefix, "[\n")
+		for _, v := range result {
+			Fdump(w, v, prefix+indent, indent)
+		}
+		fmt.Print(prefix, "]\n")
+	default:
+		panic("unexpected node")
+	}
 }
 
 // -----------------------------------------------------------------------------
