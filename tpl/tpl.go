@@ -123,7 +123,11 @@ func (p *Compiler) Match(filename string, src any, conf *Config) (next []*Token,
 	fset := p.Fset
 	f := fset.AddFile(filename, fset.Base(), len(b))
 	s.Init(f, b, conf.ScanErrorHandler, conf.ScanMode)
-	toks := make([]*Token, 0, len(b)>>3)
+	n := (len(b) >> 3) &^ 7
+	if n < 8 {
+		n = 8
+	}
+	toks := make([]*Token, 0, n)
 	for {
 		t := s.Scan()
 		if t.Tok == token.EOF {
@@ -135,7 +139,7 @@ func (p *Compiler) Match(filename string, src any, conf *Config) (next []*Token,
 		Fset:    fset,
 		FileEnd: token.Pos(f.Base() + len(b)),
 	}
-	n, result, err := p.Doc.Match(toks, ctx)
+	n, result, err = p.Doc.Match(toks, ctx)
 	if err != nil {
 		return
 	}
@@ -149,6 +153,15 @@ func isEOL(tok token.Token) bool {
 	return tok == token.SEMICOLON || tok == token.EOF
 }
 
+func isPlain(result []any) bool {
+	for _, v := range result {
+		if _, ok := v.(*Token); !ok {
+			return false
+		}
+	}
+	return true
+}
+
 // -----------------------------------------------------------------------------
 
 func Dump(result any) {
@@ -160,11 +173,22 @@ func Fdump(w io.Writer, result any, prefix, indent string) {
 	case *Token:
 		fmt.Fprint(w, prefix, result, "\n")
 	case []any:
-		fmt.Print(prefix, "[\n")
-		for _, v := range result {
-			Fdump(w, v, prefix+indent, indent)
+		if isPlain(result) {
+			fmt.Print(prefix, "[")
+			for i, v := range result {
+				if i > 0 {
+					fmt.Print(" ")
+				}
+				fmt.Fprint(w, v)
+			}
+			fmt.Print("]\n")
+		} else {
+			fmt.Print(prefix, "[\n")
+			for _, v := range result {
+				Fdump(w, v, prefix+indent, indent)
+			}
+			fmt.Print(prefix, "]\n")
 		}
-		fmt.Print(prefix, "]\n")
 	default:
 		panic("unexpected node")
 	}
