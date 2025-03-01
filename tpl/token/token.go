@@ -87,6 +87,7 @@ const (
 	QUESTION  = '?'
 	TILDE     = '~'
 	AT        = '@'
+	ENV       = '$'
 )
 
 const (
@@ -121,6 +122,10 @@ const (
 	GE       // >=
 	DEFINE   // :=
 	ELLIPSIS // ...
+
+	DRARROW   // =>
+	SRARROW   // ->
+	BIDIARROW // <>
 
 	operator_end
 )
@@ -169,6 +174,7 @@ var tokens = [...]string{
 	QUESTION:  "?",
 	TILDE:     "~",
 	AT:        "@",
+	ENV:       "$",
 
 	SHL:     "<<",
 	SHR:     ">>",
@@ -199,6 +205,10 @@ var tokens = [...]string{
 	GE:       ">=",
 	DEFINE:   ":=",
 	ELLIPSIS: "...",
+
+	DRARROW:   "=>",
+	SRARROW:   "->",
+	BIDIARROW: "<>",
 }
 
 const (
