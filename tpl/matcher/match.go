@@ -70,11 +70,11 @@ type gToken struct {
 
 func (p *gToken) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
 	if len(src) == 0 {
-		return 0, nil, &Error{} // TODO(xsw): error
+		return 0, nil, ctx.NewErrorf(ctx.FileEnd, "expect `%s`, but got EOF", p.tok)
 	}
 	t := src[0]
 	if t.Tok != p.tok {
-		return 0, nil, &Error{}
+		return 0, nil, ctx.NewErrorf(t.Pos, "expect `%s`, but got `%s`", p.tok, t.Tok)
 	}
 	return 1, t, nil
 }
@@ -116,23 +116,28 @@ type gChoice struct {
 func (p *gChoice) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
 	var nMax int
 	var errMax error
-	var multiErr = true
+	// var multiErr = true
 
 	for _, g := range p.options {
 		if n, result, err = g.Match(src, ctx); err == nil {
 			return
 		}
 		if n >= nMax {
-			if n == nMax {
-				multiErr = true
-			} else {
-				nMax, errMax, multiErr = n, err, false
-			}
+			nMax, errMax = n, err
+			/*
+				if n == nMax {
+					multiErr = true
+				} else {
+					nMax, errMax, multiErr = n, err, false
+				}
+			*/
 		}
 	}
-	if multiErr {
-		errMax = ctx.NewError(src[nMax].End(), "TODO: error msg") // TODO(xsw)
-	}
+	/*
+		if multiErr {
+			errMax = ctx.NewError(src[nMax].End(), "TODO: error msg") // TODO(xsw)
+		}
+	*/
 	return nMax, nil, errMax
 }
 

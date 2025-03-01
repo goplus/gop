@@ -122,7 +122,7 @@ const (
 	DEFINE   // :=
 	ELLIPSIS // ...
 
-	_ = operator_beg
+	operator_end
 )
 
 // -----------------------------------------------------------------------------
@@ -201,12 +201,22 @@ var tokens = [...]string{
 	ELLIPSIS: "...",
 }
 
-// ForEach iterates all tokens.
-func ForEach(f func(tok Token, lit string)) {
-	for i, s := range tokens {
-		if s != "" {
-			f(Token(i), s)
+const (
+	Break = -1
+)
+
+// ForEach iterates tokens.
+func ForEach(from Token, f func(tok Token, lit string) int) {
+	if from == 0 {
+		from = operator_beg + 1
+	}
+	for from < operator_end {
+		if s := tokens[from]; s != "" {
+			if f(Token(from), s) == Break {
+				break
+			}
 		}
+		from++
 	}
 }
 

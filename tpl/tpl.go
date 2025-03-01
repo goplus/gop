@@ -173,7 +173,9 @@ func Dump(result any) {
 func Fdump(w io.Writer, result any, prefix, indent string) {
 	switch result := result.(type) {
 	case *Token:
-		fmt.Fprint(w, prefix, result, "\n")
+		if result.Tok != token.SEMICOLON {
+			fmt.Fprint(w, prefix, result, "\n")
+		}
 	case []any:
 		if isPlain(result) {
 			fmt.Print(prefix, "[")
