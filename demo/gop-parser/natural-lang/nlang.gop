@@ -1,8 +1,9 @@
 import "os"
 
 cl := tpl`
-expr = noun verb noun
-noun = "I" | "you" | "he" | "she" | "it" | "dog" | "cat"
+expr = subject verb object
+subject = "I" | "You" | "He" | "She" | "It" | "Dog" | "Cat"
+object = "me" | "you" | "him" | "her" | "it" | "fish" | "apple" | "banana" | "dog" | "cat"
 verb = "attack" | "love" | "eat" | "hate"
 `!
 
