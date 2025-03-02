@@ -166,15 +166,17 @@ func isPlain(result []any) bool {
 
 // -----------------------------------------------------------------------------
 
-func Dump(result any) {
-	Fdump(os.Stdout, result, "", "  ")
+func Dump(result any, omitSemi ...bool) {
+	Fdump(os.Stdout, result, "", "  ", omitSemi != nil && omitSemi[0])
 }
 
-func Fdump(w io.Writer, result any, prefix, indent string) {
+func Fdump(w io.Writer, result any, prefix, indent string, omitSemi bool) {
 	switch result := result.(type) {
 	case *Token:
 		if result.Tok != token.SEMICOLON {
 			fmt.Fprint(w, prefix, result, "\n")
+		} else if !omitSemi {
+			fmt.Fprint(w, prefix, ";\n")
 		}
 	case []any:
 		if isPlain(result) {
@@ -189,7 +191,7 @@ func Fdump(w io.Writer, result any, prefix, indent string) {
 		} else {
 			fmt.Print(prefix, "[\n")
 			for _, v := range result {
-				Fdump(w, v, prefix+indent, indent)
+				Fdump(w, v, prefix+indent, indent, omitSemi)
 			}
 			fmt.Print(prefix, "]\n")
 		}

@@ -1,0 +1,17 @@
+import "os"
+
+cl := tpl`
+expr = noun verb noun
+noun = "I" | "you" | "he" | "she" | "it" | "dog" | "cat"
+verb = "attack" | "love" | "eat" | "hate"
+`!
+
+print "> "
+for line <- os.Stdin {
+	e, err := cl.parseExpr(line, nil)
+	if err != nil {
+		print "${err}\n> "
+	} else {
+		print e, "\n > "
+	}
+}
