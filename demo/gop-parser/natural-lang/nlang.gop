@@ -1,0 +1,18 @@
+import "os"
+
+cl := tpl`
+expr = subject verb object
+subject = "I" | "You" | "He" | "She" | "It" | "Dog" | "Cat"
+object = "me" | "you" | "him" | "her" | "it" | "fish" | "apple" | "banana" | "dog" | "cat"
+verb = "attack" | "love" | "eat" | "hate"
+`!
+
+print "> "
+for line <- os.Stdin {
+	e, err := cl.parseExpr(line, nil)
+	if err != nil {
+		print "${err}\n> "
+	} else {
+		print e, "\n > "
+	}
+}
