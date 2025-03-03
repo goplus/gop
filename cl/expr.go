@@ -1335,10 +1335,10 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit, typ types.Type, noPanic ...
 	for _, elt := range v.Elts {
 		compileExpr(ctx, elt)
 	}
-	if sliceHasTypeParam(ctx, typ) {
-		ctx.cb.SliceLitEx(nil, n, false, v)
-	} else {
+	if isSpecificSliceType(ctx, typ) {
 		ctx.cb.SliceLitEx(typ, n, false, v)
+	} else {
+		ctx.cb.SliceLitEx(nil, n, false, v)
 	}
 	return
 }
