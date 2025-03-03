@@ -255,7 +255,7 @@ func isTypeParam(t types.Type) bool {
 	return ok
 }
 
-func sliceHasTypeParam(ctx *blockCtx, typ types.Type) bool {
+func isSpecificSliceType(ctx *blockCtx, typ types.Type) bool {
 	if typ == nil {
 		return false
 	}
@@ -265,9 +265,11 @@ func sliceHasTypeParam(ctx *blockCtx, typ types.Type) bool {
 		t = getUnderlying(ctx, tt).(*types.Slice)
 	case *types.Slice:
 		t = tt
+	default:
+		return false
 	}
 	_, ok := t.Elem().(*types.TypeParam)
-	return ok
+	return !ok
 }
 
 func boundTypeParam(ctx *blockCtx, x ast.Expr) types.Type {
