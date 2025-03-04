@@ -1277,21 +1277,24 @@ func compileCompositeLitEx(ctx *blockCtx, v *ast.CompositeLit, expected types.Ty
 			return err
 		}
 		n := len(v.Elts)
-		if isMap(underlying) {
+		switch underlying.(type) {
+		case *types.Slice:
+			ctx.cb.SliceLitEx(typ, n<<kind, kind == compositeLitKeyVal, v)
+		case *types.Array:
+			ctx.cb.ArrayLitEx(typ, n<<kind, kind == compositeLitKeyVal, v)
+		case *types.Map:
 			if kind == compositeLitVal && n > 0 {
 				return ctx.newCodeError(v.Pos(), "missing key in map literal")
 			}
-			if err := ctx.cb.MapLitEx(typ, n<<1, v); err != nil {
+			if err := compileMapLitEx(ctx, typ, n, v); err != nil {
 				return err
 			}
-		} else {
-			switch underlying.(type) {
-			case *types.Slice:
-				ctx.cb.SliceLitEx(typ, n<<kind, kind == compositeLitKeyVal, v)
-			case *types.Array:
-				ctx.cb.ArrayLitEx(typ, n<<kind, kind == compositeLitKeyVal, v)
-			default:
+		default:
+			if kind == compositeLitVal && n > 0 {
 				return ctx.newCodeErrorf(v.Pos(), "invalid composite literal type %v", typ)
+			}
+			if err := compileMapLitEx(ctx, nil, n, v); err != nil {
+				return err
 			}
 		}
 	}
@@ -1305,12 +1308,14 @@ func compileCompositeLitEx(ctx *blockCtx, v *ast.CompositeLit, expected types.Ty
 	return nil
 }
 
-func isMap(tu types.Type) bool {
-	if tu == nil { // map can omit type
-		return true
-	}
-	_, ok := tu.(*types.Map)
-	return ok
+func compileMapLitEx(ctx *blockCtx, typ types.Type, n int, v *ast.CompositeLit) (err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			err = ctx.newCodeError(v.Pos(), "invalid map literal")
+		}
+	}()
+	err = ctx.cb.MapLitEx(typ, n<<1, v)
+	return
 }
 
 func isMapOrStruct(tu types.Type) bool {
