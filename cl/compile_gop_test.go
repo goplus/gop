@@ -1706,3 +1706,22 @@ func main() {
 }
 `)
 }
+
+func TestMapLitType(t *testing.T) {
+	gopClTest(t, `
+var a any = {
+    "Monday": 1,
+    "Tuesday": 2,
+}
+echo a
+`, `package main
+
+import "fmt"
+
+var a interface{} = map[string]int{"Monday": 1, "Tuesday": 2}
+
+func main() {
+	fmt.Println(a)
+}
+`)
+}
