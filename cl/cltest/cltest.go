@@ -34,6 +34,7 @@ import (
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gop/tool"
 	"github.com/goplus/mod/env"
+	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modfile"
 )
 
@@ -192,7 +193,16 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 	filter := func(fi fs.FileInfo) bool {
 		return fi.Name() == "in.gop"
 	}
-	DoFS(t, Conf, fsx.Local, pkgDir, filter, "main", expected)
+	conf := Conf
+	goMod := pkgDir + "/go.mod"
+	if _, err := os.Stat(goMod); err == nil {
+		if mod, err := gopmod.Load(pkgDir); err == nil {
+			confCopy := *Conf
+			confCopy.Importer = tool.NewImporter(mod, Gop, conf.Fset)
+			conf = &confCopy
+		}
+	}
+	DoFS(t, conf, fsx.Local, pkgDir, filter, "main", expected)
 }
 
 // -----------------------------------------------------------------------------

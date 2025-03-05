@@ -59,7 +59,8 @@ func (*OverloadFuncDecl) declNode() {}
 
 // -----------------------------------------------------------------------------
 
-// A DomainTextLit node represents a domain text literal.
+// A DomainTextLit node represents a domain-specific text literal.
+// https://github.com/goplus/gop/issues/2143
 //
 //	tpl`...`
 type DomainTextLit struct {
