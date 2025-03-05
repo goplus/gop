@@ -1077,13 +1077,40 @@ const (
 	tplPkgPath = "github.com/goplus/gop/tpl"
 )
 
+// https://github.com/goplus/gop/issues/2143
+// domainTag`...` => domainTag.new(`...`)
 func compileDomainTextLit(ctx *blockCtx, v *ast.DomainTextLit) {
-	switch v.Domain.Name {
-	case "tpl": // tpl`...` => tpl.new(`...`)
-		ctx.cb.Val(ctx.pkg.Import(tplPkgPath).Ref("New")).
-			Val(&goast.BasicLit{Kind: gotoken.STRING, Value: v.Value}, v).
-			Call(1)
+	var cb = ctx.cb
+	var imp gogen.PkgRef
+	var name = v.Domain.Name
+	if pi, ok := ctx.findImport(name); ok {
+		imp = pi.PkgRef
+		if pi.Path() == "golang.org/x/net/html" {
+			// html`...` => html.Parse(strings.NewReader(`...`))
+			cb.Val(imp.Ref("Parse")).
+				Val(ctx.pkg.Import("strings").Ref("NewReader")).
+				Val(&goast.BasicLit{Kind: gotoken.STRING, Value: v.Value}, v).
+				CallWith(1, 0, v).
+				CallWith(1, 0, v)
+			return
+		}
+	} else {
+		var path string
+		if name == "tpl" {
+			path = tplPkgPath
+		} else {
+			path = tplPkgPath + "/encoding/" + name
+		}
+		imp = ctx.pkg.Import(path)
+		/* TODO(xsw):
+		if imp = ctx.pkg.TryImport(path); imp.Types == nil {
+			panic("compileDomainTextLit TODO: unknown domain: " + name)
+		}
+		*/
 	}
+	cb.Val(imp.Ref("New")).
+		Val(&goast.BasicLit{Kind: gotoken.STRING, Value: v.Value}, v).
+		CallWith(1, 0, v)
 }
 
 const (
