@@ -188,7 +188,10 @@ type gopRecorder struct {
 
 // NewRecorder creates a new recorder for cl.NewPackage.
 func NewRecorder(info *Info) cl.Recorder {
-	return gopRecorder{info}
+	if info == nil {
+		return nil
+	}
+	return gopRecorder{Info: info}
 }
 
 // Type maps expressions to their types, and for constant

@@ -29,16 +29,21 @@ import (
 
 type goxRecorder struct {
 	Recorder
-	types     map[ast.Expr]types.TypeAndValue
-	referDefs map[*ast.Ident]ast.Node
-	referUses map[string][]*ast.Ident
+	checkTypes   map[ast.Expr]types.TypeAndValue
+	checkBuiltin map[*ast.Ident]types.Object
+	referDefs    map[*ast.Ident]ast.Node
+	referUses    map[string][]*ast.Ident
+	builtin      *types.Package
 }
 
 func newRecorder(rec Recorder) *goxRecorder {
-	types := make(map[ast.Expr]types.TypeAndValue)
+	checkTypes := make(map[ast.Expr]types.TypeAndValue)
+	checkBuiltin := make(map[*ast.Ident]types.Object)
 	referDefs := make(map[*ast.Ident]ast.Node)
 	referUses := make(map[string][]*ast.Ident)
-	return &goxRecorder{rec, types, referDefs, referUses}
+	builtin := types.NewPackage("gop/builtin", "builtin")
+	return &goxRecorder{Recorder: rec, checkTypes: checkTypes, checkBuiltin: checkBuiltin,
+		referDefs: referDefs, referUses: referUses, builtin: builtin}
 }
 
 // Refer uses maps identifiers to name for ast.OverloadFuncDecl.
@@ -104,7 +109,8 @@ func (p *goxRecorder) Complete(scope *types.Scope) {
 			}
 		}
 	}
-	p.types = nil
+	p.checkTypes = nil
+	p.checkBuiltin = nil
 	p.referDefs = nil
 	p.referUses = nil
 }
@@ -127,23 +133,22 @@ func (p *goxRecorder) Member(id ast.Node, obj types.Object) {
 			p.Type(v, tv)
 		}
 	case *ast.Ident: // it's in a classfile and impossible converted from Go
-		p.Use(v, obj)
-		p.Type(v, typesutil.NewTypeAndValueForObject(obj))
+		p.recordIdent(v, obj)
 	}
 }
 
 func (p *goxRecorder) Call(id ast.Node, obj types.Object) {
 	switch v := id.(type) {
 	case *ast.Ident:
-		p.Use(v, obj)
-		p.Type(v, typesutil.NewTypeAndValueForObject(obj))
+		p.recordIdent(v, obj)
 	case *ast.SelectorExpr:
 		p.Use(v.Sel, obj)
 		p.Type(v, typesutil.NewTypeAndValueForObject(obj))
 	case *ast.CallExpr:
 		switch id := v.Fun.(type) {
 		case *ast.Ident:
-			p.Use(id, obj)
+			p.recordIdent(id, obj)
+			return
 		case *ast.SelectorExpr:
 			p.Use(id.Sel, obj)
 		}
@@ -152,14 +157,14 @@ func (p *goxRecorder) Call(id ast.Node, obj types.Object) {
 }
 
 func (rec *goxRecorder) checkExprByValue(v ast.Expr) bool {
-	if tv, ok := rec.types[v]; ok {
+	if tv, ok := rec.checkTypes[v]; ok {
 		switch v.(type) {
 		case *ast.CallExpr:
 			if _, ok := tv.Type.(*types.Pointer); !ok {
 				return true
 			}
 		default:
-			if tv, ok := rec.types[v]; ok {
+			if tv, ok := rec.checkTypes[v]; ok {
 				return !tv.Addressable()
 			}
 		}
@@ -168,13 +173,13 @@ func (rec *goxRecorder) checkExprByValue(v ast.Expr) bool {
 }
 
 func (rec *goxRecorder) Type(expr ast.Expr, tv types.TypeAndValue) {
-	rec.types[expr] = tv
+	rec.checkTypes[expr] = tv
 	rec.Recorder.Type(expr, tv)
 }
 
 func (rec *goxRecorder) instantiate(expr ast.Expr, _, typ types.Type) {
 	// check gox TyOverloadNamed
-	if tv, ok := rec.types[expr]; ok {
+	if tv, ok := rec.checkTypes[expr]; ok {
 		tv.Type = typ
 		rec.Recorder.Type(expr, tv)
 	}
@@ -199,7 +204,7 @@ func (rec *goxRecorder) recordTypeValue(ctx *blockCtx, expr ast.Expr, mode types
 }
 
 func (rec *goxRecorder) indexExpr(ctx *blockCtx, expr *ast.IndexExpr) {
-	if tv, ok := rec.types[expr.X]; ok {
+	if tv, ok := rec.checkTypes[expr.X]; ok {
 		switch tv.Type.(type) {
 		case *types.Map:
 			rec.recordTypeValue(ctx, expr, typesutil.MapIndex)
@@ -232,7 +237,7 @@ func (rec *goxRecorder) unaryExpr(ctx *blockCtx, expr *ast.UnaryExpr) {
 
 func (rec *goxRecorder) recordCallExpr(ctx *blockCtx, v *ast.CallExpr, fnt types.Type) {
 	e := ctx.cb.Get(-1)
-	if _, ok := rec.types[v.Fun]; !ok {
+	if _, ok := rec.checkTypes[v.Fun]; !ok {
 		rec.Type(v.Fun, typesutil.NewTypeAndValueForValue(fnt, nil, typesutil.Value))
 	}
 	rec.Type(v, typesutil.NewTypeAndValueForCallResult(e.Type, e.CVal))
@@ -252,7 +257,46 @@ func (rec *goxRecorder) recordType(typ ast.Expr, t types.Type) {
 	rec.Type(typ, typesutil.NewTypeAndValueForType(t))
 }
 
+func isGopBuiltin(obj types.Object) bool {
+	pkg := obj.Pkg()
+	return pkg == nil || (pkg.Path() == "" && pkg.Name() == "")
+}
+
 func (rec *goxRecorder) recordIdent(ident *ast.Ident, obj types.Object) {
+	// check go+ builtin
+	if _, ok := obj.Type().(*gogen.TemplateSignature); ok {
+		if o := types.Universe.Lookup(ident.Name); o != nil {
+			obj = o
+		}
+	} else {
+		switch ident.Name {
+		case "complex", "real", "imag", "recover", "panic":
+			if t, ok := rec.checkTypes[ident]; ok && t.IsBuiltin() {
+				return
+			}
+			if isGopBuiltin(obj) {
+				if o := types.Universe.Lookup(ident.Name); o != nil {
+					obj = o
+				}
+			}
+		case "blines", "lines", "create", "open", "type", "echo", "errorf",
+			"print", "println", "printf",
+			"fprint", "fprintln", "fprintf",
+			"sprint", "sprintln", "sprintf":
+			if isGopBuiltin(obj) {
+				rec.checkBuiltin[ident] = obj
+				return
+			} else if _, ok := rec.checkBuiltin[ident]; ok {
+				id := strings.Title(ident.Name)
+				o := rec.builtin.Scope().Lookup(id)
+				if o == nil {
+					o = types.NewFunc(token.NoPos, rec.builtin, id, obj.Type().(*types.Signature))
+					rec.builtin.Scope().Insert(o)
+				}
+				obj = o
+			}
+		}
+	}
 	rec.Use(ident, obj)
 	rec.Type(ident, typesutil.NewTypeAndValueForObject(obj))
 }
@@ -264,7 +308,7 @@ func (rec *goxRecorder) recordExpr(ctx *blockCtx, expr ast.Expr, _ bool) {
 		rec.recordTypeValue(ctx, v, typesutil.Value)
 	case *ast.CallExpr:
 	case *ast.SelectorExpr:
-		if _, ok := rec.types[v]; !ok {
+		if _, ok := rec.checkTypes[v]; !ok {
 			rec.recordTypeValue(ctx, v, typesutil.Variable)
 		}
 	case *ast.BinaryExpr:

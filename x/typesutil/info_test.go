@@ -588,7 +588,7 @@ println a
 000:  2: 1 | a                   | var a []int
 001:  2: 1 | main                | func main.main()
 == uses ==
-000:  3: 1 | println             | func fmt.Println(a ...any) (n int, err error)
+000:  3: 1 | println             | func gop/builtin.Println(a ...any) (n int, err error)
 001:  3: 9 | a                   | var a []int`)
 }
 
@@ -627,7 +627,7 @@ println sum
 001:  4: 2 | sum                 | var sum int
 002:  4: 8 | sum                 | var sum int
 003:  4:14 | x                   | var x int
-004:  6: 1 | println             | func fmt.Println(a ...any) (n int, err error)
+004:  6: 1 | println             | func gop/builtin.Println(a ...any) (n int, err error)
 005:  6: 9 | sum                 | var sum int`)
 }
 
@@ -674,7 +674,7 @@ println sum
 002:  4: 2 | sum                 | var sum int
 003:  4: 8 | sum                 | var sum int
 004:  4:14 | x                   | var x int
-005:  6: 1 | println             | func fmt.Println(a ...any) (n int, err error)
+005:  6: 1 | println             | func gop/builtin.Println(a ...any) (n int, err error)
 006:  6: 9 | sum                 | var sum int`)
 }
 
@@ -701,7 +701,7 @@ println y
 == uses ==
 000:  2: 7 | x                   | var x string
 001:  2:10 | i                   | var i int
-002:  3: 1 | println             | func fmt.Println(a ...any) (n int, err error)
+002:  3: 1 | println             | func gop/builtin.Println(a ...any) (n int, err error)
 003:  3: 9 | y                   | var y map[string]int`)
 }
 
@@ -771,7 +771,7 @@ println("x:", x)
 004:  3:32 | b                   | var b float64
 005:  3:43 | arr                 | var arr []float64
 006:  3:48 | b                   | var b float64
-007:  4: 1 | println             | func fmt.Println(a ...any) (n int, err error)
+007:  4: 1 | println             | func gop/builtin.Println(a ...any) (n int, err error)
 008:  4:15 | x                   | var x [][]float64`)
 }
 
@@ -793,7 +793,7 @@ for line <- os.Stdin {
 == uses ==
 000:  4:13 | os                  | package os
 001:  4:16 | Stdin               | var os.Stdin *os.File
-002:  5: 2 | println             | func fmt.Println(a ...any) (n int, err error)
+002:  5: 2 | println             | func gop/builtin.Println(a ...any) (n int, err error)
 003:  5:10 | line                | var line string`)
 }
 
@@ -2447,4 +2447,165 @@ func add = (
 012: 13:10 | a                   | var a float64
 013: 13:14 | b                   | var b float64
 014: 15: 2 | addString           | func (*main.Rect).addString(a string, b string) string`)
+}
+
+// "append", "cap", "clear", "close", "complex", "copy", "delete", "imag", "len",
+// "make", "max", "min", "new", "panic", "real", "recover":
+func TestBuiltin(t *testing.T) {
+	testGopInfo(t, `
+echo new(int)
+echo type(0)
+
+a := [1,2,3]
+a = append(a, 100)
+echo cap(a), len(a)
+copy(a,[1,2,3])
+
+c := complex(1,2)
+echo real(c), imag(c)
+
+m := make(map[int]int)
+delete(m,1)
+
+defer func() {
+	recover()
+}()
+panic("error")
+`, "", `== types ==
+000:  2: 1 | echo                *ast.Ident                     | value   : func(a ...any) (n int, err error) | value
+001:  2: 1 | echo new(int)       *ast.CallExpr                  | value   : (n int, err error) | value
+002:  2: 6 | new                 *ast.Ident                     | builtin : invalid type | built-in
+003:  2: 6 | new(int)            *ast.CallExpr                  | value   : *int | value
+004:  2:10 | int                 *ast.Ident                     | type    : int | type
+005:  3: 1 | echo                *ast.Ident                     | value   : func(a ...any) (n int, err error) | value
+006:  3: 1 | echo type(0)        *ast.CallExpr                  | value   : (n int, err error) | value
+007:  3: 6 | type                *ast.Ident                     | value   : func(i any) reflect.Type | value
+008:  3: 6 | type(0)             *ast.CallExpr                  | value   : reflect.Type | value
+009:  3:11 | 0                   *ast.BasicLit                  | value   : untyped int = 0 | constant
+010:  5: 7 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
+011:  5: 9 | 2                   *ast.BasicLit                  | value   : untyped int = 2 | constant
+012:  5:11 | 3                   *ast.BasicLit                  | value   : untyped int = 3 | constant
+013:  6: 1 | a                   *ast.Ident                     | var     : []int | variable
+014:  6: 5 | append              *ast.Ident                     | builtin : invalid type | built-in
+015:  6: 5 | append(a, 100)      *ast.CallExpr                  | value   : []int | value
+016:  6:12 | a                   *ast.Ident                     | var     : []int | variable
+017:  6:15 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
+018:  7: 1 | echo                *ast.Ident                     | value   : func(a ...any) (n int, err error) | value
+019:  7: 1 | echo cap(a), len(a) *ast.CallExpr                  | value   : (n int, err error) | value
+020:  7: 6 | cap                 *ast.Ident                     | builtin : invalid type | built-in
+021:  7: 6 | cap(a)              *ast.CallExpr                  | value   : int | value
+022:  7:10 | a                   *ast.Ident                     | var     : []int | variable
+023:  7:14 | len                 *ast.Ident                     | builtin : invalid type | built-in
+024:  7:14 | len(a)              *ast.CallExpr                  | value   : int | value
+025:  7:18 | a                   *ast.Ident                     | var     : []int | variable
+026:  8: 1 | copy                *ast.Ident                     | builtin : invalid type | built-in
+027:  8: 1 | copy(a, [1, 2, 3])  *ast.CallExpr                  | value   : int | value
+028:  8: 6 | a                   *ast.Ident                     | var     : []int | variable
+029:  8: 9 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
+030:  8:11 | 2                   *ast.BasicLit                  | value   : untyped int = 2 | constant
+031:  8:13 | 3                   *ast.BasicLit                  | value   : untyped int = 3 | constant
+032: 10: 6 | complex             *ast.Ident                     | builtin : invalid type | built-in
+033: 10: 6 | complex(1, 2)       *ast.CallExpr                  | value   : untyped complex = (1 + 2i) | constant
+034: 10:14 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
+035: 10:16 | 2                   *ast.BasicLit                  | value   : untyped int = 2 | constant
+036: 11: 1 | echo                *ast.Ident                     | value   : func(a ...any) (n int, err error) | value
+037: 11: 1 | echo real(c), imag(c) *ast.CallExpr                  | value   : (n int, err error) | value
+038: 11: 6 | real                *ast.Ident                     | builtin : invalid type | built-in
+039: 11: 6 | real(c)             *ast.CallExpr                  | value   : float64 | value
+040: 11:11 | c                   *ast.Ident                     | var     : complex128 | variable
+041: 11:15 | imag                *ast.Ident                     | builtin : invalid type | built-in
+042: 11:15 | imag(c)             *ast.CallExpr                  | value   : float64 | value
+043: 11:20 | c                   *ast.Ident                     | var     : complex128 | variable
+044: 13: 6 | make                *ast.Ident                     | builtin : invalid type | built-in
+045: 13: 6 | make(map[int]int)   *ast.CallExpr                  | value   : map[int]int | value
+046: 13:11 | map[int]int         *ast.MapType                   | type    : map[int]int | type
+047: 13:15 | int                 *ast.Ident                     | type    : int | type
+048: 13:19 | int                 *ast.Ident                     | type    : int | type
+049: 14: 1 | delete              *ast.Ident                     | builtin : invalid type | built-in
+050: 14: 1 | delete(m, 1)        *ast.CallExpr                  | void    : () | no value
+051: 14: 8 | m                   *ast.Ident                     | var     : map[int]int | variable
+052: 14:10 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
+053: 16: 7 | func()              *ast.FuncType                  | type    : func() | type
+054: 16: 7 | func() {
+	recover()
+} *ast.FuncLit                   | value   : func() | value
+055: 16: 7 | func() {
+	recover()
+}() *ast.CallExpr                  | void    : () | no value
+056: 17: 2 | recover             *ast.Ident                     | builtin : invalid type | built-in
+057: 17: 2 | recover()           *ast.CallExpr                  | value   : interface{} | value
+058: 19: 1 | panic               *ast.Ident                     | builtin : invalid type | built-in
+059: 19: 1 | panic("error")      *ast.CallExpr                  | void    : () | no value
+060: 19: 7 | "error"             *ast.BasicLit                  | value   : untyped string = "error" | constant
+== defs ==
+000:  2: 1 | main                | func main.main()
+001:  5: 1 | a                   | var a []int
+002: 10: 1 | c                   | var c complex128
+003: 13: 1 | m                   | var m map[int]int
+== uses ==
+000:  2: 1 | echo                | func gop/builtin.Echo(a ...any) (n int, err error)
+001:  2: 6 | new                 | builtin new
+002:  2:10 | int                 | type int
+003:  3: 1 | echo                | func gop/builtin.Echo(a ...any) (n int, err error)
+004:  3: 6 | type                | func gop/builtin.Type(i any) reflect.Type
+005:  6: 1 | a                   | var a []int
+006:  6: 5 | append              | builtin append
+007:  6:12 | a                   | var a []int
+008:  7: 1 | echo                | func gop/builtin.Echo(a ...any) (n int, err error)
+009:  7: 6 | cap                 | builtin cap
+010:  7:10 | a                   | var a []int
+011:  7:14 | len                 | builtin len
+012:  7:18 | a                   | var a []int
+013:  8: 1 | copy                | builtin copy
+014:  8: 6 | a                   | var a []int
+015: 10: 6 | complex             | builtin complex
+016: 11: 1 | echo                | func gop/builtin.Echo(a ...any) (n int, err error)
+017: 11: 6 | real                | builtin real
+018: 11:11 | c                   | var c complex128
+019: 11:15 | imag                | builtin imag
+020: 11:20 | c                   | var c complex128
+021: 13: 6 | make                | builtin make
+022: 13:15 | int                 | type int
+023: 13:19 | int                 | type int
+024: 14: 1 | delete              | builtin delete
+025: 14: 8 | m                   | var m map[int]int
+026: 17: 2 | recover             | builtin recover
+027: 19: 1 | panic               | builtin panic`)
+}
+
+func TestBuiltinCover(t *testing.T) {
+	testGopInfo(t, `
+func echo(v int) {
+	println("=",v)
+}
+func append(v int) {
+}
+echo 100
+append 100
+`, ``, `== types ==
+000:  2:13 | int                 *ast.Ident                     | type    : int | type
+001:  3: 2 | println             *ast.Ident                     | value   : func(a ...any) (n int, err error) | value
+002:  3: 2 | println("=", v)     *ast.CallExpr                  | value   : (n int, err error) | value
+003:  3:10 | "="                 *ast.BasicLit                  | value   : untyped string = "=" | constant
+004:  3:14 | v                   *ast.Ident                     | var     : int | variable
+005:  5:15 | int                 *ast.Ident                     | type    : int | type
+006:  7: 1 | echo                *ast.Ident                     | value   : func(v int) | value
+007:  7: 1 | echo 100            *ast.CallExpr                  | void    : () | no value
+008:  7: 6 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
+009:  8: 1 | append              *ast.Ident                     | value   : func(v int) | value
+010:  8: 1 | append 100          *ast.CallExpr                  | void    : () | no value
+011:  8: 8 | 100                 *ast.BasicLit                  | value   : untyped int = 100 | constant
+== defs ==
+000:  2: 6 | echo                | func main.echo(v int)
+001:  2:11 | v                   | var v int
+002:  5: 6 | append              | func main.append(v int)
+003:  5:13 | v                   | var v int
+004:  7: 1 | main                | func main.main()
+== uses ==
+000:  2:13 | int                 | type int
+001:  3: 2 | println             | func gop/builtin.Println(a ...any) (n int, err error)
+002:  3:14 | v                   | var v int
+003:  5:15 | int                 | type int
+004:  7: 1 | echo                | func main.echo(v int)
+005:  8: 1 | append              | func main.append(v int)`)
 }
