@@ -106,7 +106,7 @@ func parseMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string,
 	return chkOpts.Types, info, ginfo, err
 }
 
-func parseSource(fset *token.FileSet, filename string, src interface{}, mode parser.Mode) (*types.Package, *typesutil.Info, error) {
+func parseSource(fset *token.FileSet, filename string, src interface{}, mode parser.Mode, univese bool) (*types.Package, *typesutil.Info, error) {
 	f, err := parser.ParseEntry(fset, filename, src, parser.Config{
 		Mode: mode,
 	})
@@ -130,6 +130,9 @@ func parseSource(fset *token.FileSet, filename string, src interface{}, mode par
 		Selections: make(map[*ast.SelectorExpr]*types.Selection),
 		Scopes:     make(map[ast.Node]*types.Scope),
 		Overloads:  make(map[*ast.Ident]types.Object),
+	}
+	if univese {
+		info.Universe = types.NewScope(nil, 0, 0, "univese")
 	}
 	check := typesutil.NewChecker(conf, chkOpts, nil, info)
 	err = check.Files(nil, []*ast.File{f})
@@ -192,7 +195,7 @@ func testGopInfoEx(t *testing.T, mod *gopmod.Module, name string, src string, go
 
 func testInfo(t *testing.T, src interface{}) {
 	fset := token.NewFileSet()
-	_, info, err := parseSource(fset, "main.gop", src, parser.ParseComments)
+	_, info, err := parseSource(fset, "main.gop", src, parser.ParseComments, false)
 	if err != nil {
 		t.Fatal("parserSource error", err)
 	}
@@ -1847,7 +1850,7 @@ func TestScopesInfo(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		pkg, info, err := parseSource(token.NewFileSet(), "src.gop", test.src, 0)
+		pkg, info, err := parseSource(token.NewFileSet(), "src.gop", test.src, 0, false)
 		if err != nil {
 			t.Fatalf("parse source failed: %v", test.src)
 		}
@@ -2608,4 +2611,22 @@ append 100
 003:  5:15 | int                 | type int
 004:  7: 1 | echo                | func main.echo(v int)
 005:  8: 1 | append              | func main.append(v int)`)
+}
+
+func TestBuiltinUniverse(t *testing.T) {
+	fset := token.NewFileSet()
+	_, info, err := parseSource(fset, "main.gop", `echo 100`, 0, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	obj := info.Universe.Lookup("Println")
+	if obj == nil {
+		t.Fatal("error obj")
+	}
+	if obj.Pkg().Path() != "gop/builtin" {
+		t.Fatal("error pkg")
+	}
+	if obj.Type().String() != "func(a ...any) (n int, err error)" {
+		t.Fatal("error type")
+	}
 }

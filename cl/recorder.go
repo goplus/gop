@@ -57,7 +57,8 @@ func (p *goxRecorder) ReferDef(ident *ast.Ident, node ast.Node) {
 }
 
 // Complete computes the types record.
-func (p *goxRecorder) Complete(scope *types.Scope) {
+func (p *goxRecorder) Complete(pkg *gogen.Package) {
+	scope := pkg.Types.Scope()
 	for id, node := range p.referDefs {
 		switch fn := node.(type) {
 		case *ast.FuncLit:
@@ -113,6 +114,40 @@ func (p *goxRecorder) Complete(scope *types.Scope) {
 	p.checkBuiltin = nil
 	p.referDefs = nil
 	p.referUses = nil
+
+	p.Builtin(func(universe *types.Scope) {
+		scope := pkg.Builtin().Types.Scope()
+		names := scope.Names()
+		for _, name := range names {
+			obj := scope.Lookup(name)
+			if ast.IsExported(name) {
+				continue
+			}
+			if isGopBuiltinFunc(name) {
+				id := strings.Title(name)
+				o := p.builtin.Scope().Lookup(id)
+				if o == nil {
+					if fns, ok := gogen.CheckOverloadFunc(obj.Type().(*types.Signature)); ok {
+						o = types.NewFunc(token.NoPos, p.builtin, id, fns[0].Type().(*types.Signature))
+					}
+				}
+				universe.Insert(o)
+			} else if _, ok := obj.(*types.TypeName); ok && !gogen.IsTypeEx(obj.Type()) {
+				universe.Insert(obj)
+			}
+		}
+	})
+}
+
+func isGopBuiltinFunc(name string) bool {
+	switch name {
+	case "blines", "lines", "create", "open", "type", "echo", "errorf",
+		"print", "println", "printf",
+		"fprint", "fprintln", "fprintf",
+		"sprint", "sprintln", "sprintf":
+		return true
+	}
+	return false
 }
 
 // Member maps identifiers to the objects they denote.
@@ -279,21 +314,20 @@ func (rec *goxRecorder) recordIdent(ident *ast.Ident, obj types.Object) {
 					obj = o
 				}
 			}
-		case "blines", "lines", "create", "open", "type", "echo", "errorf",
-			"print", "println", "printf",
-			"fprint", "fprintln", "fprintf",
-			"sprint", "sprintln", "sprintf":
-			if isGopBuiltin(obj) {
-				rec.checkBuiltin[ident] = obj
-				return
-			} else if _, ok := rec.checkBuiltin[ident]; ok {
-				id := strings.Title(ident.Name)
-				o := rec.builtin.Scope().Lookup(id)
-				if o == nil {
-					o = types.NewFunc(token.NoPos, rec.builtin, id, obj.Type().(*types.Signature))
-					rec.builtin.Scope().Insert(o)
+		default:
+			if isGopBuiltinFunc(ident.Name) {
+				if isGopBuiltin(obj) {
+					rec.checkBuiltin[ident] = obj
+					return
+				} else if _, ok := rec.checkBuiltin[ident]; ok {
+					id := strings.Title(ident.Name)
+					o := rec.builtin.Scope().Lookup(id)
+					if o == nil {
+						o = types.NewFunc(token.NoPos, rec.builtin, id, obj.Type().(*types.Signature))
+						rec.builtin.Scope().Insert(o)
+					}
+					obj = o
 				}
-				obj = o
 			}
 		}
 	}

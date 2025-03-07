@@ -138,6 +138,9 @@ type Info struct {
 
 	// Overloads maps identifiers to the overload decl object.
 	Overloads map[*ast.Ident]types.Object
+
+	// Universe identifiers Go+ builtin scope.
+	Universe *types.Scope
 }
 
 // ObjectOf returns the object denoted by the specified id,
@@ -334,6 +337,12 @@ func (info gopRecorder) Scope(n ast.Node, scope *types.Scope) {
 	}
 	if info.Scopes != nil {
 		info.Scopes[n] = scope
+	}
+}
+
+func (info gopRecorder) Builtin(fn func(*types.Scope)) {
+	if info.Universe != nil {
+		fn(info.Universe)
 	}
 }
 
