@@ -138,6 +138,9 @@ type Info struct {
 
 	// Overloads maps identifiers to the overload decl object.
 	Overloads map[*ast.Ident]types.Object
+
+	// Universe identifiers Go+ builtin scope.
+	Universe *types.Scope
 }
 
 // ObjectOf returns the object denoted by the specified id,
@@ -188,7 +191,10 @@ type gopRecorder struct {
 
 // NewRecorder creates a new recorder for cl.NewPackage.
 func NewRecorder(info *Info) cl.Recorder {
-	return gopRecorder{info}
+	if info == nil {
+		return nil
+	}
+	return gopRecorder{Info: info}
 }
 
 // Type maps expressions to their types, and for constant
@@ -331,6 +337,12 @@ func (info gopRecorder) Scope(n ast.Node, scope *types.Scope) {
 	}
 	if info.Scopes != nil {
 		info.Scopes[n] = scope
+	}
+}
+
+func (info gopRecorder) Builtin(fn func(*types.Scope)) {
+	if info.Universe != nil {
+		fn(info.Universe)
 	}
 }
 

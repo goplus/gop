@@ -163,6 +163,9 @@ type Recorder interface {
 	//     *ast.LambdaExpr2
 	//
 	Scope(ast.Node, *types.Scope)
+
+	// Builtin set Go+ builtin scope.
+	Builtin(fn func(*types.Scope))
 }
 
 // -----------------------------------------------------------------------------
@@ -523,7 +526,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 		rec = newRecorder(conf.Recorder)
 		confGox.Recorder = rec
 		defer func() {
-			rec.Complete(p.Types.Scope())
+			rec.Complete(p)
 		}()
 	}
 	if enableRecover {
