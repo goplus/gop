@@ -5,7 +5,7 @@ func main() {
 		println(i)
 	}
 
-	for i in 1:10 {
+	for i <- 1:10 {
 		println(i)
 	}
 
