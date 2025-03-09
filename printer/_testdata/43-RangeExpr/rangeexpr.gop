@@ -1,12 +1,12 @@
 println "---------------------------"
 
-for i <- :10 {
+for i in :10 {
 	println(i)
 }
 
 println "---------------------------"
 
-for i <- 9:-1:-1 {
+for i in 9:-1:-1 {
 	println(i)
 }
 

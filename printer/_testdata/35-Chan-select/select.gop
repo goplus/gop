@@ -15,7 +15,7 @@ func consume(xchg chan int) {
 }
 
 func product(xchg chan int, from chan int) {
-	for x <- from {
+	for x in from {
 		xchg <- x
 	}
 	done <- true
