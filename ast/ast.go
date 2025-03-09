@@ -1079,75 +1079,6 @@ func (*GenDecl) declNode()  {}
 func (*FuncDecl) declNode() {}
 
 // ----------------------------------------------------------------------------
-// Files and packages
-
-type FileType = int16
-
-// A File node represents a Go+ source file.
-//
-// The Comments list contains all comments in the source file in order of
-// appearance, including the comments that are pointed to from other nodes
-// via Doc and Comment fields.
-//
-// For correct printing of source code containing comments (using packages
-// go/format and go/printer), special care must be taken to update comments
-// when a File's syntax tree is modified: For printing, comments are interspersed
-// between tokens based on their position. If syntax tree nodes are
-// removed or moved, relevant comments in their vicinity must also be removed
-// (from the File.Comments list) or moved accordingly (by updating their
-// positions). A CommentMap may be used to facilitate some of these operations.
-//
-// Whether and how a comment is associated with a node depends on the
-// interpretation of the syntax tree by the manipulating program: Except for Doc
-// and Comment comments directly associated with nodes, the remaining comments
-// are "free-floating" (see also issues #18593, #20744).
-type File struct {
-	Doc     *CommentGroup // associated documentation; or nil
-	Package token.Pos     // position of "package" keyword; or NoPos
-	Name    *Ident        // package name
-	Decls   []Decl        // top-level declarations; or nil
-
-	Scope       *Scope          // package scope (this file only)
-	Imports     []*ImportSpec   // imports in this file
-	Unresolved  []*Ident        // unresolved identifiers in this file
-	Comments    []*CommentGroup // list of all comments in the source file
-	Code        []byte
-	ShadowEntry *FuncDecl // no entrypoint func to indicate the module entry point.
-	NoPkgDecl   bool      // no `package xxx` declaration
-	IsClass     bool      // is a classfile (including normal .gox file)
-	IsProj      bool      // is a project classfile
-	IsNormalGox bool      // is a normal .gox file
-}
-
-// There is no entrypoint func to indicate the module entry point.
-func (f *File) HasShadowEntry() bool {
-	return f.ShadowEntry != nil
-}
-
-// HasPkgDecl checks if `package xxx` exists or not.
-func (f *File) HasPkgDecl() bool {
-	return f.Package != token.NoPos
-}
-
-// Pos returns position of first character belonging to the node.
-func (f *File) Pos() token.Pos {
-	if f.Package != token.NoPos {
-		return f.Package
-	}
-	return f.Name.NamePos
-}
-
-// End returns position of first character immediately after the node.
-func (f *File) End() token.Pos {
-	for n := len(f.Decls) - 1; n >= 0; n-- {
-		d := f.Decls[n]
-		if fn, ok := d.(*FuncDecl); ok && fn.Shadow && fn != f.ShadowEntry {
-			continue
-		}
-		return d.End()
-	}
-	return f.Name.End()
-}
 
 // A Package node represents a set of source files
 // collectively building a Go+ package.
@@ -1164,3 +1095,5 @@ func (p *Package) Pos() token.Pos { return token.NoPos }
 
 // End returns position of first character immediately after the node.
 func (p *Package) End() token.Pos { return token.NoPos }
+
+// ----------------------------------------------------------------------------

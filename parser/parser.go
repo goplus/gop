@@ -50,10 +50,9 @@ type parser struct {
 	scanner scanner.Scanner
 
 	// Tracing/debugging
-	mode        Mode          // parsing mode
-	trace       bool          // == (mode & Trace != 0)
-	shadowEntry *ast.FuncDecl // shadowEntry != nil: no entrypoint func
-	indent      int           // indentation used for tracing output
+	mode   Mode // parsing mode
+	trace  bool // == (mode & Trace != 0)
+	indent int  // indentation used for tracing output
 
 	// Comments
 	comments    []*ast.CommentGroup
@@ -3975,13 +3974,13 @@ func (p *parser) parseGlobalStmts(sync map[token.Token]bool, pos token.Pos, stmt
 	if stmts != nil {
 		list = append(stmts, list...)
 	}
-	if p.errors.Len() != 0 { // TODO: error
+	if p.errors.Len() != 0 { // TODO(xsw): error
 		p.advance(sync)
 	}
 	if p.tok != token.EOF {
 		p.errorExpected(p.pos, "statement", 2)
 	}
-	f := &ast.FuncDecl{
+	return &ast.FuncDecl{
 		Name: &ast.Ident{NamePos: pos, Name: "main"},
 		Doc:  doc,
 		Type: &ast.FuncType{
@@ -3991,8 +3990,6 @@ func (p *parser) parseGlobalStmts(sync map[token.Token]bool, pos token.Pos, stmt
 		Body:   &ast.BlockStmt{List: list},
 		Shadow: true,
 	}
-	p.shadowEntry = f
-	return f
 }
 
 // ----------------------------------------------------------------------------
@@ -4038,6 +4035,7 @@ func (p *parser) parseFile() *ast.File {
 	p.openScope()
 	p.pkgScope = p.topScope
 	var decls []ast.Decl
+	var shadowEntry *ast.FuncDecl
 	if p.mode&PackageClauseOnly == 0 {
 		// import decls
 		for p.tok == token.IMPORT {
@@ -4048,6 +4046,11 @@ func (p *parser) parseFile() *ast.File {
 			// rest of package body
 			for p.tok != token.EOF {
 				decls = append(decls, p.parseDecl(declStart))
+			}
+			if n := len(decls); n > 0 {
+				if f, ok := decls[n-1].(*ast.FuncDecl); ok && f.Shadow {
+					shadowEntry = f
+				}
 			}
 		}
 	}
@@ -4076,7 +4079,7 @@ func (p *parser) parseFile() *ast.File {
 		Imports:     p.imports,
 		Unresolved:  p.unresolved[0:i],
 		Comments:    p.comments,
-		ShadowEntry: p.shadowEntry,
+		ShadowEntry: shadowEntry,
 		NoPkgDecl:   noPkgDecl,
 	}
 }
