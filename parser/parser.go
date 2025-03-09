@@ -454,6 +454,22 @@ func (p *parser) expect2(tok token.Token) (pos token.Pos) {
 	return
 }
 
+func (p *parser) expectIn() token.Pos {
+	pos := p.pos
+	switch p.tok {
+	case token.ARROW: // <- (backward compatibility)
+	case token.IDENT: // in
+		if p.lit == "in" {
+			break
+		}
+		fallthrough
+	default:
+		p.errorExpected(pos, "'in'", 3)
+	}
+	p.next() // make progress
+	return pos
+}
+
 // expectClosing is like expect but provides a better error message
 // for the common case of a missing comma before a newline.
 func (p *parser) expectClosing(tok token.Token, context string) token.Pos {
@@ -826,7 +842,7 @@ func (p *parser) parseArrayTypeOrSliceLit(state int, slice ast.Expr) (expr ast.E
 				sliceLit := p.parseSliceOrMatrixLit(lbrack, len)
 				p.exprLev--
 				return sliceLit, resultSliceLit
-			case token.FOR: // [expr for k, v <- container if cond]
+			case token.FOR: // [expr for k, v in container if cond]
 				phrases := p.parseForPhrases()
 				p.exprLev--
 				rbrack := p.expect(token.RBRACK)
@@ -2736,7 +2752,12 @@ func (p *parser) parseSimpleStmtEx(mode int, allowCmd, allowRangeExpr bool) (ast
 			p.shortVarDecl(as, x)
 		}
 		return as, isRange
-	case token.ARROW:
+	case token.IDENT: // in
+		if mode != rangeOk || p.lit != "in" {
+			break
+		}
+		fallthrough
+	case token.ARROW: // <- (backward compatibility)
 		if mode == rangeOk {
 			return p.parseForPhraseStmtPart(x), true
 		}
@@ -3276,7 +3297,7 @@ func (p *parser) parseForPhrases() (phrases []*ast.ForPhrase) {
 }
 
 func (p *parser) parseForPhraseStmtPart(lhs []ast.Expr) *ast.ForPhraseStmt {
-	tokPos := p.expect(token.ARROW) // <-
+	tokPos := p.expectIn() // in
 	x := p.parseExpr(false, false, true)
 	var cond ast.Expr
 	var ifPos token.Pos
@@ -3312,7 +3333,7 @@ func (p *parser) toIdent(e ast.Expr) *ast.Ident {
 	return nil
 }
 
-func (p *parser) parseForPhrase() *ast.ForPhrase { // for k, v <- container if cond
+func (p *parser) parseForPhrase() *ast.ForPhrase { // for k, v in container if cond
 	if p.trace {
 		defer un(trace(p, "ForPhrase"))
 	}
@@ -3328,7 +3349,7 @@ func (p *parser) parseForPhrase() *ast.ForPhrase { // for k, v <- container if c
 		k, v = v, p.parseIdent()
 	}
 
-	tokPos := p.expect(token.ARROW) // <- container
+	tokPos := p.expectIn() // in container
 	x := p.parseExpr(false, false, true)
 	var init ast.Stmt
 	var cond ast.Expr

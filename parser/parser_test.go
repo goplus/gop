@@ -339,6 +339,11 @@ func (a T) +{}
 `, `/foo/bar.gop:1:6: overload operator can only have one parameter`, ``)
 }
 
+func TestErrForIn(t *testing.T) {
+	testErrCode(t, `x := [a for a i b]
+`, `/foo/bar.gop:1:15: expected 'in', found i`, ``)
+}
+
 func TestNumberUnitLit(t *testing.T) {
 	var p parser
 	p.checkExpr(&ast.NumberUnitLit{})
