@@ -494,14 +494,21 @@ func (f *File) Pos() token.Pos {
 
 // End returns position of first character immediately after the node.
 func (f *File) End() token.Pos {
+	if f.ShadowEntry != nil { // has shadow entry
+		return f.ShadowEntry.End()
+	}
 	for n := len(f.Decls) - 1; n >= 0; n-- {
 		d := f.Decls[n]
-		if fn, ok := d.(*FuncDecl); ok && fn.Shadow && fn != f.ShadowEntry {
+		if fn, ok := d.(*FuncDecl); ok && fn.Shadow {
+			// skip shadow functions like Classfname (see cl.astFnClassfname)
 			continue
 		}
 		return d.End()
 	}
-	return f.Name.End()
+	if f.Package != token.NoPos { // has package clause
+		return f.Name.End()
+	}
+	return f.Name.Pos()
 }
 
 // -----------------------------------------------------------------------------
