@@ -660,6 +660,9 @@ func TestUniverse(t *testing.T) {
 	if b, ok := echo.(*Builtin); !ok || b.Sym() != "fmt.Println" {
 		t.Fatal("bad sym")
 	}
+	if echo.(*Builtin).Exported() != false {
+		t.Fatal("bad exported")
+	}
 }
 
 // -----------------------------------------------------------------------------
