@@ -22,7 +22,7 @@ func (p *Circle) Area() float64 {
 
 func Area(shapes ...Shape) float64 {
 	s := 0.0
-	for shape <- shapes {
+	for shape in shapes {
 		s += shape.Area()
 	}
 	return s

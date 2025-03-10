@@ -346,11 +346,11 @@ func (*RangeExpr) exprNode() {}
 
 // -----------------------------------------------------------------------------
 
-// ForPhrase represents `for k, v <- container if init; cond` phrase.
+// ForPhrase represents `for k, v in container if init; cond` phrase.
 type ForPhrase struct {
 	For        token.Pos // position of "for" keyword
 	Key, Value *Ident    // Key may be nil
-	TokPos     token.Pos // position of "<-" operator
+	TokPos     token.Pos // position of "in" operator
 	X          Expr      // value to range over
 	IfPos      token.Pos // position of if or comma; or NoPos
 	Init       Stmt      // initialization statement; or nil
@@ -372,10 +372,10 @@ func (p *ForPhrase) exprNode() {}
 
 // ComprehensionExpr represents one of the following expressions:
 //
-//	`[vexpr for k1, v1 <- container1, cond1 ...]` or
-//	`{vexpr for k1, v1 <- container1, cond1 ...}` or
-//	`{kexpr: vexpr for k1, v1 <- container1, cond1 ...}` or
-//	`{for k1, v1 <- container1, cond1 ...}` or
+//	`[vexpr for k1, v1 in container1, cond1 ...]` or
+//	`{vexpr for k1, v1 in container1, cond1 ...}` or
+//	`{kexpr: vexpr for k1, v1 in container1, cond1 ...}` or
+//	`{for k1, v1 in container1, cond1 ...}` or
 type ComprehensionExpr struct {
 	Lpos token.Pos   // position of "[" or "{"
 	Tok  token.Token // token.LBRACK '[' or token.LBRACE '{'
@@ -398,7 +398,7 @@ func (*ComprehensionExpr) exprNode() {}
 
 // -----------------------------------------------------------------------------
 
-// A ForPhraseStmt represents a for statement with a for <- clause.
+// A ForPhraseStmt represents a for statement with a for..in clause.
 type ForPhraseStmt struct {
 	*ForPhrase
 	Body *BlockStmt

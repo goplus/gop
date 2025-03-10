@@ -5,8 +5,8 @@ type student struct {
 
 a := [student{"du", 84}, student{"wang", 70}, student{"ken", 100}]
 
-hasFullMark := {for x <- a if x.score == 100}
+hasFullMark := {for x in a if x.score == 100}
 println("is any student full mark:", hasFullMark)
 
-hasFailed := {for x <- a if x.score < 60}
+hasFailed := {for x in a if x.score < 60}
 println("is any student failed:", hasFailed)
