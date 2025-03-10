@@ -3,7 +3,7 @@ plot x => x * x
 onStart x => {
 	println x
 }
-for i <- :10 {
+for i in :10 {
 }
-println [x*x for x <- :10]
+println [x*x for x in :10]
 print f()?:10
