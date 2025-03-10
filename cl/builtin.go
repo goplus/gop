@@ -36,6 +36,7 @@ type Builtin struct {
 	name string
 	pkg  string
 	sym  string
+	fn   bool
 }
 
 func (t *Builtin) Parent() *types.Scope {
@@ -65,12 +66,15 @@ func (t *Builtin) String() string {
 func (t *Builtin) Sym() string {
 	return t.pkg + "." + t.sym
 }
+func (t *Builtin) IsFunc() bool {
+	return t.fn
+}
 
 var (
 	Universe *types.Scope
 )
 
-var builtinDefs = [...]struct {
+var builtinTypes = [...]struct {
 	name string
 	pkg  string
 	sym  string
@@ -80,6 +84,13 @@ var builtinDefs = [...]struct {
 	{"bigfloat", "github.com/goplus/gop/builtin/ng", ""},
 	{"int128", "github.com/goplus/gop/builtin/ng", ""},
 	{"uint128", "github.com/goplus/gop/builtin/ng", ""},
+}
+
+var builtinFuncs = [...]struct {
+	name string
+	pkg  string
+	sym  string
+}{
 	{"lines", "github.com/goplus/gop/builtin/iox", ""},
 	{"blines", "github.com/goplus/gop/builtin/iox", "BLines"},
 	{"newRange", "github.com/goplus/gop/builtin", "NewRange__0"},
@@ -101,35 +112,46 @@ var builtinDefs = [...]struct {
 type defSym struct {
 	name string
 	sym  string
+	fn   bool
 }
 
 var (
 	builtinSym map[string][]defSym
 )
 
+func insertBuiltin(name, pkg, sym string, fn bool) {
+	if sym == "" {
+		sym = string(name[0]-('a'-'A')) + name[1:]
+	}
+	builtinSym[pkg] = append(builtinSym[pkg], defSym{name: name, sym: sym, fn: fn})
+	obj := &Builtin{name: name, pkg: pkg, sym: sym, fn: fn}
+	Universe.Insert(obj)
+}
+
 func init() {
 	Universe = types.NewScope(nil, 0, 0, "universe")
 	builtinSym = make(map[string][]defSym)
-	for _, def := range builtinDefs {
-		if def.sym == "" {
-			def.sym = string(def.name[0]-('a'-'A')) + def.name[1:]
-		}
-		builtinSym[def.pkg] = append(builtinSym[def.pkg], defSym{name: def.name, sym: def.sym})
-		obj := &Builtin{name: def.name, pkg: def.pkg, sym: def.sym}
-		Universe.Insert(obj)
+	for _, def := range builtinTypes {
+		insertBuiltin(def.name, def.pkg, def.sym, false)
+	}
+	for _, def := range builtinFuncs {
+		insertBuiltin(def.name, def.pkg, def.sym, true)
 	}
 }
 
-func initBuiltin(pkg *gogen.Package, builtin *types.Package) {
+func initBuiltin(pkg *gogen.Package, builtin *types.Package, conf *gogen.Config) {
 	scope := builtin.Scope()
 	for im, defs := range builtinSym {
 		if p := pkg.TryImport(im); p.Types != nil {
 			for _, def := range defs {
 				obj := p.Ref(def.sym)
-				if _, ok := obj.Type().(*types.Named); ok {
-					scope.Insert(types.NewTypeName(token.NoPos, builtin, def.name, obj.Type()))
-				} else {
+				if def.fn {
 					scope.Insert(gogen.NewOverloadFunc(token.NoPos, builtin, def.name, obj))
+				} else {
+					scope.Insert(types.NewTypeName(token.NoPos, builtin, def.name, obj.Type()))
+				}
+				if rec, ok := conf.Recorder.(*goxRecorder); ok {
+					rec.Builtin(def.name, obj)
 				}
 			}
 		}
@@ -147,7 +169,7 @@ func newBuiltinDefault(pkg *gogen.Package, conf *gogen.Config) *types.Package {
 	if ng.Types != nil {
 		initMathBig(pkg, conf, ng)
 	}
-	initBuiltin(pkg, builtin)
+	initBuiltin(pkg, builtin, conf)
 	gogen.InitBuiltin(pkg, builtin, conf)
 	if strx.Types != nil {
 		ti := pkg.BuiltinTI(types.Typ[types.String])
