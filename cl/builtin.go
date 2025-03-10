@@ -36,6 +36,7 @@ type Builtin struct {
 	name string
 	pkg  string
 	sym  string
+	fn   bool
 }
 
 func (t *Builtin) Parent() *types.Scope {
@@ -65,6 +66,9 @@ func (t *Builtin) String() string {
 func (t *Builtin) Sym() string {
 	return t.pkg + "." + t.sym
 }
+func (t *Builtin) IsFunc() bool {
+	return t.fn
+}
 
 var (
 	Universe *types.Scope
@@ -74,33 +78,35 @@ var builtinDefs = [...]struct {
 	name string
 	pkg  string
 	sym  string
+	fn   bool
 }{
-	{"bigint", "github.com/goplus/gop/builtin/ng", ""},
-	{"bigrat", "github.com/goplus/gop/builtin/ng", ""},
-	{"bigfloat", "github.com/goplus/gop/builtin/ng", ""},
-	{"int128", "github.com/goplus/gop/builtin/ng", ""},
-	{"uint128", "github.com/goplus/gop/builtin/ng", ""},
-	{"lines", "github.com/goplus/gop/builtin/iox", ""},
-	{"blines", "github.com/goplus/gop/builtin/iox", "BLines"},
-	{"newRange", "github.com/goplus/gop/builtin", "NewRange__0"},
-	{"echo", "fmt", "Println"},
-	{"print", "fmt", ""},
-	{"println", "fmt", ""},
-	{"printf", "fmt", ""},
-	{"errorf", "fmt", ""},
-	{"fprint", "fmt", ""},
-	{"fprintln", "fmt", ""},
-	{"sprint", "fmt", ""},
-	{"sprintln", "fmt", ""},
-	{"sprintf", "fmt", ""},
-	{"open", "os", ""},
-	{"create", "os", ""},
-	{"type", "reflect", "TypeOf"},
+	{"bigint", "github.com/goplus/gop/builtin/ng", "", false},
+	{"bigrat", "github.com/goplus/gop/builtin/ng", "", false},
+	{"bigfloat", "github.com/goplus/gop/builtin/ng", "", false},
+	{"int128", "github.com/goplus/gop/builtin/ng", "", false},
+	{"uint128", "github.com/goplus/gop/builtin/ng", "", false},
+	{"lines", "github.com/goplus/gop/builtin/iox", "", true},
+	{"blines", "github.com/goplus/gop/builtin/iox", "BLines", true},
+	{"newRange", "github.com/goplus/gop/builtin", "NewRange__0", true},
+	{"echo", "fmt", "Println", true},
+	{"print", "fmt", "", true},
+	{"println", "fmt", "", true},
+	{"printf", "fmt", "", true},
+	{"errorf", "fmt", "", true},
+	{"fprint", "fmt", "", true},
+	{"fprintln", "fmt", "", true},
+	{"sprint", "fmt", "", true},
+	{"sprintln", "fmt", "", true},
+	{"sprintf", "fmt", "", true},
+	{"open", "os", "", true},
+	{"create", "os", "", true},
+	{"type", "reflect", "TypeOf", true},
 }
 
 type defSym struct {
 	name string
 	sym  string
+	fn   bool
 }
 
 var (
@@ -114,22 +120,25 @@ func init() {
 		if def.sym == "" {
 			def.sym = string(def.name[0]-('a'-'A')) + def.name[1:]
 		}
-		builtinSym[def.pkg] = append(builtinSym[def.pkg], defSym{name: def.name, sym: def.sym})
-		obj := &Builtin{name: def.name, pkg: def.pkg, sym: def.sym}
+		builtinSym[def.pkg] = append(builtinSym[def.pkg], defSym{name: def.name, sym: def.sym, fn: def.fn})
+		obj := &Builtin{name: def.name, pkg: def.pkg, sym: def.sym, fn: def.fn}
 		Universe.Insert(obj)
 	}
 }
 
-func initBuiltin(pkg *gogen.Package, builtin *types.Package) {
+func initBuiltin(pkg *gogen.Package, builtin *types.Package, conf *gogen.Config) {
 	scope := builtin.Scope()
 	for im, defs := range builtinSym {
 		if p := pkg.TryImport(im); p.Types != nil {
 			for _, def := range defs {
 				obj := p.Ref(def.sym)
-				if _, ok := obj.Type().(*types.Named); ok {
-					scope.Insert(types.NewTypeName(token.NoPos, builtin, def.name, obj.Type()))
-				} else {
+				if def.fn {
 					scope.Insert(gogen.NewOverloadFunc(token.NoPos, builtin, def.name, obj))
+				} else {
+					scope.Insert(types.NewTypeName(token.NoPos, builtin, def.name, obj.Type()))
+				}
+				if rec, ok := conf.Recorder.(*goxRecorder); ok {
+					rec.Builtin(def.name, obj)
 				}
 			}
 		}
@@ -147,7 +156,7 @@ func newBuiltinDefault(pkg *gogen.Package, conf *gogen.Config) *types.Package {
 	if ng.Types != nil {
 		initMathBig(pkg, conf, ng)
 	}
-	initBuiltin(pkg, builtin)
+	initBuiltin(pkg, builtin, conf)
 	gogen.InitBuiltin(pkg, builtin, conf)
 	if strx.Types != nil {
 		ti := pkg.BuiltinTI(types.Typ[types.String])
