@@ -2608,14 +2608,22 @@ func (p *parser) parseLambdaExpr(allowTuple, allowCmd, allowRangeExpr bool) (x a
 			case *tupleExpr:
 				items := make([]*ast.Ident, len(v.items))
 				for i, item := range v.items {
-					items[i] = p.toIdent(item)
+					ident := p.toIdent(item)
+					if ident == nil {
+						return &ast.BadExpr{From: item.Pos(), To: p.safePos(item.End())}, false
+					}
+					items[i] = ident
 				}
 				lhs, lhsHasParen = items, true
 			case *ast.ParenExpr:
 				e, lhsHasParen = v.X, true
 				goto retry
 			default:
-				lhs = []*ast.Ident{p.toIdent(v)}
+				ident := p.toIdent(v)
+				if ident == nil {
+					return &ast.BadExpr{From: v.Pos(), To: p.safePos(v.End())}, false
+				}
+				lhs = []*ast.Ident{ident}
 			}
 		}
 		if debugParseOutput {

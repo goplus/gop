@@ -164,6 +164,10 @@ test "hello", (x, "y") => {
 	println "lambda",x,y
 }
 `, `/foo/bar.gop:3:19: expected 'IDENT', found "y"`, ``)
+	testErrCode(t, `onTouchStart "someone" => {
+	say "touched by someone"
+}
+`, `/foo/bar.gop:1:14: expected 'IDENT', found "someone"`, ``)
 }
 
 func TestErrTooManyParseExpr(t *testing.T) {
