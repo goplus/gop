@@ -184,11 +184,14 @@ func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
 
 func checkCommandWithoutArgs(x ast.Expr) int {
 retry:
-	if v, ok := x.(*ast.SelectorExpr); ok {
+	switch v := x.(type) {
+	case *ast.SelectorExpr:
 		x = v.X
 		goto retry
-	}
-	if _, ok := x.(*ast.Ident); ok {
+	case *ast.ErrWrapExpr:
+		x = v.X
+		goto retry
+	case *ast.Ident:
 		return clCommandWithoutArgs
 	}
 	return 0

@@ -4251,3 +4251,41 @@ func main() {
 }
 `)
 }
+
+func TestErrWrapArgs(t *testing.T) {
+	gopClTest(t, `
+func foo(v ...int) (func(), error) {
+	return nil, nil
+}
+
+foo!()
+foo(1)!()
+`, `package main
+
+import "github.com/qiniu/x/errors"
+
+func foo(v ...int) (func(), error) {
+	return nil, nil
+}
+func main() {
+	func() (_gop_ret func()) {
+		var _gop_err error
+		_gop_ret, _gop_err = foo()
+		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "foo", "/foo/bar.gop", 6, "main.main")
+			panic(_gop_err)
+		}
+		return
+	}()()
+	func() (_gop_ret func()) {
+		var _gop_err error
+		_gop_ret, _gop_err = foo(1)
+		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "foo(1)", "/foo/bar.gop", 7, "main.main")
+			panic(_gop_err)
+		}
+		return
+	}()()
+}
+`)
+}

@@ -380,7 +380,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 	case *ast.ParenExpr:
 		compileExpr(ctx, v.X, inFlags...)
 	case *ast.ErrWrapExpr:
-		compileErrWrapExpr(ctx, v, 0)
+		compileErrWrapExpr(ctx, v, inFlags...)
 	case *ast.FuncType:
 		ctx.cb.Typ(toFuncType(ctx, v, nil, nil), v)
 	case *ast.EnvExpr:
@@ -679,7 +679,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 			compileErrWrapExpr(ctx, &ewExpr, inFlags)
 			return
 		}
-		compileErrWrapExpr(ctx, fn, 0)
+		compileErrWrapExpr(ctx, fn, checkCommandWithoutArgs(fn.X))
 	default:
 		compileExpr(ctx, fn)
 	}
@@ -1514,14 +1514,16 @@ var (
 	tyError = types.Universe.Lookup("error").Type()
 )
 
-func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr, inFlags int) {
+func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr, inFlags ...int) {
 	pkg, cb := ctx.pkg, ctx.cb
 	useClosure := v.Tok == token.NOT || v.Default != nil
 	if !useClosure && (cb.Scope().Parent() == types.Universe) {
 		panic("TODO: can't use expr? in global")
 	}
-
-	compileExpr(ctx, v.X, inFlags)
+	if twoValue(inFlags) {
+		inFlags[0] &= ^clCallWithTwoValue
+	}
+	compileExpr(ctx, v.X, inFlags...)
 	x := cb.InternalStack().Pop()
 	n := 0
 	results, ok := x.Type.(*types.Tuple)
