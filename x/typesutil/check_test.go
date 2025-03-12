@@ -185,6 +185,13 @@ var i int = "hello"
 	if err == nil {
 		t.Fatal("no error")
 	}
+	_, _, err = checkFiles(fset, "main.gop", `
+var nums []int
+nums = append(nums, "NaN")
+`, "", "", "", "")
+	if err == nil {
+		t.Fatal("no error")
+	}
 }
 
 func TestBadFile(t *testing.T) {
