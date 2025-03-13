@@ -1520,8 +1520,12 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr, inFlags int) {
 	if !useClosure && (cb.Scope().Parent() == types.Universe) {
 		panic("TODO: can't use expr? in global")
 	}
-
-	compileExpr(ctx, v.X, inFlags)
+	expr := v.X
+	switch expr.(type) {
+	case *ast.Ident, *ast.SelectorExpr:
+		expr = &ast.CallExpr{Fun: expr}
+	}
+	compileExpr(ctx, expr, inFlags)
 	x := cb.InternalStack().Pop()
 	n := 0
 	results, ok := x.Type.(*types.Tuple)
