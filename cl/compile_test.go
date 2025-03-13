@@ -4251,3 +4251,69 @@ func main() {
 }
 `)
 }
+
+func TestErrWrapNoArgs(t *testing.T) {
+	gopClTest(t, `
+func foo(v ...int) (func(), error) {
+	return nil, nil
+}
+func Bar() (int, error) {
+	return 100, nil
+}
+foo!()
+foo(1)!()
+echo foo!
+echo bar!
+`, `package main
+
+import (
+	"fmt"
+	"github.com/qiniu/x/errors"
+)
+
+func foo(v ...int) (func(), error) {
+	return nil, nil
+}
+func Bar() (int, error) {
+	return 100, nil
+}
+func main() {
+	func() (_gop_ret func()) {
+		var _gop_err error
+		_gop_ret, _gop_err = foo()
+		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "foo", "/foo/bar.gop", 8, "main.main")
+			panic(_gop_err)
+		}
+		return
+	}()()
+	func() (_gop_ret func()) {
+		var _gop_err error
+		_gop_ret, _gop_err = foo(1)
+		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "foo(1)", "/foo/bar.gop", 9, "main.main")
+			panic(_gop_err)
+		}
+		return
+	}()()
+	fmt.Println(func() (_gop_ret func()) {
+		var _gop_err error
+		_gop_ret, _gop_err = foo()
+		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "foo", "/foo/bar.gop", 10, "main.main")
+			panic(_gop_err)
+		}
+		return
+	}())
+	fmt.Println(func() (_gop_ret int) {
+		var _gop_err error
+		_gop_ret, _gop_err = Bar()
+		if _gop_err != nil {
+			_gop_err = errors.NewFrame(_gop_err, "bar", "/foo/bar.gop", 11, "main.main")
+			panic(_gop_err)
+		}
+		return
+	}())
+}
+`)
+}
