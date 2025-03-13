@@ -25,7 +25,7 @@ func init() {
 	typesutil.SetDebug(typesutil.DbgFlagDefault)
 }
 
-func loadFiles(fset *token.FileSet, file string, src interface{}, goxfile string, goxsrc interface{}, gofile string, gosrc interface{}) ([]*ast.File, []*goast.File, error) {
+func loadFiles(fset *token.FileSet, file string, src any, goxfile string, goxsrc any, gofile string, gosrc any) ([]*ast.File, []*goast.File, error) {
 	var files []*ast.File
 	var gofiles []*goast.File
 	if file != "" {
@@ -52,7 +52,7 @@ func loadFiles(fset *token.FileSet, file string, src interface{}, goxfile string
 	return files, gofiles, nil
 }
 
-func checkFiles(fset *token.FileSet, file string, src interface{}, goxfile string, goxsrc interface{}, gofile string, gosrc interface{}) (*typesutil.Info, *types.Info, error) {
+func checkFiles(fset *token.FileSet, file string, src any, goxfile string, goxsrc any, gofile string, gosrc any) (*typesutil.Info, *types.Info, error) {
 	files, gofiles, err := loadFiles(fset, file, src, goxfile, goxsrc, gofile, gosrc)
 	if err != nil {
 		return nil, nil, err

@@ -40,7 +40,7 @@ func check(err error) {
 	}
 }
 
-func fatal(msg interface{}) {
+func fatal(msg any) {
 	fmt.Fprintln(os.Stderr, msg)
 	os.Exit(1)
 }

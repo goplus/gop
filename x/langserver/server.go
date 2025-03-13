@@ -113,7 +113,7 @@ func (p *handler) Changed(files []string) {
 	}
 }
 
-func (p *handler) Handle(ctx context.Context, req *jsonrpc2.Request) (result interface{}, err error) {
+func (p *handler) Handle(ctx context.Context, req *jsonrpc2.Request) (result any, err error) {
 	switch req.Method {
 	case methodChanged:
 		var files []string

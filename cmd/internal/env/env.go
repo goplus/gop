@@ -64,7 +64,7 @@ func runCmd(_ *base.Command, args []string) {
 		log.Fatalln("run go env failed:", err)
 	}
 
-	var gopEnv map[string]interface{}
+	var gopEnv map[string]any
 	if err := json.Unmarshal(stdout.Bytes(), &gopEnv); err != nil {
 		log.Fatal("decode json of go env failed:", err)
 	}
@@ -82,7 +82,7 @@ func runCmd(_ *base.Command, args []string) {
 	outputEnvVars(gopEnv, vars, *envJson)
 }
 
-func outputEnvVars(gopEnv map[string]interface{}, vars []string, outputJson bool) {
+func outputEnvVars(gopEnv map[string]any, vars []string, outputJson bool) {
 	onlyValues := true
 
 	if len(vars) == 0 {
@@ -94,7 +94,7 @@ func outputEnvVars(gopEnv map[string]interface{}, vars []string, outputJson bool
 		}
 		sort.Strings(vars)
 	} else {
-		newEnv := make(map[string]interface{})
+		newEnv := make(map[string]any)
 		for _, v := range vars {
 			if value, ok := gopEnv[v]; ok {
 				newEnv[v] = value

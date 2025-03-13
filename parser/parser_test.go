@@ -64,7 +64,7 @@ func TestAssert(t *testing.T) {
 	assert(false, "panic msg")
 }
 
-func panicMsg(e interface{}) string {
+func panicMsg(e any) string {
 	switch v := e.(type) {
 	case string:
 		return v

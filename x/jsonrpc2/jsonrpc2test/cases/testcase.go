@@ -92,24 +92,24 @@ type invoker interface {
 
 type notify struct {
 	method string
-	params interface{}
+	params any
 }
 
 type call struct {
 	method string
-	params interface{}
-	expect interface{}
+	params any
+	expect any
 }
 
 type async struct {
 	name   string
 	method string
-	params interface{}
+	params any
 }
 
 type collect struct {
 	name   string
-	expect interface{}
+	expect any
 	fails  bool
 }
 
@@ -175,7 +175,7 @@ func (test call) Invoke(t *testing.T, ctx context.Context, h *handler) {
 
 func (test echo) Invoke(t *testing.T, ctx context.Context, h *handler) {
 	results := newResults(test.expect)
-	if err := h.conn.Call(ctx, "echo", []interface{}{test.method, test.params}).Await(ctx, results); err != nil {
+	if err := h.conn.Call(ctx, "echo", []any{test.method, test.params}).Await(ctx, results); err != nil {
 		t.Fatalf("%v:Echo failed: %v", test.method, err)
 	}
 	verifyResults(t, test.method, results, test.expect)
@@ -216,10 +216,10 @@ func (test sequence) Invoke(t *testing.T, ctx context.Context, h *handler) {
 }
 
 // newResults makes a new empty copy of the expected type to put the results into
-func newResults(expect interface{}) interface{} {
+func newResults(expect any) any {
 	switch e := expect.(type) {
-	case []interface{}:
-		var r []interface{}
+	case []any:
+		var r []any
 		for _, v := range e {
 			r = append(r, reflect.New(reflect.TypeOf(v)).Interface())
 		}
@@ -232,7 +232,7 @@ func newResults(expect interface{}) interface{} {
 }
 
 // verifyResults compares the results to the expected values
-func verifyResults(t *testing.T, method string, results interface{}, expect interface{}) {
+func verifyResults(t *testing.T, method string, results any, expect any) {
 	if expect == nil {
 		if results != nil {
 			t.Errorf("%v:Got results %+v where none expeted", method, expect)
@@ -288,7 +288,7 @@ func (h *handler) tryCloseWaiter(name string) (ok bool) {
 	return
 }
 
-func (h *handler) Preempt(ctx context.Context, req *jsonrpc2.Request) (interface{}, error) {
+func (h *handler) Preempt(ctx context.Context, req *jsonrpc2.Request) (any, error) {
 	switch req.Method {
 	case "unblock":
 		var name string
@@ -314,7 +314,7 @@ func (h *handler) Preempt(ctx context.Context, req *jsonrpc2.Request) (interface
 	}
 }
 
-func (h *handler) Handle(ctx context.Context, req *jsonrpc2.Request) (interface{}, error) {
+func (h *handler) Handle(ctx context.Context, req *jsonrpc2.Request) (any, error) {
 	switch req.Method {
 	case "no_args":
 		if len(req.Params) > 0 {
@@ -359,11 +359,11 @@ func (h *handler) Handle(ctx context.Context, req *jsonrpc2.Request) (interface{
 		}
 		return path.Join(v...), nil
 	case "echo":
-		var v []interface{}
+		var v []any
 		if err := json.Unmarshal(req.Params, &v); err != nil {
 			return nil, fmt.Errorf("%w: %s", jsonrpc2.ErrParse, err)
 		}
-		var result interface{}
+		var result any
 		err := h.conn.Call(ctx, v[0].(string), v[1]).Await(ctx, &result)
 		return result, err
 	case "wait":

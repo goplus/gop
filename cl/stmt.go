@@ -977,7 +977,7 @@ func compileType(ctx *blockCtx, t *ast.TypeSpec) {
 }
 
 type (
-	valueMap  map[interface{}][]valueType // underlying Go value -> valueType
+	valueMap  map[any][]valueType // underlying Go value -> valueType
 	valueType struct {
 		pos token.Pos
 		typ types.Type
@@ -985,7 +985,7 @@ type (
 )
 
 // goVal returns the Go value for val, or nil.
-func goVal(val constant.Value) interface{} {
+func goVal(val constant.Value) any {
 	// val should exist, but be conservative and check
 	if val == nil {
 		return nil
