@@ -61,7 +61,7 @@ const wireVersion = "2.0"
 // We can decode this and then work out which it is.
 type wireCombined struct {
 	VersionTag string          `json:"jsonrpc"`
-	ID         interface{}     `json:"id,omitempty"`
+	ID         any             `json:"id,omitempty"`
 	Method     string          `json:"method,omitempty"`
 	Params     json.RawMessage `json:"params,omitempty"`
 	Result     json.RawMessage `json:"result,omitempty"`

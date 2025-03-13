@@ -409,11 +409,11 @@ func (p *pkgCtx) newCodeError(pos token.Pos, msg string) error {
 	return &gogen.CodeError{Fset: p.nodeInterp, Pos: pos, Msg: msg}
 }
 
-func (p *pkgCtx) newCodeErrorf(pos token.Pos, format string, args ...interface{}) error {
+func (p *pkgCtx) newCodeErrorf(pos token.Pos, format string, args ...any) error {
 	return &gogen.CodeError{Fset: p.nodeInterp, Pos: pos, Msg: fmt.Sprintf(format, args...)}
 }
 
-func (p *pkgCtx) handleErrorf(pos token.Pos, format string, args ...interface{}) {
+func (p *pkgCtx) handleErrorf(pos token.Pos, format string, args ...any) {
 	p.handleErr(p.newCodeErrorf(pos, format, args...))
 }
 
@@ -460,12 +460,12 @@ func (p *pkgCtx) loadSymbol(name string) bool {
 	return false
 }
 
-func (p *pkgCtx) handleRecover(e interface{}, src ast.Node) {
+func (p *pkgCtx) handleRecover(e any, src ast.Node) {
 	err := p.recoverErr(e, src)
 	p.handleErr(err)
 }
 
-func (p *pkgCtx) recoverErr(e interface{}, src ast.Node) error {
+func (p *pkgCtx) recoverErr(e any, src ast.Node) error {
 	err, ok := e.(error)
 	if !ok {
 		if src != nil {

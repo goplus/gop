@@ -106,7 +106,7 @@ func parseMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string,
 	return chkOpts.Types, info, ginfo, err
 }
 
-func parseSource(fset *token.FileSet, filename string, src interface{}, mode parser.Mode) (*types.Package, *typesutil.Info, error) {
+func parseSource(fset *token.FileSet, filename string, src any, mode parser.Mode) (*types.Package, *typesutil.Info, error) {
 	f, err := parser.ParseEntry(fset, filename, src, parser.Config{
 		Mode: mode,
 	})
@@ -136,7 +136,7 @@ func parseSource(fset *token.FileSet, filename string, src interface{}, mode par
 	return pkg, info, err
 }
 
-func parseGoSource(fset *token.FileSet, filename string, src interface{}, mode goparser.Mode) (*types.Package, *types.Info, error) {
+func parseGoSource(fset *token.FileSet, filename string, src any, mode goparser.Mode) (*types.Package, *types.Info, error) {
 	f, err := goparser.ParseFile(fset, filename, src, mode)
 	if err != nil {
 		return nil, nil, err
@@ -190,7 +190,7 @@ func testGopInfoEx(t *testing.T, mod *gopmod.Module, name string, src string, go
 	}
 }
 
-func testInfo(t *testing.T, src interface{}) {
+func testInfo(t *testing.T, src any) {
 	fset := token.NewFileSet()
 	_, info, err := parseSource(fset, "main.gop", src, parser.ParseComments)
 	if err != nil {

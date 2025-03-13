@@ -141,7 +141,7 @@ func (c *Context) ParseFSDir(fs parser.FileSystem, dir string) (*Package, error)
 	return c.loadPackage(dir, pkgs)
 }
 
-func (c *Context) ParseFile(file string, src interface{}) (*Package, error) {
+func (c *Context) ParseFile(file string, src any) (*Package, error) {
 	fs, err := memfs.File(file, src)
 	if err != nil {
 		return nil, err
@@ -173,7 +173,7 @@ func (c *Context) loadPackage(srcDir string, pkgs map[string]*ast.Package) (*Pac
 	return &Package{c.fset, out}, nil
 }
 
-func (ctx *Context) BuildFile(filename string, src interface{}) (data []byte, err error) {
+func (ctx *Context) BuildFile(filename string, src any) (data []byte, err error) {
 	defer func() {
 		r := recover()
 		if r != nil {

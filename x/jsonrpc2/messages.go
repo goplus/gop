@@ -28,7 +28,7 @@ import (
 
 // ID is a Request identifier.
 type ID struct {
-	value interface{}
+	value any
 }
 
 // Message is the interface to all jsonrpc2 message types.
@@ -75,18 +75,18 @@ func Int64ID(i int64) ID { return ID{value: i} }
 func (id ID) IsValid() bool { return id.value != nil }
 
 // Raw returns the underlying value of the ID.
-func (id ID) Raw() interface{} { return id.value }
+func (id ID) Raw() any { return id.value }
 
 // NewNotification constructs a new Notification message for the supplied
 // method and parameters.
-func NewNotification(method string, params interface{}) (*Request, error) {
+func NewNotification(method string, params any) (*Request, error) {
 	p, merr := marshalToRaw(params)
 	return &Request{Method: method, Params: p}, merr
 }
 
 // NewCall constructs a new Call message for the supplied ID, method and
 // parameters.
-func NewCall(id ID, method string, params interface{}) (*Request, error) {
+func NewCall(id ID, method string, params any) (*Request, error) {
 	p, merr := marshalToRaw(params)
 	return &Request{ID: id, Method: method, Params: p}, merr
 }
@@ -101,7 +101,7 @@ func (msg *Request) marshal(to *wireCombined) {
 
 // NewResponse constructs a new Response message that is a reply to the
 // supplied. If err is set result may be ignored.
-func NewResponse(id ID, result interface{}, rerr error) (*Response, error) {
+func NewResponse(id ID, result any, rerr error) (*Response, error) {
 	r, merr := marshalToRaw(result)
 	return &Response{ID: id, Result: r, Error: rerr}, merr
 }
@@ -185,7 +185,7 @@ func DecodeMessage(data []byte) (Message, error) {
 	return resp, nil
 }
 
-func marshalToRaw(obj interface{}) (json.RawMessage, error) {
+func marshalToRaw(obj any) (json.RawMessage, error) {
 	if obj == nil {
 		return nil, nil
 	}

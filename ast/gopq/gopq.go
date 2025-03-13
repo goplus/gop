@@ -51,7 +51,7 @@ var (
 type Node interface {
 	ast.Node
 	ForEach(filter func(node Node) error) error
-	Obj() interface{}
+	Obj() any
 }
 
 // NodeEnum - node enumerator
@@ -66,7 +66,7 @@ type NodeSet struct {
 }
 
 // FromFile calls ParseFile for a single file and returns *ast.File node set.
-func FromFile(fset *token.FileSet, filename string, src interface{}, mode parser.Mode) (doc NodeSet, err error) {
+func FromFile(fset *token.FileSet, filename string, src any, mode parser.Mode) (doc NodeSet, err error) {
 	file, err := parser.ParseFile(fset, filename, src, mode)
 	if err != nil {
 		return
@@ -77,7 +77,7 @@ func FromFile(fset *token.FileSet, filename string, src interface{}, mode parser
 // FromFSFile calls ParseFSFile for a single file and returns *ast.File node set.
 func FromFSFile(
 	fset *token.FileSet, fs fsx.FileSystem,
-	filename string, src interface{}, mode parser.Mode) (doc NodeSet, err error) {
+	filename string, src any, mode parser.Mode) (doc NodeSet, err error) {
 	file, err := parser.ParseFSFile(fset, fs, filename, src, mode)
 	if err != nil {
 		return

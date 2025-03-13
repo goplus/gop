@@ -41,7 +41,7 @@ func (p *dirEntry) Info() (fs.FileInfo, error) {
 	return p.FileInfo, nil
 }
 
-func File(filename string, src interface{}) (f *FileFS, err error) {
+func File(filename string, src any) (f *FileFS, err error) {
 	var data []byte
 	var info fs.DirEntry
 	if src != nil {
@@ -84,7 +84,7 @@ func (p *FileFS) Abs(path string) (string, error) {
 	return path, nil
 }
 
-func readSource(src interface{}) ([]byte, error) {
+func readSource(src any) ([]byte, error) {
 	switch s := src.(type) {
 	case string:
 		return []byte(s), nil

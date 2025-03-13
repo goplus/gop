@@ -160,7 +160,7 @@ func TestParseEntries_SaveAbsFile(t *testing.T) {
 }
 
 func doTestParseEntries(t *testing.T, confReal Config) {
-	doTestParseEntry(t, func(fset *token.FileSet, filename string, src interface{}, conf Config) (f *ast.File, err error) {
+	doTestParseEntry(t, func(fset *token.FileSet, filename string, src any, conf Config) (f *ast.File, err error) {
 		fs, _ := memfs.File(filename, src)
 		pkgs, err := ParseFSEntries(fset, fs, []string{filename}, confReal)
 		if err != nil {
@@ -181,7 +181,7 @@ func TestParseEntry(t *testing.T) {
 	doTestParseEntry(t, ParseEntry)
 }
 
-func doTestParseEntry(t *testing.T, parseEntry func(fset *token.FileSet, filename string, src interface{}, conf Config) (f *ast.File, err error)) {
+func doTestParseEntry(t *testing.T, parseEntry func(fset *token.FileSet, filename string, src any, conf Config) (f *ast.File, err error)) {
 	fset := token.NewFileSet()
 	src, err := os.ReadFile("./_testdata/functype/functype.go")
 	if err != nil {
