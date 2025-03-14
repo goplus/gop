@@ -417,11 +417,10 @@ func findMethod(o types.Object, name string) *types.Func {
 	return nil
 }
 
-func makeMainSig(recv *types.Var, f *types.Func) *types.Signature {
+func makeMainSig(recv *types.Var, sig *types.Signature) *types.Signature {
 	const (
 		paramNameTempl = "_gop_arg0"
 	)
-	sig := f.Type().(*types.Signature)
 	in := sig.Params()
 	nin := in.Len()
 	pkg := recv.Pkg()

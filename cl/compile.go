@@ -365,9 +365,10 @@ type blockCtx struct {
 	pystr_     gogen.Ref
 	relBaseDir string
 
+	baseClass   types.Object // available when isClass
+	baseMainSig *types.Signature
+
 	classRecv *ast.FieldList // available when isClass
-	baseClass types.Object   // available when isClass
-	baseMain  *types.Func
 
 	fileScope *types.Scope // available when isGopFile
 	rec       *goxRecorder
@@ -377,9 +378,11 @@ type blockCtx struct {
 	isGopFile bool // is Go+ file or not
 }
 
-func (p *blockCtx) initBaseMain(base types.Object, name string) {
+func (p *blockCtx) initBaseMainSig(base types.Object, name string) {
 	p.baseClass = base
-	p.baseMain = findMethod(base, name)
+	if f := findMethod(base, name); f != nil {
+		p.baseMainSig = f.Type().(*types.Signature)
+	}
 }
 
 func (p *blockCtx) cstr() gogen.Ref {
@@ -757,7 +760,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 			}
 			if f.IsProj {
 				o := proj.game
-				ctx.initBaseMain(o, "MainEntry")
+				ctx.initBaseMainSig(o, "MainEntry")
 				baseTypeName, baseType = o.Name(), o.Type()
 				if proj.gameIsPtr {
 					baseType = types.NewPointer(baseType)
@@ -765,7 +768,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 			} else {
 				sp := proj.sprite[c.ext]
 				o := sp.obj
-				ctx.initBaseMain(o, "Main")
+				ctx.initBaseMainSig(o, "Main")
 				baseTypeName, baseType, spxProj, spxClass = o.Name(), o.Type(), sp.proj, true
 			}
 		}
@@ -1305,8 +1308,8 @@ func loadFunc(ctx *blockCtx, recv *types.Var, name string, d *ast.FuncDecl, genB
 	var sigBase *types.Signature
 	if d.Shadow {
 		if recv != nil && (name == "Main" || name == "MainEntry") {
-			if baseMain := ctx.baseMain; baseMain != nil {
-				sigBase = makeMainSig(recv, baseMain)
+			if baseMainSig := ctx.baseMainSig; baseMainSig != nil {
+				sigBase = makeMainSig(recv, baseMainSig)
 			}
 		}
 	} else if d.Operator {
