@@ -725,6 +725,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 	var baseType types.Type
 	var spxProj string
 	var spxClass bool
+	var spxClassfname bool
 	var goxTestFile bool
 	var parent = ctx.pkgCtx
 	if f.IsClass {
@@ -760,7 +761,9 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 				sp := proj.sprite[c.ext]
 				o := sp.obj
 				ctx.baseClass = o
-				baseTypeName, baseType, spxProj, spxClass = o.Name(), o.Type(), sp.proj, true
+				baseTypeName, baseType, spxProj = o.Name(), o.Type(), sp.proj
+				spxClassfname = (proj.spfeats & spriteClassfname) != 0
+				spxClass = true
 			}
 		}
 	}
@@ -864,7 +867,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 			},
 		}}}
 		// func Classfname() string
-		if spxClass {
+		if spxClassfname {
 			f.Decls = append(f.Decls, astFnClassfname(c))
 		}
 	}

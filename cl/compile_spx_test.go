@@ -57,9 +57,6 @@ type MyGame struct {
 	*spx.MyGame
 }
 
-func (this *Kai) Classfname() string {
-	return "Kai"
-}
 func (this *Kai) Main() {
 }
 func (this *MyGame) Main() {
@@ -142,9 +139,6 @@ func (this *Kai) onMsg(msg string) {
 		this.Say("Hi")
 	}
 }
-func (this *Kai) Classfname() string {
-	return "Kai"
-}
 func (this *Kai) Main() {
 }
 func main() {
@@ -199,9 +193,6 @@ func (this *index) MainEntry() {
 func (this *index) Main() {
 	spx.Gopt_MyGame_Main(this)
 }
-func (this *bar) Classfname() string {
-	return "bar"
-}
 func (this *bar) Main() {
 }
 func main() {
@@ -233,9 +224,6 @@ func (this *index) MainEntry() {
 }
 func (this *index) Main() {
 	spx.Gopt_MyGame_Main(this)
-}
-func (this *bar) Classfname() string {
-	return "bar"
 }
 func (this *bar) Main() {
 }
@@ -269,9 +257,6 @@ func (this *index) MainEntry() {
 }
 func (this *index) Main() {
 	spx.Gopt_MyGame_Main(this)
-}
-func (this *bar) Classfname() string {
-	return "bar"
 }
 func (this *bar) Main() {
 }
@@ -313,9 +298,6 @@ func (this *index) MainEntry() {
 }
 func (this *index) Main() {
 	spx.Gopt_MyGame_Main(this)
-}
-func (this *bar) Classfname() string {
-	return "bar"
 }
 func (this *bar) Main() {
 }
@@ -371,9 +353,6 @@ func (this *bar) onInit() {
 	this.Play("recordingWhere")
 	this.Say("Where do you come from?", 2)
 	this.Broadcast__0("msg2")
-}
-func (this *bar) Classfname() string {
-	return "bar"
 }
 func (this *bar) Main() {
 }
@@ -434,9 +413,6 @@ func (this *Kai) onInit() {
 func (this *Kai) onCloned() {
 	this.Say("Hi")
 }
-func (this *Kai) Classfname() string {
-	return "Kai"
-}
 func (this *Kai) Main() {
 }
 func main() {
@@ -484,9 +460,6 @@ func (this *index) Main() {
 }
 func (this *Kai) Main() {
 	fmt.Println("Hi")
-}
-func (this *Kai) Classfname() string {
-	return "Kai"
 }
 func main() {
 	new(index).Main()
@@ -610,9 +583,6 @@ func (this *Game) Main() {
 }
 func (this *Kai) onMsg(msg string) {
 }
-func (this *Kai) Classfname() string {
-	return "Kai"
-}
 func (this *Kai) Main() {
 }
 func main() {
@@ -650,9 +620,6 @@ func (this *Game) Main() {
 }
 func (this *Kai) onMsg(msg string) {
 }
-func (this *Kai) Classfname() string {
-	return "Kai"
-}
 func (this *Kai) Main() {
 }
 func main() {
@@ -684,13 +651,7 @@ type Kai struct {
 func (this *Dog) Main() {
 	fmt.Println("Hi, Sprite")
 }
-func (this *Dog) Classfname() string {
-	return "Dog"
-}
 func (this *Kai) onMsg(msg string) {
-}
-func (this *Kai) Classfname() string {
-	return "Kai"
 }
 func (this *Kai) Main() {
 }
@@ -721,9 +682,6 @@ func (this *Game) MainEntry() {
 func (this *Game) Main() {
 	(*spx2.Game).Main(&this.Game)
 }
-func (this *Kai) Classfname() string {
-	return "Kai"
-}
 func (this *Kai) Main() {
 }
 func main() {
@@ -752,9 +710,6 @@ func (this *Game) MainEntry() {
 }
 func (this *Game) Main() {
 	(*spx2.Game).Main(&this.Game)
-}
-func (this *Kai) Classfname() string {
-	return "Kai"
 }
 func (this *Kai) Main() {
 }
@@ -803,9 +758,6 @@ func (this *Kai) Main() {
 }
 func (this *Kai) onMsg(msg string) {
 }
-func (this *Kai) Classfname() string {
-	return "Kai"
-}
 func main() {
 	new(Game).Main()
 }
@@ -851,9 +803,6 @@ func (this *Kai) onMsg(msg string) {
 		spx.Sched()
 		this.Say("Hi")
 	}
-}
-func (this *Kai) Classfname() string {
-	return "Kai"
 }
 func (this *Kai) Main() {
 }
@@ -929,9 +878,6 @@ func (this *Kai) onInit() {
 func (this *Kai) onCloned() {
 	this.Say("Hi")
 }
-func (this *Kai) Classfname() string {
-	return "Kai"
-}
 func (this *Kai) Main() {
 }
 func main() {
@@ -974,9 +920,6 @@ func (this *Game) Main() {
 }
 func (this *Kai) onMsg(msg string) {
 }
-func (this *Kai) Classfname() string {
-	return "Kai"
-}
 func (this *Kai) Main() {
 }
 func main() {
@@ -1015,9 +958,6 @@ func (this *Game) Main() {
 }
 func (this *Kai) onMsg(msg string) {
 	this.Position().Add__0(100, 200)
-}
-func (this *Kai) Classfname() string {
-	return "Kai"
 }
 func (this *Kai) Main() {
 }
@@ -1082,9 +1022,6 @@ func (this *Kai) onMsg(msg string) {
 	this.Vector().Self().Add__0(this.Position().X, this.Position().Y)
 	fmt.Println(this.Vector().X)
 	fmt.Println(this.Vector().Self().Self())
-}
-func (this *Kai) Classfname() string {
-	return "Kai"
 }
 func (this *Kai) Main() {
 }
@@ -1197,9 +1134,6 @@ func (this *Kai) Main() {
 	spx.Gopt_Sprite_OnKey2(this, "hello", func(key string) {
 	})
 }
-func (this *Kai) Classfname() string {
-	return "Kai"
-}
 func main() {
 	new(Game).Main()
 }
@@ -1239,9 +1173,6 @@ func (this *caseFoo) Main() {
 		t.Fatal("failed")
 	})
 }
-func (this *caseFoo) Classfname() string {
-	return "Foo"
-}
 func TestFoo(t *testing.T) {
 	test.Gopt_Case_TestMain(new(caseFoo), t)
 }
@@ -1269,9 +1200,6 @@ type case_foo struct {
 
 func (this *case_foo) Main() {
 	this.T().Log("Hi")
-}
-func (this *case_foo) Classfname() string {
-	return "foo"
 }
 func Test_foo(t *testing.T) {
 	test.Gopt_Case_TestMain(new(case_foo), t)
