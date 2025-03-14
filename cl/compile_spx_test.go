@@ -506,6 +506,10 @@ func (this *Kai) Main(_gop_arg0 string) {
 func (this *Kai) Classfname() string {
 	return "Kai"
 }
+func (this *Kai) Classclone() interface{} {
+	_gop_ret := *this
+	return &_gop_ret
+}
 func main() {
 	new(Game).Main()
 }
@@ -544,6 +548,10 @@ func (this *Game) Main() {
 }
 func (this *Kai) Classfname() string {
 	return "Kai"
+}
+func (this *Kai) Classclone() interface{} {
+	_gop_ret := *this
+	return &_gop_ret
 }
 func (this *Kai) Main(_gop_arg0 string) {
 	this.Sprite.Main(_gop_arg0)

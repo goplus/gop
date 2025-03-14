@@ -499,6 +499,40 @@ func astFnClassfname(c *gmxClass) *ast.FuncDecl {
 	}
 }
 
+func astFnClassclone() *ast.FuncDecl {
+	ret := &ast.Ident{Name: "_gop_ret"}
+	return &ast.FuncDecl{
+		Name: &ast.Ident{
+			Name: "Classclone",
+		},
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{},
+			Results: &ast.FieldList{
+				List: []*ast.Field{
+					{Type: &ast.Ident{Name: "any"}},
+				},
+			},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.AssignStmt{
+					Lhs: []ast.Expr{ret},
+					Tok: token.DEFINE,
+					Rhs: []ast.Expr{
+						&ast.StarExpr{X: &ast.Ident{Name: "this"}},
+					},
+				},
+				&ast.ReturnStmt{
+					Results: []ast.Expr{
+						&ast.UnaryExpr{Op: token.AND, X: ret},
+					},
+				},
+			},
+		},
+		Shadow: true,
+	}
+}
+
 func astEmptyEntrypoint(f *ast.File) {
 	var entry = getEntrypoint(f)
 	var hasEntry bool
