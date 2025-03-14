@@ -365,10 +365,8 @@ type blockCtx struct {
 	pystr_     gogen.Ref
 	relBaseDir string
 
-	baseClass   types.Object // available when isClass
-	baseMainSig *types.Signature
-
 	classRecv *ast.FieldList // available when isClass
+	baseClass types.Object   // available when isClass
 
 	fileScope *types.Scope // available when isGopFile
 	rec       *goxRecorder
@@ -378,12 +376,30 @@ type blockCtx struct {
 	isGopFile bool // is Go+ file or not
 }
 
+/*
+func (p *blockCtx) spxNeedMethod(name string) bool {
+	if sig := p.baseMainSig; sig != nil && sig.Variadic() {
+		in := sig.Params()
+		last := in.At(in.Len() - 1)
+		elt := last.Type().(*types.Slice).Elem()
+		if intf, ok := elt.(*types.Interface); ok {
+			for i, n := 0, intf.NumMethods(); i < n; i++ {
+				if intf.Method(i).Name() == name {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
 func (p *blockCtx) initBaseMainSig(base types.Object, name string) {
 	p.baseClass = base
 	if f := findMethod(base, name); f != nil {
 		p.baseMainSig = f.Type().(*types.Signature)
 	}
 }
+*/
 
 func (p *blockCtx) cstr() gogen.Ref {
 	if p.cstr_ == nil {
@@ -760,7 +776,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 			}
 			if f.IsProj {
 				o := proj.game
-				ctx.initBaseMainSig(o, "MainEntry")
+				ctx.baseClass = o
 				baseTypeName, baseType = o.Name(), o.Type()
 				if proj.gameIsPtr {
 					baseType = types.NewPointer(baseType)
@@ -768,7 +784,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 			} else {
 				sp := proj.sprite[c.ext]
 				o := sp.obj
-				ctx.initBaseMainSig(o, "Main")
+				ctx.baseClass = o
 				baseTypeName, baseType, spxProj, spxClass = o.Name(), o.Type(), sp.proj, true
 			}
 		}
@@ -1308,8 +1324,11 @@ func loadFunc(ctx *blockCtx, recv *types.Var, name string, d *ast.FuncDecl, genB
 	var sigBase *types.Signature
 	if d.Shadow {
 		if recv != nil && (name == "Main" || name == "MainEntry") {
-			if baseMainSig := ctx.baseMainSig; baseMainSig != nil {
-				sigBase = makeMainSig(recv, baseMainSig)
+			if base := ctx.baseClass; base != nil {
+				if f := findMethod(base, name); f != nil {
+					baseMainSig := f.Type().(*types.Signature)
+					sigBase = makeMainSig(recv, baseMainSig)
+				}
 			}
 		}
 	} else if d.Operator {
