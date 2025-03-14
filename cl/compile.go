@@ -1298,7 +1298,7 @@ func loadFunc(ctx *blockCtx, recv *types.Var, name string, d *ast.FuncDecl, genB
 	var pkg = ctx.pkg
 	var sigBase *types.Signature
 	if d.Shadow {
-		if recv != nil {
+		if recv != nil && (name == "Main" || name == "MainEntry") {
 			if base := ctx.baseClass; base != nil {
 				if f := findMethod(base, name); f != nil {
 					sigBase = makeMainSig(recv, f)
