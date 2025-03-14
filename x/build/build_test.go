@@ -410,9 +410,6 @@ type MyGame struct {
 func (this *Cat) Main() {
 	fmt.Println("hi")
 }
-func (this *Cat) Classfname() string {
-	return "Cat"
-}
 func (this *MyGame) Main() {
 	spx.Gopt_MyGame_Main(this)
 }
