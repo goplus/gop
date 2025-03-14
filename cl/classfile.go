@@ -47,8 +47,9 @@ type spxObj struct {
 }
 
 type gmxProject struct {
-	gameClass  string            // <gmtype>.gmx
-	game       gogen.Ref         // Game (project base class)
+	gameClass  string    // <gmtype>.gmx
+	game       gogen.Ref // Game (project base class)
+	spfeats    spriteFeat
 	sprite     map[string]spxObj // .spx => Sprite
 	sptypes    []string          // <sptype>.spx
 	scheds     []string
@@ -60,6 +61,43 @@ type gmxProject struct {
 	gameIsPtr  bool
 	isTest     bool
 	hasMain_   bool
+}
+
+type spriteFeat uint
+
+const (
+	spriteClassfname spriteFeat = 1 << iota
+	spriteClassclone
+)
+
+func spriteFeatures(game gogen.Ref) (feats spriteFeat) {
+	if mainFn := findMethod(game, "Main"); mainFn != nil {
+		sig := mainFn.Type().(*types.Signature)
+		if t, ok := gogen.CheckSigFuncEx(sig); ok {
+			if t, ok := t.(*gogen.TyTemplateRecvMethod); ok {
+				sig = t.Func.Type().(*types.Signature)
+			}
+		}
+		if sig.Variadic() {
+			in := sig.Params()
+			last := in.At(in.Len() - 1)
+			elt := last.Type().(*types.Slice).Elem()
+			if tn, ok := elt.(*types.Named); ok {
+				elt = tn.Underlying()
+			}
+			if intf, ok := elt.(*types.Interface); ok {
+				for i, n := 0, intf.NumMethods(); i < n; i++ {
+					switch intf.Method(i).Name() {
+					case "Classfname":
+						feats |= spriteClassfname
+					case "Classclone":
+						feats |= spriteClassclone
+					}
+				}
+			}
+		}
+	}
+	return
 }
 
 func (p *gmxProject) hasMain() bool {
@@ -165,6 +203,7 @@ func loadClass(ctx *pkgCtx, pkg *gogen.Package, file string, f *ast.File, conf *
 		spx := p.pkgImps[0]
 		if gt.Class != "" {
 			p.game, p.gameIsPtr = spxRef(spx, gt.Class)
+			p.spfeats = spriteFeatures(p.game)
 		}
 		p.sprite = make(map[string]spxObj)
 		for _, v := range gt.Works {
@@ -417,10 +456,11 @@ func findMethod(o types.Object, name string) *types.Func {
 	return nil
 }
 
-func makeMainSig(recv *types.Var, sig *types.Signature) *types.Signature {
+func makeMainSig(recv *types.Var, f *types.Func) *types.Signature {
 	const (
 		paramNameTempl = "_gop_arg0"
 	)
+	sig := f.Type().(*types.Signature)
 	in := sig.Params()
 	nin := in.Len()
 	pkg := recv.Pkg()

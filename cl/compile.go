@@ -376,31 +376,6 @@ type blockCtx struct {
 	isGopFile bool // is Go+ file or not
 }
 
-/*
-func (p *blockCtx) spxNeedMethod(name string) bool {
-	if sig := p.baseMainSig; sig != nil && sig.Variadic() {
-		in := sig.Params()
-		last := in.At(in.Len() - 1)
-		elt := last.Type().(*types.Slice).Elem()
-		if intf, ok := elt.(*types.Interface); ok {
-			for i, n := 0, intf.NumMethods(); i < n; i++ {
-				if intf.Method(i).Name() == name {
-					return true
-				}
-			}
-		}
-	}
-	return false
-}
-
-func (p *blockCtx) initBaseMainSig(base types.Object, name string) {
-	p.baseClass = base
-	if f := findMethod(base, name); f != nil {
-		p.baseMainSig = f.Type().(*types.Signature)
-	}
-}
-*/
-
 func (p *blockCtx) cstr() gogen.Ref {
 	if p.cstr_ == nil {
 		p.cstr_ = p.pkg.Import(pathLibc).Ref("Str")
@@ -1326,8 +1301,7 @@ func loadFunc(ctx *blockCtx, recv *types.Var, name string, d *ast.FuncDecl, genB
 		if recv != nil && (name == "Main" || name == "MainEntry") {
 			if base := ctx.baseClass; base != nil {
 				if f := findMethod(base, name); f != nil {
-					baseMainSig := f.Type().(*types.Signature)
-					sigBase = makeMainSig(recv, baseMainSig)
+					sigBase = makeMainSig(recv, f)
 				}
 			}
 		}
