@@ -55,7 +55,7 @@ func (p *memFileInfo) IsDir() bool {
 	return false
 }
 
-func (p *memFileInfo) Sys() interface{} {
+func (p *memFileInfo) Sys() any {
 	return nil
 }
 

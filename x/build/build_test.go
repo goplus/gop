@@ -47,11 +47,11 @@ func init() {
 	build.RegisterClassFileType("_yap.gox", "App", nil, "github.com/goplus/yap")
 }
 
-func gopClTest(t *testing.T, gopcode interface{}, expected string) {
+func gopClTest(t *testing.T, gopcode any, expected string) {
 	gopClTestEx(t, "main.gop", gopcode, expected)
 }
 
-func gopClTestEx(t *testing.T, filename string, gopcode interface{}, expected string) {
+func gopClTestEx(t *testing.T, filename string, gopcode any, expected string) {
 	data, err := ctx.BuildFile(filename, gopcode)
 	if err != nil {
 		t.Fatalf("build gop error: %v", err)
@@ -409,9 +409,6 @@ type MyGame struct {
 
 func (this *Cat) Main() {
 	fmt.Println("hi")
-}
-func (this *Cat) Classfname() string {
-	return "Cat"
 }
 func (this *MyGame) Main() {
 	spx.Gopt_MyGame_Main(this)

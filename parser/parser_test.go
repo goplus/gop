@@ -64,7 +64,7 @@ func TestAssert(t *testing.T) {
 	assert(false, "panic msg")
 }
 
-func panicMsg(e interface{}) string {
+func panicMsg(e any) string {
 	switch v := e.(type) {
 	case string:
 		return v
@@ -164,6 +164,10 @@ test "hello", (x, "y") => {
 	println "lambda",x,y
 }
 `, `/foo/bar.gop:3:19: expected 'IDENT', found "y"`, ``)
+	testErrCode(t, `onTouchStart "someone" => {
+	say "touched by someone"
+}
+`, `/foo/bar.gop:1:14: expected 'IDENT', found "someone"`, ``)
 }
 
 func TestErrTooManyParseExpr(t *testing.T) {
@@ -337,6 +341,11 @@ func (a T) +{}
 `, `/foo/bar.gop:2:12: expected type, found '+'`, ``)
 	testErrCode(t, `func +(a T, b T) {}
 `, `/foo/bar.gop:1:6: overload operator can only have one parameter`, ``)
+}
+
+func TestErrForIn(t *testing.T) {
+	testErrCode(t, `x := [a for a i b]
+`, `/foo/bar.gop:1:15: expected 'in', found i`, ``)
 }
 
 func TestNumberUnitLit(t *testing.T) {

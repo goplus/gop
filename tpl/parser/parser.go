@@ -121,6 +121,9 @@ func (p *parser) parseFile() *ast.File {
 
 	for p.tok != token.EOF {
 		rule := p.parseRule()
+		if rule == nil {
+			break
+		}
 		file.Decls = append(file.Decls, rule)
 	}
 
@@ -212,6 +215,7 @@ func (p *parser) parseTerm() (ast.Expr, bool) {
 		y, ok := p.parseFactor()
 		if !ok {
 			p.error(p.pos, "expected factor")
+			return x, false
 		}
 		x = &ast.BinaryExpr{
 			X:     x,

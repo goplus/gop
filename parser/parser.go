@@ -50,10 +50,9 @@ type parser struct {
 	scanner scanner.Scanner
 
 	// Tracing/debugging
-	mode        Mode          // parsing mode
-	trace       bool          // == (mode & Trace != 0)
-	shadowEntry *ast.FuncDecl // shadowEntry != nil: no entrypoint func
-	indent      int           // indentation used for tracing output
+	mode   Mode // parsing mode
+	trace  bool // == (mode & Trace != 0)
+	indent int  // indentation used for tracing output
 
 	// Comments
 	comments    []*ast.CommentGroup
@@ -150,7 +149,7 @@ func (p *parser) closeLabelScope() {
 	p.labelScope = p.labelScope.Outer
 }
 
-func (p *parser) declare(decl, data interface{}, scope *ast.Scope, kind ast.ObjKind, idents ...*ast.Ident) {
+func (p *parser) declare(decl, data any, scope *ast.Scope, kind ast.ObjKind, idents ...*ast.Ident) {
 	for _, ident := range idents {
 		assert(ident.Obj == nil, "identifier already declared or resolved")
 		obj := ast.NewObj(kind, ident.Name)
@@ -242,7 +241,7 @@ func (p *parser) resolve(x ast.Expr) {
 // ----------------------------------------------------------------------------
 // Parsing support
 
-func (p *parser) printTrace(a ...interface{}) {
+func (p *parser) printTrace(a ...any) {
 	const dots = ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . "
 	const n = len(dots)
 	pos := p.file.Position(p.pos)
@@ -453,6 +452,22 @@ func (p *parser) expect2(tok token.Token) (pos token.Pos) {
 	}
 	p.next() // make progress
 	return
+}
+
+func (p *parser) expectIn() token.Pos {
+	pos := p.pos
+	switch p.tok {
+	case token.ARROW: // <- (backward compatibility)
+	case token.IDENT: // in
+		if p.lit == "in" {
+			break
+		}
+		fallthrough
+	default:
+		p.errorExpected(pos, "'in'", 3)
+	}
+	p.next() // make progress
+	return pos
 }
 
 // expectClosing is like expect but provides a better error message
@@ -827,7 +842,7 @@ func (p *parser) parseArrayTypeOrSliceLit(state int, slice ast.Expr) (expr ast.E
 				sliceLit := p.parseSliceOrMatrixLit(lbrack, len)
 				p.exprLev--
 				return sliceLit, resultSliceLit
-			case token.FOR: // [expr for k, v <- container if cond]
+			case token.FOR: // [expr for k, v in container if cond]
 				phrases := p.parseForPhrases()
 				p.exprLev--
 				rbrack := p.expect(token.RBRACK)
@@ -2593,14 +2608,22 @@ func (p *parser) parseLambdaExpr(allowTuple, allowCmd, allowRangeExpr bool) (x a
 			case *tupleExpr:
 				items := make([]*ast.Ident, len(v.items))
 				for i, item := range v.items {
-					items[i] = p.toIdent(item)
+					ident := p.toIdent(item)
+					if ident == nil {
+						return &ast.BadExpr{From: item.Pos(), To: p.safePos(item.End())}, false
+					}
+					items[i] = ident
 				}
 				lhs, lhsHasParen = items, true
 			case *ast.ParenExpr:
 				e, lhsHasParen = v.X, true
 				goto retry
 			default:
-				lhs = []*ast.Ident{p.toIdent(v)}
+				ident := p.toIdent(v)
+				if ident == nil {
+					return &ast.BadExpr{From: v.Pos(), To: p.safePos(v.End())}, false
+				}
+				lhs = []*ast.Ident{ident}
 			}
 		}
 		if debugParseOutput {
@@ -2737,7 +2760,12 @@ func (p *parser) parseSimpleStmtEx(mode int, allowCmd, allowRangeExpr bool) (ast
 			p.shortVarDecl(as, x)
 		}
 		return as, isRange
-	case token.ARROW:
+	case token.IDENT: // in
+		if mode != rangeOk || p.lit != "in" {
+			break
+		}
+		fallthrough
+	case token.ARROW: // <- (backward compatibility)
 		if mode == rangeOk {
 			return p.parseForPhraseStmtPart(x), true
 		}
@@ -3277,7 +3305,7 @@ func (p *parser) parseForPhrases() (phrases []*ast.ForPhrase) {
 }
 
 func (p *parser) parseForPhraseStmtPart(lhs []ast.Expr) *ast.ForPhraseStmt {
-	tokPos := p.expect(token.ARROW) // <-
+	tokPos := p.expectIn() // in
 	x := p.parseExpr(false, false, true)
 	var cond ast.Expr
 	var ifPos token.Pos
@@ -3313,7 +3341,7 @@ func (p *parser) toIdent(e ast.Expr) *ast.Ident {
 	return nil
 }
 
-func (p *parser) parseForPhrase() *ast.ForPhrase { // for k, v <- container if cond
+func (p *parser) parseForPhrase() *ast.ForPhrase { // for k, v in container if cond
 	if p.trace {
 		defer un(trace(p, "ForPhrase"))
 	}
@@ -3329,7 +3357,7 @@ func (p *parser) parseForPhrase() *ast.ForPhrase { // for k, v <- container if c
 		k, v = v, p.parseIdent()
 	}
 
-	tokPos := p.expect(token.ARROW) // <- container
+	tokPos := p.expectIn() // in container
 	x := p.parseExpr(false, false, true)
 	var init ast.Stmt
 	var cond ast.Expr
@@ -3975,13 +4003,13 @@ func (p *parser) parseGlobalStmts(sync map[token.Token]bool, pos token.Pos, stmt
 	if stmts != nil {
 		list = append(stmts, list...)
 	}
-	if p.errors.Len() != 0 { // TODO: error
+	if p.errors.Len() != 0 { // TODO(xsw): error
 		p.advance(sync)
 	}
 	if p.tok != token.EOF {
 		p.errorExpected(p.pos, "statement", 2)
 	}
-	f := &ast.FuncDecl{
+	return &ast.FuncDecl{
 		Name: &ast.Ident{NamePos: pos, Name: "main"},
 		Doc:  doc,
 		Type: &ast.FuncType{
@@ -3991,8 +4019,6 @@ func (p *parser) parseGlobalStmts(sync map[token.Token]bool, pos token.Pos, stmt
 		Body:   &ast.BlockStmt{List: list},
 		Shadow: true,
 	}
-	p.shadowEntry = f
-	return f
 }
 
 // ----------------------------------------------------------------------------
@@ -4038,6 +4064,7 @@ func (p *parser) parseFile() *ast.File {
 	p.openScope()
 	p.pkgScope = p.topScope
 	var decls []ast.Decl
+	var shadowEntry *ast.FuncDecl
 	if p.mode&PackageClauseOnly == 0 {
 		// import decls
 		for p.tok == token.IMPORT {
@@ -4048,6 +4075,11 @@ func (p *parser) parseFile() *ast.File {
 			// rest of package body
 			for p.tok != token.EOF {
 				decls = append(decls, p.parseDecl(declStart))
+			}
+			if n := len(decls); n > 0 {
+				if f, ok := decls[n-1].(*ast.FuncDecl); ok && f.Shadow {
+					shadowEntry = f
+				}
 			}
 		}
 	}
@@ -4076,7 +4108,7 @@ func (p *parser) parseFile() *ast.File {
 		Imports:     p.imports,
 		Unresolved:  p.unresolved[0:i],
 		Comments:    p.comments,
-		ShadowEntry: p.shadowEntry,
+		ShadowEntry: shadowEntry,
 		NoPkgDecl:   noPkgDecl,
 	}
 }

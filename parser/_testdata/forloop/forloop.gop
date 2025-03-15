@@ -21,10 +21,10 @@ for i := 1; i < 100; i++ {
 }
 println("sum(1-100):", sum)
 
-for x <- [1] {
+for x in [1] {
 	println(x)
 }
 
-for i, x <- [1] if i%2 == 0 {
+for i, x in [1] if i%2 == 0 {
 	println(i, x)
 }

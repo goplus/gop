@@ -20,7 +20,7 @@ import (
 	"math/big"
 )
 
-func Gop_istmp(a interface{}) bool {
+func Gop_istmp(a any) bool {
 	return false
 }
 

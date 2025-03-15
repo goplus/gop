@@ -1,0 +1,330 @@
+package main
+
+file listcompr.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: y
+          Tok: :=
+          Rhs:
+            ast.ComprehensionExpr:
+              Tok: [
+              Elt:
+                ast.BinaryExpr:
+                  X:
+                    ast.Ident:
+                      Name: x
+                  Op: *
+                  Y:
+                    ast.Ident:
+                      Name: x
+              Fors:
+                ast.ForPhrase:
+                  Value:
+                    ast.Ident:
+                      Name: x
+                  X:
+                    ast.SliceLit:
+                      Elts:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 1
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.Ident:
+                  Name: y
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: y
+          Tok: =
+          Rhs:
+            ast.ComprehensionExpr:
+              Tok: [
+              Elt:
+                ast.BinaryExpr:
+                  X:
+                    ast.Ident:
+                      Name: x
+                  Op: *
+                  Y:
+                    ast.Ident:
+                      Name: x
+              Fors:
+                ast.ForPhrase:
+                  Value:
+                    ast.Ident:
+                      Name: x
+                  X:
+                    ast.SliceLit:
+                      Elts:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 1
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 3
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 5
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 7
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 11
+                  Cond:
+                    ast.BinaryExpr:
+                      X:
+                        ast.Ident:
+                          Name: x
+                      Op: >
+                      Y:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 3
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.Ident:
+                  Name: y
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: z
+          Tok: :=
+          Rhs:
+            ast.ComprehensionExpr:
+              Tok: [
+              Elt:
+                ast.BinaryExpr:
+                  X:
+                    ast.Ident:
+                      Name: i
+                  Op: +
+                  Y:
+                    ast.Ident:
+                      Name: v
+              Fors:
+                ast.ForPhrase:
+                  Key:
+                    ast.Ident:
+                      Name: i
+                  Value:
+                    ast.Ident:
+                      Name: v
+                  X:
+                    ast.SliceLit:
+                      Elts:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 1
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 3
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 5
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 7
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 11
+                  Init:
+                    ast.AssignStmt:
+                      Lhs:
+                        ast.Ident:
+                          Name: t
+                      Tok: :=
+                      Rhs:
+                        ast.BinaryExpr:
+                          X:
+                            ast.Ident:
+                              Name: i
+                          Op: %
+                          Y:
+                            ast.BasicLit:
+                              Kind: INT
+                              Value: 2
+                  Cond:
+                    ast.BinaryExpr:
+                      X:
+                        ast.Ident:
+                          Name: t
+                      Op: ==
+                      Y:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 1
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.Ident:
+                  Name: z
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.ComprehensionExpr:
+                  Tok: [
+                  Elt:
+                    ast.BinaryExpr:
+                      X:
+                        ast.BinaryExpr:
+                          X:
+                            ast.Ident:
+                              Name: k
+                          Op: +
+                          Y:
+                            ast.BasicLit:
+                              Kind: STRING
+                              Value: ","
+                      Op: +
+                      Y:
+                        ast.Ident:
+                          Name: s
+                  Fors:
+                    ast.ForPhrase:
+                      Key:
+                        ast.Ident:
+                          Name: k
+                      Value:
+                        ast.Ident:
+                          Name: s
+                      X:
+                        ast.CompositeLit:
+                          Elts:
+                            ast.KeyValueExpr:
+                              Key:
+                                ast.BasicLit:
+                                  Kind: STRING
+                                  Value: "Hello"
+                              Value:
+                                ast.BasicLit:
+                                  Kind: STRING
+                                  Value: "xsw"
+                            ast.KeyValueExpr:
+                              Key:
+                                ast.BasicLit:
+                                  Kind: STRING
+                                  Value: "Hi"
+                              Value:
+                                ast.BasicLit:
+                                  Kind: STRING
+                                  Value: "Go+"
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: arr
+          Tok: :=
+          Rhs:
+            ast.SliceLit:
+              Elts:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 1
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 2
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 3
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 4
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 5
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 6
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: x
+          Tok: :=
+          Rhs:
+            ast.ComprehensionExpr:
+              Tok: [
+              Elt:
+                ast.SliceLit:
+                  Elts:
+                    ast.Ident:
+                      Name: a
+                    ast.Ident:
+                      Name: b
+              Fors:
+                ast.ForPhrase:
+                  Value:
+                    ast.Ident:
+                      Name: a
+                  X:
+                    ast.Ident:
+                      Name: arr
+                  Cond:
+                    ast.BinaryExpr:
+                      X:
+                        ast.Ident:
+                          Name: a
+                      Op: <
+                      Y:
+                        ast.Ident:
+                          Name: b
+                ast.ForPhrase:
+                  Value:
+                    ast.Ident:
+                      Name: b
+                  X:
+                    ast.Ident:
+                      Name: arr
+                  Cond:
+                    ast.BinaryExpr:
+                      X:
+                        ast.Ident:
+                          Name: b
+                      Op: >
+                      Y:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 2
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "x:"
+                ast.Ident:
+                  Name: x

@@ -1,0 +1,3 @@
+re, err := regexp`^[a-z]+\[[0-9]+\]$`
+echo re.matchString("adam[23]")
+_ = err

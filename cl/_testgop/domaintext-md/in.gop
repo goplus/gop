@@ -1,0 +1,13 @@
+import (
+    "os"
+
+    "github.com/xushiwei/markdown"
+)
+
+md := markdown`
+# Title
+
+Hello world
+`
+
+md.convert os.Stdout

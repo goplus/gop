@@ -106,7 +106,7 @@ func parseMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string,
 	return chkOpts.Types, info, ginfo, err
 }
 
-func parseSource(fset *token.FileSet, filename string, src interface{}, mode parser.Mode) (*types.Package, *typesutil.Info, error) {
+func parseSource(fset *token.FileSet, filename string, src any, mode parser.Mode) (*types.Package, *typesutil.Info, error) {
 	f, err := parser.ParseEntry(fset, filename, src, parser.Config{
 		Mode: mode,
 	})
@@ -136,7 +136,7 @@ func parseSource(fset *token.FileSet, filename string, src interface{}, mode par
 	return pkg, info, err
 }
 
-func parseGoSource(fset *token.FileSet, filename string, src interface{}, mode goparser.Mode) (*types.Package, *types.Info, error) {
+func parseGoSource(fset *token.FileSet, filename string, src any, mode goparser.Mode) (*types.Package, *types.Info, error) {
 	f, err := goparser.ParseFile(fset, filename, src, mode)
 	if err != nil {
 		return nil, nil, err
@@ -190,7 +190,7 @@ func testGopInfoEx(t *testing.T, mod *gopmod.Module, name string, src string, go
 	}
 }
 
-func testInfo(t *testing.T, src interface{}) {
+func testInfo(t *testing.T, src any) {
 	fset := token.NewFileSet()
 	_, info, err := parseSource(fset, "main.gop", src, parser.ParseComments)
 	if err != nil {
@@ -1679,61 +1679,57 @@ func onCloned() {
 	say("Hi")
 }
 `, `== types ==
-000:  0: 0 | "Kai"               *ast.BasicLit                  | value   : untyped string = "Kai" | constant
-001:  0: 0 | *MyGame             *ast.StarExpr                  | type    : *main.MyGame | type
-002:  0: 0 | Kai                 *ast.Ident                     | type    : main.Kai | type
-003:  0: 0 | MyGame              *ast.Ident                     | type    : main.MyGame | type
-004:  0: 0 | string              *ast.Ident                     | type    : string | type
-005:  3: 4 | int                 *ast.Ident                     | type    : int | type
-006:  6:11 | struct {
+000:  0: 0 | *MyGame             *ast.StarExpr                  | type    : *main.MyGame | type
+001:  0: 0 | Kai                 *ast.Ident                     | type    : main.Kai | type
+002:  0: 0 | MyGame              *ast.Ident                     | type    : main.MyGame | type
+003:  3: 4 | int                 *ast.Ident                     | type    : int | type
+004:  6:11 | struct {
 	x int
 	y int
 } *ast.StructType                | type    : struct{x int; y int} | type
-007:  7: 4 | int                 *ast.Ident                     | type    : int | type
-008:  8: 4 | int                 *ast.Ident                     | type    : int | type
-009: 12: 2 | a                   *ast.Ident                     | var     : int | variable
-010: 12: 6 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
-011: 13: 2 | clone               *ast.Ident                     | value   : func(sprite interface{}) | value
-012: 14: 2 | clone               *ast.Ident                     | value   : func(sprite interface{}, data interface{}) | value
-013: 14: 2 | clone info{1, 2}    *ast.CallExpr                  | void    : () | no value
-014: 14: 8 | info                *ast.Ident                     | type    : main.info | type
-015: 14: 8 | info{1, 2}          *ast.CompositeLit              | value   : main.info | value
-016: 14:13 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
-017: 14:15 | 2                   *ast.BasicLit                  | value   : untyped int = 2 | constant
-018: 15: 2 | clone               *ast.Ident                     | value   : func(sprite interface{}, data interface{}) | value
-019: 15: 2 | clone &info{1, 2}   *ast.CallExpr                  | void    : () | no value
-020: 15: 8 | &info{1, 2}         *ast.UnaryExpr                 | value   : *main.info | value
-021: 15: 9 | info                *ast.Ident                     | type    : main.info | type
-022: 15: 9 | info{1, 2}          *ast.CompositeLit              | value   : main.info | value
-023: 15:14 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
-024: 15:16 | 2                   *ast.BasicLit                  | value   : untyped int = 2 | constant
-025: 19: 2 | say                 *ast.Ident                     | value   : func(msg string, secs ...float64) | value
-026: 19: 2 | say("Hi")           *ast.CallExpr                  | void    : () | no value
-027: 19: 6 | "Hi"                *ast.BasicLit                  | value   : untyped string = "Hi" | constant
+005:  7: 4 | int                 *ast.Ident                     | type    : int | type
+006:  8: 4 | int                 *ast.Ident                     | type    : int | type
+007: 12: 2 | a                   *ast.Ident                     | var     : int | variable
+008: 12: 6 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
+009: 13: 2 | clone               *ast.Ident                     | value   : func(sprite any) | value
+010: 14: 2 | clone               *ast.Ident                     | value   : func(sprite any, data any) | value
+011: 14: 2 | clone info{1, 2}    *ast.CallExpr                  | void    : () | no value
+012: 14: 8 | info                *ast.Ident                     | type    : main.info | type
+013: 14: 8 | info{1, 2}          *ast.CompositeLit              | value   : main.info | value
+014: 14:13 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
+015: 14:15 | 2                   *ast.BasicLit                  | value   : untyped int = 2 | constant
+016: 15: 2 | clone               *ast.Ident                     | value   : func(sprite any, data any) | value
+017: 15: 2 | clone &info{1, 2}   *ast.CallExpr                  | void    : () | no value
+018: 15: 8 | &info{1, 2}         *ast.UnaryExpr                 | value   : *main.info | value
+019: 15: 9 | info                *ast.Ident                     | type    : main.info | type
+020: 15: 9 | info{1, 2}          *ast.CompositeLit              | value   : main.info | value
+021: 15:14 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
+022: 15:16 | 2                   *ast.BasicLit                  | value   : untyped int = 2 | constant
+023: 19: 2 | say                 *ast.Ident                     | value   : func(msg string, secs ...float64) | value
+024: 19: 2 | say("Hi")           *ast.CallExpr                  | void    : () | no value
+025: 19: 6 | "Hi"                *ast.BasicLit                  | value   : untyped string = "Hi" | constant
 == defs ==
-000:  0: 0 | Classfname          | func (*main.Kai).Classfname() string
-001:  0: 0 | Main                | func (*main.Kai).Main()
-002:  0: 0 | this                | var this *main.Kai
-003:  3: 2 | a                   | field a int
-004:  6: 6 | info                | type main.info struct{x int; y int}
-005:  7: 2 | x                   | field x int
-006:  8: 2 | y                   | field y int
-007: 11: 6 | onInit              | func (*main.Kai).onInit()
-008: 18: 6 | onCloned            | func (*main.Kai).onCloned()
+000:  0: 0 | Main                | func (*main.Kai).Main()
+001:  0: 0 | this                | var this *main.Kai
+002:  3: 2 | a                   | field a int
+003:  6: 6 | info                | type main.info struct{x int; y int}
+004:  7: 2 | x                   | field x int
+005:  8: 2 | y                   | field y int
+006: 11: 6 | onInit              | func (*main.Kai).onInit()
+007: 18: 6 | onCloned            | func (*main.Kai).onCloned()
 == uses ==
 000:  0: 0 | Kai                 | type main.Kai struct{github.com/goplus/gop/cl/internal/spx.Sprite; *main.MyGame; a int}
 001:  0: 0 | MyGame              | type main.MyGame struct{*github.com/goplus/gop/cl/internal/spx.MyGame}
-002:  0: 0 | string              | type string
-003:  3: 4 | int                 | type int
-004:  7: 4 | int                 | type int
-005:  8: 4 | int                 | type int
-006: 12: 2 | a                   | field a int
-007: 13: 2 | clone               | func github.com/goplus/gop/cl/internal/spx.Gopt_Sprite_Clone__0(sprite interface{})
-008: 14: 2 | clone               | func github.com/goplus/gop/cl/internal/spx.Gopt_Sprite_Clone__1(sprite interface{}, data interface{})
-009: 14: 8 | info                | type main.info struct{x int; y int}
-010: 15: 2 | clone               | func github.com/goplus/gop/cl/internal/spx.Gopt_Sprite_Clone__1(sprite interface{}, data interface{})
-011: 15: 9 | info                | type main.info struct{x int; y int}
-012: 19: 2 | say                 | func (*github.com/goplus/gop/cl/internal/spx.Sprite).Say(msg string, secs ...float64)
+002:  3: 4 | int                 | type int
+003:  7: 4 | int                 | type int
+004:  8: 4 | int                 | type int
+005: 12: 2 | a                   | field a int
+006: 13: 2 | clone               | func github.com/goplus/gop/cl/internal/spx.Gopt_Sprite_Clone__0(sprite any)
+007: 14: 2 | clone               | func github.com/goplus/gop/cl/internal/spx.Gopt_Sprite_Clone__1(sprite any, data any)
+008: 14: 8 | info                | type main.info struct{x int; y int}
+009: 15: 2 | clone               | func github.com/goplus/gop/cl/internal/spx.Gopt_Sprite_Clone__1(sprite any, data any)
+010: 15: 9 | info                | type main.info struct{x int; y int}
+011: 19: 2 | say                 | func (*github.com/goplus/gop/cl/internal/spx.Sprite).Say(msg string, secs ...float64)
 == overloads ==
 000: 13: 2 | clone               | func (github.com/goplus/gop/cl/internal/spx.Sprite).Clone(__gop_overload_args__ interface{_()})
 001: 14: 2 | clone               | func (github.com/goplus/gop/cl/internal/spx.Sprite).Clone(__gop_overload_args__ interface{_()})

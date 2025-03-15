@@ -226,6 +226,9 @@ func (p *nodeInterp) Caller(node ast.Node) string {
 
 func (p *nodeInterp) LoadExpr(node ast.Node) string {
 	start := node.Pos()
+	if start == token.NoPos {
+		return ""
+	}
 	pos := p.fset.Position(start)
 	f := p.files[pos.Filename]
 	n := int(node.End() - start)
@@ -409,11 +412,11 @@ func (p *pkgCtx) newCodeError(pos token.Pos, msg string) error {
 	return &gogen.CodeError{Fset: p.nodeInterp, Pos: pos, Msg: msg}
 }
 
-func (p *pkgCtx) newCodeErrorf(pos token.Pos, format string, args ...interface{}) error {
+func (p *pkgCtx) newCodeErrorf(pos token.Pos, format string, args ...any) error {
 	return &gogen.CodeError{Fset: p.nodeInterp, Pos: pos, Msg: fmt.Sprintf(format, args...)}
 }
 
-func (p *pkgCtx) handleErrorf(pos token.Pos, format string, args ...interface{}) {
+func (p *pkgCtx) handleErrorf(pos token.Pos, format string, args ...any) {
 	p.handleErr(p.newCodeErrorf(pos, format, args...))
 }
 
@@ -460,12 +463,12 @@ func (p *pkgCtx) loadSymbol(name string) bool {
 	return false
 }
 
-func (p *pkgCtx) handleRecover(e interface{}, src ast.Node) {
+func (p *pkgCtx) handleRecover(e any, src ast.Node) {
 	err := p.recoverErr(e, src)
 	p.handleErr(err)
 }
 
-func (p *pkgCtx) recoverErr(e interface{}, src ast.Node) error {
+func (p *pkgCtx) recoverErr(e any, src ast.Node) error {
 	err, ok := e.(error)
 	if !ok {
 		if src != nil {
@@ -725,6 +728,8 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 	var baseType types.Type
 	var spxProj string
 	var spxClass bool
+	var spxClassfname bool
+	var spxClassclone bool
 	var goxTestFile bool
 	var parent = ctx.pkgCtx
 	if f.IsClass {
@@ -760,7 +765,10 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 				sp := proj.sprite[c.ext]
 				o := sp.obj
 				ctx.baseClass = o
-				baseTypeName, baseType, spxProj, spxClass = o.Name(), o.Type(), sp.proj, true
+				baseTypeName, baseType, spxProj = o.Name(), o.Type(), sp.proj
+				spxClassfname = (proj.spfeats & spriteClassfname) != 0
+				spxClassclone = (proj.spfeats & spriteClassclone) != 0
+				spxClass = true
 			}
 		}
 	}
@@ -864,8 +872,12 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 			},
 		}}}
 		// func Classfname() string
-		if spxClass {
+		if spxClassfname {
 			f.Decls = append(f.Decls, astFnClassfname(c))
+		}
+		// func Classclone() any
+		if spxClassclone {
+			f.Decls = append(f.Decls, astFnClassclone())
 		}
 	}
 
@@ -1298,7 +1310,7 @@ func loadFunc(ctx *blockCtx, recv *types.Var, name string, d *ast.FuncDecl, genB
 	var pkg = ctx.pkg
 	var sigBase *types.Signature
 	if d.Shadow {
-		if recv != nil {
+		if recv != nil && (name == "Main" || name == "MainEntry") {
 			if base := ctx.baseClass; base != nil {
 				if f := findMethod(base, name); f != nil {
 					sigBase = makeMainSig(recv, f)

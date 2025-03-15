@@ -26,7 +26,7 @@ type Sound string
 type MyGame struct {
 }
 
-func Gopt_MyGame_Main(game interface{}) {
+func Gopt_MyGame_Main(game any) {
 }
 
 func (p *MyGame) Ls(n int) {}
@@ -51,20 +51,20 @@ func (p *MyGame) Broadcast__0(msg string) {
 func (p *MyGame) Broadcast__1(msg string, wait bool) {
 }
 
-func (p *MyGame) Broadcast__2(msg string, data interface{}, wait bool) {
+func (p *MyGame) Broadcast__2(msg string, data any, wait bool) {
 }
 
 func (p *MyGame) Play(media string, wait ...bool) {
 }
 
-func (p *MyGame) sendMessage(data interface{}) {
+func (p *MyGame) sendMessage(data any) {
 }
 
-func (p *MyGame) SendMessage(data interface{}) {
+func (p *MyGame) SendMessage(data any) {
 	p.sendMessage(data)
 }
 
-func Gopt_MyGame_Run(game interface{}, resource string) error {
+func Gopt_MyGame_Run(game any, resource string) error {
 	return nil
 }
 

@@ -39,6 +39,13 @@ func getGoxConf() *gogen.Config {
 	return &gogen.Config{Fset: fset, Importer: imp}
 }
 
+func TestLoadExpr(t *testing.T) {
+	var ni nodeInterp
+	if v := ni.LoadExpr(&ast.Ident{Name: "x"}); v != "" {
+		t.Fatal("LoadExpr:", v)
+	}
+}
+
 func TestSimplifyPkgPath(t *testing.T) {
 	if simplifyPkgPath("c/lua") != "github.com/goplus/llgo/c/lua" {
 		t.Fatal("simplifyPkgPath: c/lua")
@@ -455,7 +462,7 @@ func TestSpxRef(t *testing.T) {
 	spxRef(pkg, "bar")
 }
 
-func isError(e interface{}, msg string) bool {
+func isError(e any, msg string) bool {
 	if e != nil {
 		if err, ok := e.(error); ok {
 			return err.Error() == msg

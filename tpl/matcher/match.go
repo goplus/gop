@@ -24,6 +24,13 @@ import (
 	"github.com/goplus/gop/tpl/types"
 )
 
+var (
+	errMultiMismatch = errors.New("multiple mismatch")
+
+	// ErrVarAssigned error
+	ErrVarAssigned = errors.New("variable is already assigned")
+)
+
 // -----------------------------------------------------------------------------
 
 // Error represents a matching error.
@@ -114,30 +121,25 @@ type gChoice struct {
 }
 
 func (p *gChoice) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
-	var nMax int
+	var nMax = -1
 	var errMax error
-	// var multiErr = true
+	var multiErr = true
 
 	for _, g := range p.options {
 		if n, result, err = g.Match(src, ctx); err == nil {
 			return
 		}
 		if n >= nMax {
-			nMax, errMax = n, err
-			/*
-				if n == nMax {
-					multiErr = true
-				} else {
-					nMax, errMax, multiErr = n, err, false
-				}
-			*/
+			if n == nMax {
+				multiErr = true
+			} else {
+				nMax, errMax, multiErr = n, err, false
+			}
 		}
 	}
-	/*
-		if multiErr {
-			errMax = ctx.NewError(src[nMax].End(), "TODO: error msg") // TODO(xsw)
-		}
-	*/
+	if multiErr {
+		errMax = errMultiMismatch
+	}
 	return nMax, nil, errMax
 }
 
@@ -263,11 +265,6 @@ func List(a, b Matcher) Matcher {
 
 // -----------------------------------------------------------------------------
 
-var (
-	// ErrVarAssigned error
-	ErrVarAssigned = errors.New("variable is already assigned")
-)
-
 type Var struct {
 	Elem Matcher
 	Name string
@@ -277,9 +274,20 @@ type Var struct {
 func (p *Var) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
 	g := p.Elem
 	if g == nil {
-		return 0, nil, ctx.NewErrorf(p.Pos, "variable `%s` not found", p.Name)
+		return 0, nil, ctx.NewErrorf(p.Pos, "variable `%s` not assigned", p.Name)
 	}
-	return g.Match(src, ctx)
+	n, result, err = g.Match(src, ctx)
+	if err == errMultiMismatch {
+		var posErr token.Pos
+		var tokErr any
+		if len(src) > 0 {
+			posErr, tokErr = src[0].Pos, src[0]
+		} else {
+			posErr, tokErr = ctx.FileEnd, "EOF"
+		}
+		err = ctx.NewErrorf(posErr, "expect `%s`, but got `%s`", p.Name, tokErr)
+	}
+	return
 }
 
 // Assign assigns a value to this variable.

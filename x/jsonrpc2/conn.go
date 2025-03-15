@@ -275,7 +275,7 @@ func newConnection(bindCtx context.Context, rwc io.ReadWriteCloser, binder Binde
 // Notify invokes the target method but does not wait for a response.
 // The params will be marshaled to JSON before sending over the wire, and will
 // be handed to the method invoked.
-func (c *Connection) Notify(ctx context.Context, method string, params interface{}) (err error) {
+func (c *Connection) Notify(ctx context.Context, method string, params any) (err error) {
 	attempted := false
 
 	defer func() {
@@ -325,7 +325,7 @@ func (c *Connection) Notify(ctx context.Context, method string, params interface
 // be handed to the method invoked.
 // You do not have to wait for the response, it can just be ignored if not needed.
 // If sending the call failed, the response will be ready and have the error in it.
-func (c *Connection) Call(ctx context.Context, method string, params interface{}) *AsyncCall {
+func (c *Connection) Call(ctx context.Context, method string, params any) *AsyncCall {
 	if debugCall {
 		log.Println("Call", method, "params:", params)
 	}
@@ -417,7 +417,7 @@ func (ac *AsyncCall) retire(response *Response) {
 
 // Await waits for (and decodes) the results of a Call.
 // The response will be unmarshaled from JSON into the result.
-func (ac *AsyncCall) Await(ctx context.Context, result interface{}) error {
+func (ac *AsyncCall) Await(ctx context.Context, result any) error {
 	if Verbose {
 		log.Println("==> AsyncCall.Await", ac.id)
 	}
@@ -446,7 +446,7 @@ func (ac *AsyncCall) Await(ctx context.Context, result interface{}) error {
 //
 // Respond must be called exactly once for any message for which a handler
 // returns ErrAsyncResponse. It must not be called for any other message.
-func (c *Connection) Respond(id ID, result interface{}, err error) error {
+func (c *Connection) Respond(id ID, result any, err error) error {
 	var req *incomingRequest
 	c.updateInFlight(func(s *inFlightState) {
 		req = s.incomingByID[id]
@@ -705,7 +705,7 @@ func (c *Connection) handleAsync() {
 }
 
 // processResult processes the result of a request and, if appropriate, sends a response.
-func (c *Connection) processResult(from interface{}, req *incomingRequest, result interface{}, err error) error {
+func (c *Connection) processResult(from any, req *incomingRequest, result any, err error) error {
 	switch err {
 	case ErrAsyncResponse:
 		if !req.IsCall() {
@@ -794,7 +794,7 @@ func (c *Connection) write(ctx context.Context, msg Message) error {
 // internalErrorf reports an internal error. By default it panics, but if
 // c.onInternalError is non-nil it instead calls that and returns an error
 // wrapping ErrInternal.
-func (c *Connection) internalErrorf(format string, args ...interface{}) error {
+func (c *Connection) internalErrorf(format string, args ...any) error {
 	err := fmt.Errorf(format, args...)
 	c.onInternalError(err)
 
@@ -804,7 +804,7 @@ func (c *Connection) internalErrorf(format string, args ...interface{}) error {
 // notDone is a context.Context wrapper that returns a nil Done channel.
 type notDone struct{ ctx context.Context }
 
-func (ic notDone) Value(key interface{}) interface{} {
+func (ic notDone) Value(key any) any {
 	return ic.ctx.Value(key)
 }
 

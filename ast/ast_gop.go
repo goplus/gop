@@ -59,7 +59,8 @@ func (*OverloadFuncDecl) declNode() {}
 
 // -----------------------------------------------------------------------------
 
-// A DomainTextLit node represents a domain text literal.
+// A DomainTextLit node represents a domain-specific text literal.
+// https://github.com/goplus/gop/issues/2143
 //
 //	tpl`...`
 type DomainTextLit struct {
@@ -345,11 +346,11 @@ func (*RangeExpr) exprNode() {}
 
 // -----------------------------------------------------------------------------
 
-// ForPhrase represents `for k, v <- container if init; cond` phrase.
+// ForPhrase represents `for k, v in container if init; cond` phrase.
 type ForPhrase struct {
 	For        token.Pos // position of "for" keyword
 	Key, Value *Ident    // Key may be nil
-	TokPos     token.Pos // position of "<-" operator
+	TokPos     token.Pos // position of "in" operator
 	X          Expr      // value to range over
 	IfPos      token.Pos // position of if or comma; or NoPos
 	Init       Stmt      // initialization statement; or nil
@@ -371,10 +372,10 @@ func (p *ForPhrase) exprNode() {}
 
 // ComprehensionExpr represents one of the following expressions:
 //
-//	`[vexpr for k1, v1 <- container1, cond1 ...]` or
-//	`{vexpr for k1, v1 <- container1, cond1 ...}` or
-//	`{kexpr: vexpr for k1, v1 <- container1, cond1 ...}` or
-//	`{for k1, v1 <- container1, cond1 ...}` or
+//	`[vexpr for k1, v1 in container1, cond1 ...]` or
+//	`{vexpr for k1, v1 in container1, cond1 ...}` or
+//	`{kexpr: vexpr for k1, v1 in container1, cond1 ...}` or
+//	`{for k1, v1 in container1, cond1 ...}` or
 type ComprehensionExpr struct {
 	Lpos token.Pos   // position of "[" or "{"
 	Tok  token.Token // token.LBRACK '[' or token.LBRACE '{'
@@ -397,7 +398,7 @@ func (*ComprehensionExpr) exprNode() {}
 
 // -----------------------------------------------------------------------------
 
-// A ForPhraseStmt represents a for statement with a for <- clause.
+// A ForPhraseStmt represents a for statement with a for..in clause.
 type ForPhraseStmt struct {
 	*ForPhrase
 	Body *BlockStmt
@@ -432,6 +433,82 @@ func (s *SendStmt) End() token.Pos {
 	}
 	vals := s.Values
 	return vals[len(vals)-1].End()
+}
+
+// -----------------------------------------------------------------------------
+
+// A File node represents a Go+ source file.
+//
+// The Comments list contains all comments in the source file in order of
+// appearance, including the comments that are pointed to from other nodes
+// via Doc and Comment fields.
+//
+// For correct printing of source code containing comments (using packages
+// go/format and go/printer), special care must be taken to update comments
+// when a File's syntax tree is modified: For printing, comments are interspersed
+// between tokens based on their position. If syntax tree nodes are
+// removed or moved, relevant comments in their vicinity must also be removed
+// (from the File.Comments list) or moved accordingly (by updating their
+// positions). A CommentMap may be used to facilitate some of these operations.
+//
+// Whether and how a comment is associated with a node depends on the
+// interpretation of the syntax tree by the manipulating program: Except for Doc
+// and Comment comments directly associated with nodes, the remaining comments
+// are "free-floating" (see also issues #18593, #20744).
+type File struct {
+	Doc     *CommentGroup // associated documentation; or nil
+	Package token.Pos     // position of "package" keyword; or NoPos
+	Name    *Ident        // package name
+	Decls   []Decl        // top-level declarations; or nil
+
+	Scope       *Scope          // package scope (this file only)
+	Imports     []*ImportSpec   // imports in this file
+	Unresolved  []*Ident        // unresolved identifiers in this file
+	Comments    []*CommentGroup // list of all comments in the source file
+	Code        []byte
+	ShadowEntry *FuncDecl // indicate the module entry point.
+	NoPkgDecl   bool      // no `package xxx` declaration
+	IsClass     bool      // is a classfile (including normal .gox file)
+	IsProj      bool      // is a project classfile
+	IsNormalGox bool      // is a normal .gox file
+}
+
+// There is no entrypoint func to indicate the module entry point.
+func (f *File) HasShadowEntry() bool {
+	return f.ShadowEntry != nil
+}
+
+// HasPkgDecl checks if `package xxx` exists or not.
+func (f *File) HasPkgDecl() bool {
+	return f.Package != token.NoPos
+}
+
+// Pos returns position of first character belonging to the node.
+func (f *File) Pos() token.Pos {
+	if f.Package != token.NoPos {
+		return f.Package
+	}
+	// if no package clause, name records the position of the first token in the file
+	return f.Name.NamePos
+}
+
+// End returns position of first character immediately after the node.
+func (f *File) End() token.Pos {
+	if f.ShadowEntry != nil { // has shadow entry
+		return f.ShadowEntry.End()
+	}
+	for n := len(f.Decls) - 1; n >= 0; n-- {
+		d := f.Decls[n]
+		if fn, ok := d.(*FuncDecl); ok && fn.Shadow {
+			// skip shadow functions like Classfname (see cl.astFnClassfname)
+			continue
+		}
+		return d.End()
+	}
+	if f.Package != token.NoPos { // has package clause
+		return f.Name.End()
+	}
+	return f.Name.Pos()
 }
 
 // -----------------------------------------------------------------------------

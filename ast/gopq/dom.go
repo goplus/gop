@@ -38,7 +38,7 @@ func (p astPackages) ForEach(filter func(node Node) error) error {
 	return nil
 }
 
-func (p astPackages) Obj() interface{} {
+func (p astPackages) Obj() any {
 	return p
 }
 
@@ -58,7 +58,7 @@ func (p astPackage) ForEach(filter func(node Node) error) error {
 	return nil
 }
 
-func (p astPackage) Obj() interface{} {
+func (p astPackage) Obj() any {
 	return p.Package
 }
 
@@ -78,7 +78,7 @@ func (p astFile) ForEach(filter func(node Node) error) error {
 	return nil
 }
 
-func (p astFile) Obj() interface{} {
+func (p astFile) Obj() any {
 	return p.File
 }
 
@@ -100,7 +100,7 @@ func (p *astDecl) ForEach(filter func(node Node) error) error {
 	return nil
 }
 
-func (p *astDecl) Obj() interface{} {
+func (p *astDecl) Obj() any {
 	return p.Decl
 }
 
@@ -114,7 +114,7 @@ func (p *astSpec) ForEach(filter func(node Node) error) error {
 	return nil
 }
 
-func (p *astSpec) Obj() interface{} {
+func (p *astSpec) Obj() any {
 	return p.Spec
 }
 
@@ -155,7 +155,7 @@ func (p *astStmt) ForEach(filter func(node Node) error) error {
 	return nil
 }
 
-func (p *astStmt) Obj() interface{} {
+func (p *astStmt) Obj() any {
 	return p.Stmt
 }
 
@@ -169,7 +169,7 @@ func (p *astExpr) ForEach(filter func(node Node) error) error {
 	return nil
 }
 
-func (p *astExpr) Obj() interface{} {
+func (p *astExpr) Obj() any {
 	return p.Expr
 }
 

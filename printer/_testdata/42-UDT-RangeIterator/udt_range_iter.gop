@@ -25,8 +25,8 @@ func (p *foo) Gop_Enum() *fooIter {
 }
 
 obj := newFoo()
-for k, v <- obj {
+for k, v in obj {
 	println(k, v)
 }
 
-println({v: k for k, v <- obj})
+println({v: k for k, v in obj})

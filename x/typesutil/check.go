@@ -163,6 +163,8 @@ func (p *Checker) Files(goFiles []*goast.File, gopFiles []*ast.File) (err error)
 				}
 			} else if ce, ok := convErr(fset, err); ok {
 				onErr(ce)
+			} else {
+				onErr(err)
 			}
 		}
 		if debugPrintErr {
@@ -245,6 +247,9 @@ func convErr(fset *token.FileSet, e error) (ret types.Error, ok bool) {
 		typesutil.SetErrorGo116(&ret, 0, ret.Pos, end)
 	case *gogen.ImportError:
 		ret.Pos, ret.Msg = v.Pos, v.Err.Error()
+		typesutil.SetErrorGo116(&ret, 0, v.Pos, v.Pos)
+	case *gogen.BoundTypeError:
+		ret.Pos, ret.Msg = v.Pos, v.Error()
 		typesutil.SetErrorGo116(&ret, 0, v.Pos, v.Pos)
 	default:
 		return

@@ -1689,3 +1689,39 @@ func main() {
 }
 `)
 }
+
+func TestSliceType(t *testing.T) {
+	gopClTest(t, `
+a := [1, "a"]
+a[0] = [1, 2, 3]
+echo a
+`, `package main
+
+import "fmt"
+
+func main() {
+	a := []interface{}{1, "a"}
+	a[0] = []int{1, 2, 3}
+	fmt.Println(a)
+}
+`)
+}
+
+func TestMapLitType(t *testing.T) {
+	gopClTest(t, `
+var a any = {
+    "Monday": 1,
+    "Tuesday": 2,
+}
+echo a
+`, `package main
+
+import "fmt"
+
+var a interface{} = map[string]int{"Monday": 1, "Tuesday": 2}
+
+func main() {
+	fmt.Println(a)
+}
+`)
+}

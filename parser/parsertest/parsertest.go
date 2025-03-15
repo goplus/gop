@@ -31,7 +31,7 @@ import (
 	"github.com/goplus/gop/token"
 )
 
-func sortedKeys(m interface{}) []string {
+func sortedKeys(m any) []string {
 	iter := reflect.ValueOf(m).MapRange()
 	keys := make([]string, 0, 8)
 	for iter.Next() {
@@ -50,7 +50,7 @@ var (
 )
 
 // FprintNode prints a Go+ AST node.
-func FprintNode(w io.Writer, lead string, v interface{}, prefix, indent string) {
+func FprintNode(w io.Writer, lead string, v any, prefix, indent string) {
 	val := reflect.ValueOf(v)
 	switch val.Kind() {
 	case reflect.Slice:

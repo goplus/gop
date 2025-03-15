@@ -148,7 +148,7 @@ func NameOf(node Node) string {
 	return getName(node.Obj(), false)
 }
 
-func getName(v interface{}, useEmpty bool) string {
+func getName(v any, useEmpty bool) string {
 	switch v := v.(type) {
 	case *ast.FuncDecl:
 		return v.Name.Name

@@ -1144,6 +1144,10 @@ func (p *printer) expr1(expr ast.Expr, prec1, depth int) {
 	}
 }
 
+var (
+	in = &ast.Ident{Name: "in"}
+)
+
 func (p *printer) listForPhrase(list []*ast.ForPhrase) {
 	for i, x := range list {
 		if i > 0 {
@@ -1155,7 +1159,7 @@ func (p *printer) listForPhrase(list []*ast.ForPhrase) {
 			p.print(token.COMMA, blank)
 		}
 		p.print(x.Value, blank)
-		p.print(x.TokPos, token.ARROW, blank)
+		p.print(x.TokPos, in, blank)
 		p.expr(x.X)
 		if x.Cond != nil {
 			p.print(blank, x.Cond.Pos(), token.IF, blank)
@@ -1567,7 +1571,7 @@ func (p *printer) stmt(stmt ast.Stmt, nextIsRBrace bool) {
 			p.print(token.COMMA, blank)
 		}
 		p.expr(s.Value)
-		p.print(blank, s.TokPos, token.ARROW, blank)
+		p.print(blank, s.TokPos, in, blank)
 		p.expr(s.X)
 		if s.Cond != nil {
 			p.print(blank, s.Cond.Pos(), token.IF, blank)

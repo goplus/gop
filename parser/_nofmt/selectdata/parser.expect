@@ -1,0 +1,77 @@
+package main
+
+file select.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: a
+          Tok: :=
+          Rhs:
+            ast.SliceLit:
+              Elts:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 1
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 3
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 5
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 7
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 8
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 19
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: y
+          Tok: :=
+          Rhs:
+            ast.ComprehensionExpr:
+              Tok: {
+              Elt:
+                ast.Ident:
+                  Name: x
+              Fors:
+                ast.ForPhrase:
+                  Value:
+                    ast.Ident:
+                      Name: x
+                  X:
+                    ast.Ident:
+                      Name: a
+                  Cond:
+                    ast.BinaryExpr:
+                      X:
+                        ast.BinaryExpr:
+                          X:
+                            ast.Ident:
+                              Name: x
+                          Op: %
+                          Y:
+                            ast.BasicLit:
+                              Kind: INT
+                              Value: 2
+                      Op: ==
+                      Y:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 0

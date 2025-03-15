@@ -1,0 +1,278 @@
+package main
+
+file forloop.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: n
+          Tok: :=
+          Rhs:
+            ast.BasicLit:
+              Kind: INT
+              Value: 0
+        ast.RangeStmt:
+          Tok: ILLEGAL
+          X:
+            ast.SliceLit:
+              Elts:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 1
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 3
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 5
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 7
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 11
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.IncDecStmt:
+                  X:
+                    ast.Ident:
+                      Name: n
+                  Tok: ++
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "n:"
+                ast.Ident:
+                  Name: n
+        ast.RangeStmt:
+          Key:
+            ast.Ident:
+              Name: x
+          Tok: :=
+          X:
+            ast.SliceLit:
+              Elts:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 1
+          Body:
+            ast.BlockStmt:
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: sum
+          Tok: :=
+          Rhs:
+            ast.BasicLit:
+              Kind: INT
+              Value: 0
+        ast.RangeStmt:
+          Key:
+            ast.Ident:
+              Name: _
+          Value:
+            ast.Ident:
+              Name: x
+          Tok: :=
+          X:
+            ast.SliceLit:
+              Elts:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 1
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 3
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 5
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 7
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 11
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.IfStmt:
+                  Cond:
+                    ast.BinaryExpr:
+                      X:
+                        ast.Ident:
+                          Name: x
+                      Op: >
+                      Y:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 3
+                  Body:
+                    ast.BlockStmt:
+                      List:
+                        ast.AssignStmt:
+                          Lhs:
+                            ast.Ident:
+                              Name: sum
+                          Tok: +=
+                          Rhs:
+                            ast.Ident:
+                              Name: x
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "sum(1,3,5,7,11):"
+                ast.Ident:
+                  Name: sum
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: sum
+          Tok: =
+          Rhs:
+            ast.BasicLit:
+              Kind: INT
+              Value: 0
+        ast.ForStmt:
+          Init:
+            ast.AssignStmt:
+              Lhs:
+                ast.Ident:
+                  Name: i
+              Tok: :=
+              Rhs:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 1
+          Cond:
+            ast.BinaryExpr:
+              X:
+                ast.Ident:
+                  Name: i
+              Op: <
+              Y:
+                ast.BasicLit:
+                  Kind: INT
+                  Value: 100
+          Post:
+            ast.IncDecStmt:
+              X:
+                ast.Ident:
+                  Name: i
+              Tok: ++
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.AssignStmt:
+                  Lhs:
+                    ast.Ident:
+                      Name: sum
+                  Tok: +=
+                  Rhs:
+                    ast.Ident:
+                      Name: i
+        ast.ExprStmt:
+          X:
+            ast.CallExpr:
+              Fun:
+                ast.Ident:
+                  Name: println
+              Args:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "sum(1-100):"
+                ast.Ident:
+                  Name: sum
+        ast.ForPhraseStmt:
+          ForPhrase:
+            ast.ForPhrase:
+              Value:
+                ast.Ident:
+                  Name: x
+              X:
+                ast.SliceLit:
+                  Elts:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 1
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.ExprStmt:
+                  X:
+                    ast.CallExpr:
+                      Fun:
+                        ast.Ident:
+                          Name: println
+                      Args:
+                        ast.Ident:
+                          Name: x
+        ast.ForPhraseStmt:
+          ForPhrase:
+            ast.ForPhrase:
+              Key:
+                ast.Ident:
+                  Name: i
+              Value:
+                ast.Ident:
+                  Name: x
+              X:
+                ast.SliceLit:
+                  Elts:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 1
+              Cond:
+                ast.BinaryExpr:
+                  X:
+                    ast.BinaryExpr:
+                      X:
+                        ast.Ident:
+                          Name: i
+                      Op: %
+                      Y:
+                        ast.BasicLit:
+                          Kind: INT
+                          Value: 2
+                  Op: ==
+                  Y:
+                    ast.BasicLit:
+                      Kind: INT
+                      Value: 0
+          Body:
+            ast.BlockStmt:
+              List:
+                ast.ExprStmt:
+                  X:
+                    ast.CallExpr:
+                      Fun:
+                        ast.Ident:
+                          Name: println
+                      Args:
+                        ast.Ident:
+                          Name: i
+                        ast.Ident:
+                          Name: x

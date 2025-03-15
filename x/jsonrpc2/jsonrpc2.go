@@ -79,13 +79,13 @@ type Preempter interface {
 	// Otherwise, the result and error are processed as if returned by Handle.
 	//
 	// Preempt must not block. (The Context passed to it is for Values only.)
-	Preempt(ctx context.Context, req *Request) (result interface{}, err error)
+	Preempt(ctx context.Context, req *Request) (result any, err error)
 }
 
 // A PreempterFunc implements the Preempter interface for a standalone Preempt function.
-type PreempterFunc func(ctx context.Context, req *Request) (interface{}, error)
+type PreempterFunc func(ctx context.Context, req *Request) (any, error)
 
-func (f PreempterFunc) Preempt(ctx context.Context, req *Request) (interface{}, error) {
+func (f PreempterFunc) Preempt(ctx context.Context, req *Request) (any, error) {
 	return f(ctx, req)
 }
 
@@ -106,23 +106,23 @@ type Handler interface {
 	// connection is broken or the request is canceled or completed.
 	// (If Handle returns ErrAsyncResponse, ctx will remain uncanceled
 	// until either Cancel or Respond is called for the request's ID.)
-	Handle(ctx context.Context, req *Request) (result interface{}, err error)
+	Handle(ctx context.Context, req *Request) (result any, err error)
 }
 
 type defaultHandler struct{}
 
-func (defaultHandler) Preempt(context.Context, *Request) (interface{}, error) {
+func (defaultHandler) Preempt(context.Context, *Request) (any, error) {
 	return nil, ErrNotHandled
 }
 
-func (defaultHandler) Handle(context.Context, *Request) (interface{}, error) {
+func (defaultHandler) Handle(context.Context, *Request) (any, error) {
 	return nil, ErrNotHandled
 }
 
 // A HandlerFunc implements the Handler interface for a standalone Handle function.
-type HandlerFunc func(ctx context.Context, req *Request) (interface{}, error)
+type HandlerFunc func(ctx context.Context, req *Request) (any, error)
 
-func (f HandlerFunc) Handle(ctx context.Context, req *Request) (interface{}, error) {
+func (f HandlerFunc) Handle(ctx context.Context, req *Request) (any, error) {
 	return f(ctx, req)
 }
 

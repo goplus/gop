@@ -604,6 +604,12 @@ bar.gop:3:27: cannot use "Go" + "+" (type untyped string) as type int in map val
 a := map[string]int{1+2: 2}
 b := map[string]int{"Hi": "Go" + "+"}
 `)
+	codeErrorTest(t, `bar.gop:2:13: invalid map literal`, `
+var v any = {1:2,1}
+`)
+	codeErrorTest(t, `bar.gop:2:21: invalid map literal`, `
+var v map[int]int = {1:2,1}
+`)
 }
 
 func TestErrSlice(t *testing.T) {

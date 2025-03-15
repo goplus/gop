@@ -5,7 +5,7 @@
 </p>
 <h1>The Go+ Programming Language</h1>
 
-[goplus.org](https://goplus.org) | [Docs](doc/docs.md) | [Go+ vs. Go](doc/goplus-vs-go.md) | [Tutorials](https://tutorial.goplus.org/) | [Playground](https://play.goplus.org) | [iGo+ Playground](https://repl.goplus.org/) | [Contributing & compiler design](doc/contributing.md)
+[goplus.org](https://goplus.org) | [Docs](doc/docs.md) | [Go+ vs. Go](doc/goplus-vs-go.md) | [Tutorials](https://tutorial.goplus.org/) | [Playground](https://play.goplus.org) | [Go+ REPL (iGo+)](https://repl.goplus.org/) | [Contributing & compiler design](doc/contributing.md)
 
 </div>
 

@@ -1077,13 +1077,40 @@ const (
 	tplPkgPath = "github.com/goplus/gop/tpl"
 )
 
+// https://github.com/goplus/gop/issues/2143
+// domainTag`...` => domainTag.new(`...`)
 func compileDomainTextLit(ctx *blockCtx, v *ast.DomainTextLit) {
-	switch v.Domain.Name {
-	case "tpl": // tpl`...` => tpl.new(`...`)
-		ctx.cb.Val(ctx.pkg.Import(tplPkgPath).Ref("New")).
-			Val(&goast.BasicLit{Kind: gotoken.STRING, Value: v.Value}, v).
-			Call(1)
+	var cb = ctx.cb
+	var imp gogen.PkgRef
+	var name = v.Domain.Name
+	if pi, ok := ctx.findImport(name); ok {
+		imp = pi.PkgRef
+		if pi.Path() == "golang.org/x/net/html" {
+			// html`...` => html.Parse(strings.NewReader(`...`))
+			cb.Val(imp.Ref("Parse")).
+				Val(ctx.pkg.Import("strings").Ref("NewReader")).
+				Val(&goast.BasicLit{Kind: gotoken.STRING, Value: v.Value}, v).
+				CallWith(1, 0, v).
+				CallWith(1, 0, v)
+			return
+		}
+	} else {
+		var path string
+		if name == "tpl" {
+			path = tplPkgPath
+		} else {
+			path = tplPkgPath + "/encoding/" + name
+		}
+		imp = ctx.pkg.Import(path)
+		/* TODO(xsw):
+		if imp = ctx.pkg.TryImport(path); imp.Types == nil {
+			panic("compileDomainTextLit TODO: unknown domain: " + name)
+		}
+		*/
 	}
+	cb.Val(imp.Ref("New")).
+		Val(&goast.BasicLit{Kind: gotoken.STRING, Value: v.Value}, v).
+		CallWith(1, 0, v)
 }
 
 const (
@@ -1277,21 +1304,24 @@ func compileCompositeLitEx(ctx *blockCtx, v *ast.CompositeLit, expected types.Ty
 			return err
 		}
 		n := len(v.Elts)
-		if isMap(underlying) {
+		switch underlying.(type) {
+		case *types.Slice:
+			ctx.cb.SliceLitEx(typ, n<<kind, kind == compositeLitKeyVal, v)
+		case *types.Array:
+			ctx.cb.ArrayLitEx(typ, n<<kind, kind == compositeLitKeyVal, v)
+		case *types.Map:
 			if kind == compositeLitVal && n > 0 {
 				return ctx.newCodeError(v.Pos(), "missing key in map literal")
 			}
-			if err := ctx.cb.MapLitEx(typ, n<<1, v); err != nil {
+			if err := compileMapLitEx(ctx, typ, n, v); err != nil {
 				return err
 			}
-		} else {
-			switch underlying.(type) {
-			case *types.Slice:
-				ctx.cb.SliceLitEx(typ, n<<kind, kind == compositeLitKeyVal, v)
-			case *types.Array:
-				ctx.cb.ArrayLitEx(typ, n<<kind, kind == compositeLitKeyVal, v)
-			default:
+		default:
+			if kind == compositeLitVal && n > 0 {
 				return ctx.newCodeErrorf(v.Pos(), "invalid composite literal type %v", typ)
+			}
+			if err := compileMapLitEx(ctx, nil, n, v); err != nil {
+				return err
 			}
 		}
 	}
@@ -1305,12 +1335,14 @@ func compileCompositeLitEx(ctx *blockCtx, v *ast.CompositeLit, expected types.Ty
 	return nil
 }
 
-func isMap(tu types.Type) bool {
-	if tu == nil { // map can omit type
-		return true
-	}
-	_, ok := tu.(*types.Map)
-	return ok
+func compileMapLitEx(ctx *blockCtx, typ types.Type, n int, v *ast.CompositeLit) (err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			err = ctx.newCodeError(v.Pos(), "invalid map literal")
+		}
+	}()
+	err = ctx.cb.MapLitEx(typ, n<<1, v)
+	return
 }
 
 func isMapOrStruct(tu types.Type) bool {
@@ -1335,10 +1367,10 @@ func compileSliceLit(ctx *blockCtx, v *ast.SliceLit, typ types.Type, noPanic ...
 	for _, elt := range v.Elts {
 		compileExpr(ctx, elt)
 	}
-	if sliceHasTypeParam(ctx, typ) {
-		ctx.cb.SliceLitEx(nil, n, false, v)
-	} else {
+	if isSpecificSliceType(ctx, typ) {
 		ctx.cb.SliceLitEx(typ, n, false, v)
+	} else {
+		ctx.cb.SliceLitEx(nil, n, false, v)
 	}
 	return
 }
@@ -1488,8 +1520,12 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr, inFlags int) {
 	if !useClosure && (cb.Scope().Parent() == types.Universe) {
 		panic("TODO: can't use expr? in global")
 	}
-
-	compileExpr(ctx, v.X, inFlags)
+	expr := v.X
+	switch expr.(type) {
+	case *ast.Ident, *ast.SelectorExpr:
+		expr = &ast.CallExpr{Fun: expr}
+	}
+	compileExpr(ctx, expr, inFlags)
 	x := cb.InternalStack().Pop()
 	n := 0
 	results, ok := x.Type.(*types.Tuple)
