@@ -40,11 +40,11 @@ func (p *Sprite) Name() string {
 
 func (p *Sprite) Main(name string) {}
 
-type iHandler interface {
+type Handler interface {
 	Main(name string)
 	Classfname() string
 	Classclone() any
 }
 
-func Gopt_Game_Main(game interface{ initGame() }, workers ...iHandler) {
+func Gopt_Game_Main(game interface{ initGame() }, workers ...Handler) {
 }

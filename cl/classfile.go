@@ -57,6 +57,7 @@ type gmxProject struct {
 	pkgImps    []gogen.PkgRef
 	pkgPaths   []string
 	autoimps   map[string]pkgImp // auto-import statement in gop.mod
+	classclone *types.Signature  // prototype of Classclone
 	hasScheds  bool
 	gameIsPtr  bool
 	isTest     bool
@@ -70,7 +71,7 @@ const (
 	spriteClassclone
 )
 
-func spriteFeatures(game gogen.Ref) (feats spriteFeat) {
+func spriteFeatures(game gogen.Ref) (feats spriteFeat, classclone *types.Signature) {
 	if mainFn := findMethod(game, "Main"); mainFn != nil {
 		sig := mainFn.Type().(*types.Signature)
 		if t, ok := gogen.CheckSigFuncEx(sig); ok {
@@ -87,10 +88,11 @@ func spriteFeatures(game gogen.Ref) (feats spriteFeat) {
 			}
 			if intf, ok := elt.(*types.Interface); ok {
 				for i, n := 0, intf.NumMethods(); i < n; i++ {
-					switch intf.Method(i).Name() {
+					switch m := intf.Method(i); m.Name() {
 					case "Classfname":
 						feats |= spriteClassfname
 					case "Classclone":
+						classclone = m.Type().(*types.Signature)
 						feats |= spriteClassclone
 					}
 				}
@@ -203,7 +205,7 @@ func loadClass(ctx *pkgCtx, pkg *gogen.Package, file string, f *ast.File, conf *
 		spx := p.pkgImps[0]
 		if gt.Class != "" {
 			p.game, p.gameIsPtr = spxRef(spx, gt.Class)
-			p.spfeats = spriteFeatures(p.game)
+			p.spfeats, p.classclone = spriteFeatures(p.game)
 		}
 		p.sprite = make(map[string]spxObj)
 		for _, v := range gt.Works {
@@ -265,19 +267,6 @@ func getStringConst(spx gogen.PkgRef, name string) string {
 		}
 	}
 	return ""
-}
-
-func getFields(f *ast.File) []ast.Spec {
-	for _, decl := range f.Decls {
-		if g, ok := decl.(*ast.GenDecl); ok {
-			if g.Tok == token.VAR {
-				return g.Specs
-			}
-			continue
-		}
-		break
-	}
-	return nil
 }
 
 func setBodyHandler(ctx *blockCtx) {
