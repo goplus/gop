@@ -358,7 +358,6 @@ type pkgImp struct {
 type blockCtx struct {
 	*pkgCtx
 	proj       *gmxProject
-	spxClass   *gmxClass // available when isClass && !isProj
 	pkg        *gogen.Package
 	cb         *gogen.CodeBuilder
 	imports    map[string]pkgImp
@@ -729,6 +728,8 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 	var baseTypeName string
 	var baseType types.Type
 	var spxProj string
+	var spfeats spriteFeat
+	var spxClass bool
 	var goxTestFile bool
 	var parent = ctx.pkgCtx
 	if f.IsClass {
@@ -763,9 +764,10 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 			} else {
 				sp := proj.sprite[c.ext]
 				o := sp.obj
-				ctx.spxClass = c
 				ctx.baseClass = o
 				baseTypeName, baseType, spxProj = o.Name(), o.Type(), sp.proj
+				spxClass = true
+				spfeats = proj.spfeats
 			}
 		}
 	}
@@ -808,7 +810,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 					tags = append(tags, "")
 					chk.chkRedecl(ctx, baseTypeName, pos)
 				}
-				if ctx.spxClass != nil {
+				if spxClass {
 					if gameClass := proj.gameClass; gameClass != "" {
 						if spxProj == "" { // if spxProj is empty, use gameClass
 							spxProj = gameClass
@@ -870,15 +872,6 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 				X: &ast.Ident{Name: classType},
 			},
 		}}}
-
-		// func Classfname() string
-		if ctx.spxClass != nil && proj.spfeats&spriteClassfname != 0 {
-			f.Decls = append(f.Decls, astFnClassfname(c))
-		}
-		// func Classclone() any
-		if ctx.spxClass != nil && proj.spfeats&spriteClassclone != 0 {
-			f.Decls = append(f.Decls, astFnClassclone())
-		}
 	}
 
 	if d := f.ShadowEntry; d != nil {
@@ -888,6 +881,25 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 	}
 
 	preloadFile(p, ctx, f, goFile, !conf.Outline)
+	if spfeats != 0 {
+		ld := getTypeLoader(parent, parent.syms, token.NoPos, classType)
+		if (spfeats & spriteClassfname) != 0 { // Classfname() string
+			ld.methods = append(ld.methods, func() {
+				old, _ := p.SetCurFile(goFile, true)
+				defer p.RestoreCurFile(old)
+				doInitType(ld)
+				genClassfname(ctx, c)
+			})
+		}
+		if (spfeats & spriteClassclone) != 0 { // Classclone() clonetype
+			ld.methods = append(ld.methods, func() {
+				old, _ := p.SetCurFile(goFile, true)
+				defer p.RestoreCurFile(old)
+				doInitType(ld)
+				genClassclone(ctx, proj.classclone)
+			})
+		}
+	}
 	if goxTestFile {
 		parent.inits = append(parent.inits, func() {
 			old, _ := p.SetCurFile(testingGoFile, true)

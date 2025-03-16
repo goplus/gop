@@ -23,7 +23,6 @@ import (
 	"go/types"
 	"log"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/goplus/gogen"
@@ -426,8 +425,9 @@ func genMainFunc(pkg *gogen.Package, gameClass string) {
 	if o := pkg.TryRef(gameClass); o != nil {
 		// new(gameClass).Main()
 		new := pkg.Builtin().Ref("new")
-		pkg.NewFunc(nil, "main", nil, nil, false).
-			BodyStart(pkg).Val(new).Val(o).Call(1).MemberVal("Main").Call(0).EndStmt().End()
+		pkg.NewFunc(nil, "main", nil, nil, false).BodyStart(pkg).
+			Val(new).Val(o).Call(1).MemberVal("Main").Call(0).EndStmt().
+			End()
 	}
 }
 
@@ -462,64 +462,23 @@ func makeMainSig(recv *types.Var, f *types.Func) *types.Signature {
 	return types.NewSignatureType(recv, nil, nil, types.NewTuple(params...), nil, false)
 }
 
-func astFnClassfname(c *gmxClass) *ast.FuncDecl {
-	return &ast.FuncDecl{
-		Name: &ast.Ident{
-			Name: "Classfname",
-		},
-		Type: &ast.FuncType{
-			Params: &ast.FieldList{},
-			Results: &ast.FieldList{
-				List: []*ast.Field{
-					{Type: &ast.Ident{Name: "string"}},
-				},
-			},
-		},
-		Body: &ast.BlockStmt{
-			List: []ast.Stmt{
-				&ast.ReturnStmt{
-					Results: []ast.Expr{
-						&ast.BasicLit{Kind: token.STRING, Value: strconv.Quote(c.clsfile)},
-					},
-				},
-			},
-		},
-		Shadow: true,
-	}
+func genClassfname(ctx *blockCtx, c *gmxClass) {
+	pkg := ctx.pkg
+	recv := toRecv(ctx, ctx.classRecv)
+	ret := types.NewTuple(pkg.NewParam(token.NoPos, "", types.Typ[types.String]))
+	pkg.NewFunc(recv, "Classfname", nil, ret, false).BodyStart(pkg).
+		Val(c.clsfile).Return(1).
+		End()
 }
 
-func astFnClassclone() *ast.FuncDecl {
-	ret := &ast.Ident{Name: "_gop_ret"}
-	return &ast.FuncDecl{
-		Name: &ast.Ident{
-			Name: "Classclone",
-		},
-		Type: &ast.FuncType{
-			Params: &ast.FieldList{},
-			Results: &ast.FieldList{
-				List: []*ast.Field{
-					{Type: &ast.Ident{Name: "any"}},
-				},
-			},
-		},
-		Body: &ast.BlockStmt{
-			List: []ast.Stmt{
-				&ast.AssignStmt{
-					Lhs: []ast.Expr{ret},
-					Tok: token.DEFINE,
-					Rhs: []ast.Expr{
-						&ast.StarExpr{X: &ast.Ident{Name: "this"}},
-					},
-				},
-				&ast.ReturnStmt{
-					Results: []ast.Expr{
-						&ast.UnaryExpr{Op: token.AND, X: ret},
-					},
-				},
-			},
-		},
-		Shadow: true,
-	}
+func genClassclone(ctx *blockCtx, classclone *types.Signature) {
+	pkg := ctx.pkg
+	recv := toRecv(ctx, ctx.classRecv)
+	ret := classclone.Results()
+	pkg.NewFunc(recv, "Classclone", nil, ret, false).BodyStart(pkg).
+		DefineVarStart(token.NoPos, "_gop_ret").VarVal("this").Elem().EndInit(1).
+		VarVal("_gop_ret").UnaryOp(gotoken.AND).Return(1).
+		End()
 }
 
 func astEmptyEntrypoint(f *ast.File) {

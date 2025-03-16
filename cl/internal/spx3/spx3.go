@@ -43,7 +43,7 @@ func (p *Sprite) Main(name string) {}
 type Handler interface {
 	Main(name string)
 	Classfname() string
-	Classclone() any
+	Classclone() Handler
 }
 
 func Gopt_Game_Main(game interface{ initGame() }, workers ...Handler) {
