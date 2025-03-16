@@ -483,6 +483,22 @@ func (f *File) HasPkgDecl() bool {
 	return f.Package != token.NoPos
 }
 
+// ClassFieldsDecl returns the class fields declaration.
+func (f *File) ClassFieldsDecl() *GenDecl {
+	if f.IsClass {
+		for _, decl := range f.Decls {
+			if g, ok := decl.(*GenDecl); ok {
+				if g.Tok == token.VAR {
+					return g
+				}
+				continue
+			}
+			break
+		}
+	}
+	return nil
+}
+
 // Pos returns position of first character belonging to the node.
 func (f *File) Pos() token.Pos {
 	if f.Package != token.NoPos {

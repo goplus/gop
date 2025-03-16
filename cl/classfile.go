@@ -23,7 +23,6 @@ import (
 	"go/types"
 	"log"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/goplus/gogen"
@@ -57,6 +56,7 @@ type gmxProject struct {
 	pkgImps    []gogen.PkgRef
 	pkgPaths   []string
 	autoimps   map[string]pkgImp // auto-import statement in gop.mod
+	classclone *types.Signature  // prototype of Classclone
 	hasScheds  bool
 	gameIsPtr  bool
 	isTest     bool
@@ -70,7 +70,7 @@ const (
 	spriteClassclone
 )
 
-func spriteFeatures(game gogen.Ref) (feats spriteFeat) {
+func spriteFeatures(game gogen.Ref) (feats spriteFeat, classclone *types.Signature) {
 	if mainFn := findMethod(game, "Main"); mainFn != nil {
 		sig := mainFn.Type().(*types.Signature)
 		if t, ok := gogen.CheckSigFuncEx(sig); ok {
@@ -87,10 +87,11 @@ func spriteFeatures(game gogen.Ref) (feats spriteFeat) {
 			}
 			if intf, ok := elt.(*types.Interface); ok {
 				for i, n := 0, intf.NumMethods(); i < n; i++ {
-					switch intf.Method(i).Name() {
+					switch m := intf.Method(i); m.Name() {
 					case "Classfname":
 						feats |= spriteClassfname
 					case "Classclone":
+						classclone = m.Type().(*types.Signature)
 						feats |= spriteClassclone
 					}
 				}
@@ -203,7 +204,7 @@ func loadClass(ctx *pkgCtx, pkg *gogen.Package, file string, f *ast.File, conf *
 		spx := p.pkgImps[0]
 		if gt.Class != "" {
 			p.game, p.gameIsPtr = spxRef(spx, gt.Class)
-			p.spfeats = spriteFeatures(p.game)
+			p.spfeats, p.classclone = spriteFeatures(p.game)
 		}
 		p.sprite = make(map[string]spxObj)
 		for _, v := range gt.Works {
@@ -265,19 +266,6 @@ func getStringConst(spx gogen.PkgRef, name string) string {
 		}
 	}
 	return ""
-}
-
-func getFields(f *ast.File) []ast.Spec {
-	for _, decl := range f.Decls {
-		if g, ok := decl.(*ast.GenDecl); ok {
-			if g.Tok == token.VAR {
-				return g.Specs
-			}
-			continue
-		}
-		break
-	}
-	return nil
 }
 
 func setBodyHandler(ctx *blockCtx) {
@@ -437,8 +425,9 @@ func genMainFunc(pkg *gogen.Package, gameClass string) {
 	if o := pkg.TryRef(gameClass); o != nil {
 		// new(gameClass).Main()
 		new := pkg.Builtin().Ref("new")
-		pkg.NewFunc(nil, "main", nil, nil, false).
-			BodyStart(pkg).Val(new).Val(o).Call(1).MemberVal("Main").Call(0).EndStmt().End()
+		pkg.NewFunc(nil, "main", nil, nil, false).BodyStart(pkg).
+			Val(new).Val(o).Call(1).MemberVal("Main").Call(0).EndStmt().
+			End()
 	}
 }
 
@@ -473,64 +462,23 @@ func makeMainSig(recv *types.Var, f *types.Func) *types.Signature {
 	return types.NewSignatureType(recv, nil, nil, types.NewTuple(params...), nil, false)
 }
 
-func astFnClassfname(c *gmxClass) *ast.FuncDecl {
-	return &ast.FuncDecl{
-		Name: &ast.Ident{
-			Name: "Classfname",
-		},
-		Type: &ast.FuncType{
-			Params: &ast.FieldList{},
-			Results: &ast.FieldList{
-				List: []*ast.Field{
-					{Type: &ast.Ident{Name: "string"}},
-				},
-			},
-		},
-		Body: &ast.BlockStmt{
-			List: []ast.Stmt{
-				&ast.ReturnStmt{
-					Results: []ast.Expr{
-						&ast.BasicLit{Kind: token.STRING, Value: strconv.Quote(c.clsfile)},
-					},
-				},
-			},
-		},
-		Shadow: true,
-	}
+func genClassfname(ctx *blockCtx, c *gmxClass) {
+	pkg := ctx.pkg
+	recv := toRecv(ctx, ctx.classRecv)
+	ret := types.NewTuple(pkg.NewParam(token.NoPos, "", types.Typ[types.String]))
+	pkg.NewFunc(recv, "Classfname", nil, ret, false).BodyStart(pkg).
+		Val(c.clsfile).Return(1).
+		End()
 }
 
-func astFnClassclone() *ast.FuncDecl {
-	ret := &ast.Ident{Name: "_gop_ret"}
-	return &ast.FuncDecl{
-		Name: &ast.Ident{
-			Name: "Classclone",
-		},
-		Type: &ast.FuncType{
-			Params: &ast.FieldList{},
-			Results: &ast.FieldList{
-				List: []*ast.Field{
-					{Type: &ast.Ident{Name: "any"}},
-				},
-			},
-		},
-		Body: &ast.BlockStmt{
-			List: []ast.Stmt{
-				&ast.AssignStmt{
-					Lhs: []ast.Expr{ret},
-					Tok: token.DEFINE,
-					Rhs: []ast.Expr{
-						&ast.StarExpr{X: &ast.Ident{Name: "this"}},
-					},
-				},
-				&ast.ReturnStmt{
-					Results: []ast.Expr{
-						&ast.UnaryExpr{Op: token.AND, X: ret},
-					},
-				},
-			},
-		},
-		Shadow: true,
-	}
+func genClassclone(ctx *blockCtx, classclone *types.Signature) {
+	pkg := ctx.pkg
+	recv := toRecv(ctx, ctx.classRecv)
+	ret := classclone.Results()
+	pkg.NewFunc(recv, "Classclone", nil, ret, false).BodyStart(pkg).
+		DefineVarStart(token.NoPos, "_gop_ret").VarVal("this").Elem().EndInit(1).
+		VarVal("_gop_ret").UnaryOp(gotoken.AND).Return(1).
+		End()
 }
 
 func astEmptyEntrypoint(f *ast.File) {

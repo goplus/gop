@@ -604,7 +604,6 @@ func TestClassFileEnd(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	f.Decls = append(f.Decls, astFnClassfname(&gmxClass{clsfile: "get"}))
 	if f.End() != f.ShadowEntry.End() {
 		t.Fatal("class file end not shadow entry")
 	}
