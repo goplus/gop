@@ -27,20 +27,6 @@ import (
 // An OperandMode specifies the (addressing) mode of an operand.
 type OperandMode byte
 
-const (
-	Invalid  OperandMode = iota // operand is invalid
-	NoValue                     // operand represents no value (result of a function call w/o result)
-	Builtin                     // operand is a built-in function
-	TypExpr                     // operand is a type
-	Constant                    // operand is a constant; the operand's typ is a Basic type
-	Variable                    // operand is an addressable variable
-	MapIndex                    // operand is a map index expression (acts like a variable on lhs, commaok on rhs of an assignment)
-	Value                       // operand is a computed value
-	CommaOK                     // like value, but operand may be used in a comma,ok expression
-	CommaErr                    // like commaok, but second value is error, not boolean
-	CgoFunc                     // operand is a cgo function
-)
-
 // TypeAndValue reports the type and value (for constants)
 // of the corresponding expression.
 type TypeAndValue struct {
