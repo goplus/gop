@@ -187,9 +187,17 @@ func (p *gSequence) Match(src []*types.Token, ctx *Context) (n int, result any, 
 		n += n1
 	}
 	if nitems == 2 {
-		if _, ok := p.items[1].(*gRepeat0); ok && len(rets[1].([]any)) == 0 {
-			result = rets[0]
-			return
+		switch v := p.items[1].(type) {
+		case *gRepeat0:
+			if len(rets[1].([]any)) == 0 {
+				result = rets[0]
+				return
+			}
+		case *gToken:
+			if v.tok == token.SEMICOLON || v.tok == token.EOF {
+				result = rets[0]
+				return
+			}
 		}
 	}
 	result = rets
