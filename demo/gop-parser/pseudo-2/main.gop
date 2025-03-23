@@ -31,11 +31,7 @@ untilStmt = "REPEAT" ";" doc "UNTIL" expr
 
 typeExpr = "INTEGER" | "REAL" | "STRING" | "BOOLEAN"
 
-expr = term2Expr % ("<" | "<=" | ">" | ">=" | "=" | "<>")
-
-term2Expr = term1Expr % ("+" | "-")
-
-term1Expr = unaryExpr % ("*" | "/")
+expr = unaryExpr % ("*" | "/") % ("+" | "-") % ("<" | "<=" | ">" | ">=" | "=" | "<>")
 
 unaryExpr = operand | "-" unaryExpr
 
