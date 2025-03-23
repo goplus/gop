@@ -82,33 +82,40 @@ func (p *Compiler) ParseExpr(x string, conf *Config) (result any, err error) {
 
 // ParseExprFrom parses an expression from a file.
 func (p *Compiler) ParseExprFrom(filename string, src any, conf *Config) (result any, err error) {
-	next, result, err := p.Match(filename, src, conf)
+	ms, result, err := p.Match(filename, src, conf)
 	if err != nil {
 		return
 	}
-	if len(next) == 0 || isEOL(next[0].Tok) {
+	if len(ms.Toks) == ms.N || isEOL(ms.Toks[ms.N].Tok) {
 		return
 	}
-	t := next[0]
+	t := ms.Toks[len(ms.Toks)-ms.Ctx.Left]
 	err = &matcher.Error{Fset: p.Fset, Pos: t.Pos, Msg: fmt.Sprintf("unexpected token: %v", t)}
 	return
 }
 
 // Parse parses a source file.
 func (p *Compiler) Parse(filename string, src any, conf *Config) (result any, err error) {
-	next, result, err := p.Match(filename, src, conf)
+	ms, result, err := p.Match(filename, src, conf)
 	if err != nil {
 		return
 	}
-	if len(next) > 0 {
-		t := next[0]
+	if len(ms.Toks) > ms.N {
+		t := ms.Toks[len(ms.Toks)-ms.Ctx.Left]
 		err = &matcher.Error{Fset: p.Fset, Pos: t.Pos, Msg: fmt.Sprintf("unexpected token: %v", t)}
 	}
 	return
 }
 
+// MatchState represents a matching state.
+type MatchState struct {
+	Toks []*Token
+	Ctx  *matcher.Context
+	N    int
+}
+
 // Match matches a source file.
-func (p *Compiler) Match(filename string, src any, conf *Config) (next []*Token, result any, err error) {
+func (p *Compiler) Match(filename string, src any, conf *Config) (ms MatchState, result any, err error) {
 	b, err := iox.ReadSourceLocal(filename, src)
 	if err != nil {
 		return
@@ -135,15 +142,13 @@ func (p *Compiler) Match(filename string, src any, conf *Config) (next []*Token,
 		}
 		toks = append(toks, &t)
 	}
-	ctx := &matcher.Context{
-		Fset:    fset,
-		FileEnd: token.Pos(f.Base() + len(b)),
-	}
-	n, result, err = p.Doc.Match(toks, ctx)
+	ms.Ctx = matcher.NewContext(fset, token.Pos(f.Base()+len(b)), len(toks))
+	ms.N, result, err = p.Doc.Match(toks, ms.Ctx)
+	ms.Ctx.SetLastError(len(toks)-ms.N, err)
 	if err != nil {
 		return
 	}
-	next = toks[n:]
+	ms.Toks = toks
 	return
 }
 

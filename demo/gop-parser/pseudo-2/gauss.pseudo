@@ -1,6 +1,6 @@
 DECLARE n, i, sum : INTEGER
 OUTPUT "please input n:"
-INPUT n
+INPUT n, 3
 i <- 1
 sum <- 0
 WHILE i <= n DO

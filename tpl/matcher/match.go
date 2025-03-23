@@ -51,12 +51,33 @@ func (p *Error) Error() string {
 type Context struct {
 	Fset    *token.FileSet
 	FileEnd token.Pos
+
+	LastErr error
+	Left    int
 }
 
+// NewContext creates a new matching context.
+func NewContext(fset *token.FileSet, fileEnd token.Pos, n int) *Context {
+	return &Context{
+		Fset:    fset,
+		FileEnd: fileEnd,
+		Left:    n,
+	}
+}
+
+// SetLastError sets the last error.
+func (p *Context) SetLastError(left int, err error) {
+	if left < p.Left {
+		p.Left, p.LastErr = left, err
+	}
+}
+
+// NewError creates a new error.
 func (p *Context) NewError(pos token.Pos, msg string) *Error {
 	return &Error{p.Fset, pos, msg}
 }
 
+// NewErrorf creates a new error with a format string.
 func (p *Context) NewErrorf(pos token.Pos, format string, args ...any) error {
 	return &Error{p.Fset, pos, fmt.Sprintf(format, args...)}
 }
@@ -192,6 +213,7 @@ func (p *gRepeat0) Match(src []*types.Token, ctx *Context) (n int, result any, e
 	for {
 		n1, ret1, err1 := g.Match(src, ctx)
 		if err1 != nil {
+			ctx.SetLastError(len(src)-n1, err1)
 			result = rets
 			return
 		}
@@ -224,6 +246,7 @@ func (p *gRepeat1) Match(src []*types.Token, ctx *Context) (n int, result any, e
 	for {
 		n1, ret1, err1 := g.Match(src[n:], ctx)
 		if err1 != nil {
+			ctx.SetLastError(len(src)-n-n1, err1)
 			result = rets
 			return
 		}
