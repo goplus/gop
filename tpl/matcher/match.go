@@ -129,6 +129,7 @@ func (p *gChoice) Match(src []*types.Token, ctx *Context) (n int, result any, er
 		if n, result, err = g.Match(src, ctx); err == nil {
 			return
 		}
+		fmt.Println("==> Choice.Match", n, err)
 		if n >= nMax {
 			if n == nMax {
 				multiErr = true
@@ -164,6 +165,7 @@ func (p *gSequence) Match(src []*types.Token, ctx *Context) (n int, result any, 
 		}
 		rets[i] = ret1
 		n += n1
+		fmt.Println("==> Sequence.Match", n, ret1)
 	}
 	if nitems == 2 {
 		if _, ok := p.items[1].(*gRepeat0); ok && len(rets[1].([]any)) == 0 {
@@ -191,12 +193,12 @@ func (p *gRepeat0) Match(src []*types.Token, ctx *Context) (n int, result any, e
 	rets := make([]any, 0, 2)
 	for {
 		n1, ret1, err1 := g.Match(src, ctx)
+		n += n1
 		if err1 != nil {
 			result = rets
 			return
 		}
 		rets = append(rets, ret1)
-		n += n1
 		src = src[n1:]
 	}
 }
@@ -223,12 +225,12 @@ func (p *gRepeat1) Match(src []*types.Token, ctx *Context) (n int, result any, e
 	rets[0] = ret0
 	for {
 		n1, ret1, err1 := g.Match(src[n:], ctx)
+		n += n1
 		if err1 != nil {
 			result = rets
 			return
 		}
 		rets = append(rets, ret1)
-		n += n1
 	}
 }
 
