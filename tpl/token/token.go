@@ -47,16 +47,21 @@ func (tok Token) Len() int {
 // -----------------------------------------------------------------------------
 
 const (
+	// Special tokens
 	ILLEGAL Token = iota
 	EOF
 	COMMENT
 
+	literal_beg
+	// Identifiers and basic type literals
+	// (these tokens stand for classes of literals)
 	IDENT  // main
 	INT    // 12345
 	FLOAT  // 123.45
 	IMAG   // 123.45i
 	CHAR   // 'a'
 	STRING // "abc"
+	literal_end
 
 	ADD = '+'
 	SUB = '-'

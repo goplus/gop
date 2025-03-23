@@ -206,3 +206,18 @@ func Fdump(w io.Writer, result any, prefix, indent string, omitSemi bool) {
 }
 
 // -----------------------------------------------------------------------------
+
+// List converts the matching result of (R % ",") to a flat list.
+// R % "," means R *("," R)
+func List(this any) []any {
+	in := this.([]any)
+	next := in[1].([]any)
+	ret := make([]any, len(next)+1)
+	ret[0] = in[0]
+	for i, v := range next {
+		ret[i+1] = v.([]any)[1]
+	}
+	return ret
+}
+
+// -----------------------------------------------------------------------------
