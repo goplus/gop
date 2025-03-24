@@ -52,17 +52,20 @@ func FromFile(fset *token.FileSet, filename string, src any, params ...any) (ret
 	if fset == nil {
 		fset = token.NewFileSet()
 	}
-	f, err := parser.ParseFile(fset, filename, src, 0)
+	f, err := parser.ParseFile(fset, filename, src, nil)
 	if err != nil {
 		return
 	}
-	ret.Result, err = cl.New(fset, f)
+	ret.Result, err = cl.NewEx(retProcs(params), fset, f)
 	ret.Fset = fset
 	return
 }
 
 func retProcs(params []any) map[string]any {
 	n := len(params)
+	if n == 0 {
+		return nil
+	}
 	if n&1 != 0 {
 		panic("tpl.New: invalid params. should be in form `ruleName1, retProc1, ..., ruleNameN, retProcN`")
 	}

@@ -1,0 +1,374 @@
+ast.Rule:
+  Name:
+    ast.Ident:
+      Name: file
+  Expr:
+    ast.Ident:
+      Name: stmts
+ast.Rule:
+  Name:
+    ast.Ident:
+      Name: stmts
+  Expr:
+    ast.UnaryExpr:
+      Op: *
+      X:
+        ast.Sequence:
+          Items:
+            ast.Ident:
+              Name: stmt
+            ast.BasicLit:
+              Kind: STRING
+              Value: ";"
+ast.Rule:
+  Name:
+    ast.Ident:
+      Name: stmt
+  Expr:
+    ast.Choice:
+      Options:
+        ast.Ident:
+          Name: varStmt
+        ast.Ident:
+          Name: constStmt
+        ast.Ident:
+          Name: outputStmt
+        ast.Ident:
+          Name: inputStmt
+        ast.Ident:
+          Name: ifStmt
+        ast.Ident:
+          Name: whileStmt
+        ast.Ident:
+          Name: untilStmt
+        ast.Ident:
+          Name: assignStmt
+ast.Rule:
+  Name:
+    ast.Ident:
+      Name: varStmt
+  Expr:
+    ast.Sequence:
+      Items:
+        ast.BasicLit:
+          Kind: STRING
+          Value: "DECLARE"
+        ast.Ident:
+          Name: namelist
+        ast.BasicLit:
+          Kind: STRING
+          Value: ":"
+        ast.Ident:
+          Name: typeExpr
+ast.Rule:
+  Name:
+    ast.Ident:
+      Name: constStmt
+  Expr:
+    ast.Sequence:
+      Items:
+        ast.BasicLit:
+          Kind: STRING
+          Value: "CONSTANT"
+        ast.Ident:
+          Name: IDENT
+        ast.BasicLit:
+          Kind: STRING
+          Value: "<-"
+        ast.Ident:
+          Name: expr
+ast.Rule:
+  Name:
+    ast.Ident:
+      Name: assignStmt
+  Expr:
+    ast.Sequence:
+      Items:
+        ast.Ident:
+          Name: IDENT
+        ast.BasicLit:
+          Kind: STRING
+          Value: "<-"
+        ast.Ident:
+          Name: expr
+ast.Rule:
+  Name:
+    ast.Ident:
+      Name: outputStmt
+  Expr:
+    ast.Sequence:
+      Items:
+        ast.BasicLit:
+          Kind: STRING
+          Value: "OUTPUT"
+        ast.Ident:
+          Name: exprlist
+ast.Rule:
+  Name:
+    ast.Ident:
+      Name: inputStmt
+  Expr:
+    ast.Sequence:
+      Items:
+        ast.BasicLit:
+          Kind: STRING
+          Value: "INPUT"
+        ast.Ident:
+          Name: namelist
+ast.Rule:
+  Name:
+    ast.Ident:
+      Name: ifStmt
+  Expr:
+    ast.Sequence:
+      Items:
+        ast.BasicLit:
+          Kind: STRING
+          Value: "IF"
+        ast.Ident:
+          Name: expr
+        ast.BasicLit:
+          Kind: STRING
+          Value: "THEN"
+        ast.BasicLit:
+          Kind: STRING
+          Value: ";"
+        ast.Ident:
+          Name: stmts
+        ast.UnaryExpr:
+          Op: ?
+          X:
+            ast.Sequence:
+              Items:
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: "ELSE"
+                ast.BasicLit:
+                  Kind: STRING
+                  Value: ";"
+                ast.Ident:
+                  Name: stmts
+        ast.BasicLit:
+          Kind: STRING
+          Value: "ENDIF"
+ast.Rule:
+  Name:
+    ast.Ident:
+      Name: whileStmt
+  Expr:
+    ast.Sequence:
+      Items:
+        ast.BasicLit:
+          Kind: STRING
+          Value: "WHILE"
+        ast.Ident:
+          Name: expr
+        ast.BasicLit:
+          Kind: STRING
+          Value: "DO"
+        ast.BasicLit:
+          Kind: STRING
+          Value: ";"
+        ast.Ident:
+          Name: stmts
+        ast.BasicLit:
+          Kind: STRING
+          Value: "ENDWHILE"
+ast.Rule:
+  Name:
+    ast.Ident:
+      Name: untilStmt
+  Expr:
+    ast.Sequence:
+      Items:
+        ast.BasicLit:
+          Kind: STRING
+          Value: "REPEAT"
+        ast.BasicLit:
+          Kind: STRING
+          Value: ";"
+        ast.Ident:
+          Name: stmts
+        ast.BasicLit:
+          Kind: STRING
+          Value: "UNTIL"
+        ast.Ident:
+          Name: expr
+ast.Rule:
+  Name:
+    ast.Ident:
+      Name: typeExpr
+  Expr:
+    ast.Choice:
+      Options:
+        ast.BasicLit:
+          Kind: STRING
+          Value: "INTEGER"
+        ast.BasicLit:
+          Kind: STRING
+          Value: "REAL"
+        ast.BasicLit:
+          Kind: STRING
+          Value: "STRING"
+        ast.BasicLit:
+          Kind: STRING
+          Value: "BOOLEAN"
+ast.Rule:
+  Name:
+    ast.Ident:
+      Name: expr
+  Expr:
+    ast.BinaryExpr:
+      X:
+        ast.Ident:
+          Name: binaryExpr2
+      Op: %
+      Y:
+        ast.Choice:
+          Options:
+            ast.BasicLit:
+              Kind: STRING
+              Value: "<"
+            ast.BasicLit:
+              Kind: STRING
+              Value: "<="
+            ast.BasicLit:
+              Kind: STRING
+              Value: ">"
+            ast.BasicLit:
+              Kind: STRING
+              Value: ">="
+            ast.BasicLit:
+              Kind: STRING
+              Value: "="
+            ast.BasicLit:
+              Kind: STRING
+              Value: "<>"
+ast.Rule:
+  Name:
+    ast.Ident:
+      Name: binaryExpr2
+  Expr:
+    ast.BinaryExpr:
+      X:
+        ast.Ident:
+          Name: binaryExpr1
+      Op: %
+      Y:
+        ast.Choice:
+          Options:
+            ast.BasicLit:
+              Kind: STRING
+              Value: "+"
+            ast.BasicLit:
+              Kind: STRING
+              Value: "-"
+ast.Rule:
+  Name:
+    ast.Ident:
+      Name: binaryExpr1
+  Expr:
+    ast.BinaryExpr:
+      X:
+        ast.Ident:
+          Name: operand
+      Op: %
+      Y:
+        ast.Choice:
+          Options:
+            ast.BasicLit:
+              Kind: STRING
+              Value: "*"
+            ast.BasicLit:
+              Kind: STRING
+              Value: "/"
+ast.Rule:
+  Name:
+    ast.Ident:
+      Name: operand
+  Expr:
+    ast.Choice:
+      Options:
+        ast.Ident:
+          Name: basicLit
+        ast.Ident:
+          Name: ident
+        ast.Ident:
+          Name: parenExpr
+        ast.Ident:
+          Name: unaryExpr
+ast.Rule:
+  Name:
+    ast.Ident:
+      Name: unaryExpr
+  Expr:
+    ast.Sequence:
+      Items:
+        ast.BasicLit:
+          Kind: STRING
+          Value: "-"
+        ast.Ident:
+          Name: operand
+ast.Rule:
+  Name:
+    ast.Ident:
+      Name: basicLit
+  Expr:
+    ast.Choice:
+      Options:
+        ast.Ident:
+          Name: INT
+        ast.Ident:
+          Name: FLOAT
+        ast.Ident:
+          Name: STRING
+ast.Rule:
+  Name:
+    ast.Ident:
+      Name: ident
+  Expr:
+    ast.Ident:
+      Name: IDENT
+ast.Rule:
+  Name:
+    ast.Ident:
+      Name: parenExpr
+  Expr:
+    ast.Sequence:
+      Items:
+        ast.BasicLit:
+          Kind: STRING
+          Value: "("
+        ast.Ident:
+          Name: expr
+        ast.BasicLit:
+          Kind: STRING
+          Value: ")"
+ast.Rule:
+  Name:
+    ast.Ident:
+      Name: exprlist
+  Expr:
+    ast.BinaryExpr:
+      X:
+        ast.Ident:
+          Name: expr
+      Op: %
+      Y:
+        ast.BasicLit:
+          Kind: STRING
+          Value: ","
+ast.Rule:
+  Name:
+    ast.Ident:
+      Name: namelist
+  Expr:
+    ast.BinaryExpr:
+      X:
+        ast.Ident:
+          Name: IDENT
+      Op: %
+      Y:
+        ast.BasicLit:
+          Kind: STRING
+          Value: ","

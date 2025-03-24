@@ -142,6 +142,11 @@ func (s *Scanner) Init(file *token.File, src []byte, err ScanErrorHandler, mode 
 	}
 }
 
+// CodeTo returns the source code snippet for the given end.
+func (s *Scanner) CodeTo(end int) []byte {
+	return s.src[:end]
+}
+
 func (s *Scanner) error(offs int, msg string) {
 	if s.err != nil {
 		s.err(s.file.Position(s.file.Pos(offs)), msg)
