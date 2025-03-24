@@ -88,6 +88,7 @@ func (p *Context) NewErrorf(pos token.Pos, format string, args ...any) error {
 // Matcher represents a matcher.
 type Matcher interface {
 	Match(src []*types.Token, ctx *Context) (n int, result any, err error)
+	IsList() bool
 }
 
 // -----------------------------------------------------------------------------
@@ -105,6 +106,10 @@ func (p *gToken) Match(src []*types.Token, ctx *Context) (n int, result any, err
 		return 0, nil, ctx.NewErrorf(t.Pos, "expect `%s`, but got `%s`", p.tok, t.Tok)
 	}
 	return 1, t, nil
+}
+
+func (p *gToken) IsList() bool {
+	return false
 }
 
 // Token: ADD, SUB, IDENT, INT, FLOAT, CHAR, STRING, etc.
@@ -128,6 +133,10 @@ func (p *gLiteral) Match(src []*types.Token, ctx *Context) (n int, result any, e
 		return 0, nil, ctx.NewErrorf(t.Pos, "expect `%s`, but got `%s`", p.lit, t.Lit)
 	}
 	return 1, t, nil
+}
+
+func (p *gLiteral) IsList() bool {
+	return false
 }
 
 // Literal: "abc", 'a', 123, 1.23, etc.
@@ -164,6 +173,10 @@ func (p *gChoice) Match(src []*types.Token, ctx *Context) (n int, result any, er
 	return nMax, nil, errMax
 }
 
+func (p *gChoice) IsList() bool {
+	return false
+}
+
 // Choice: R1 | R2 | ... | Rn
 func Choice(options ...Matcher) Matcher {
 	return &gChoice{options}
@@ -186,22 +199,12 @@ func (p *gSequence) Match(src []*types.Token, ctx *Context) (n int, result any, 
 		rets[i] = ret1
 		n += n1
 	}
-	if nitems == 2 {
-		switch v := p.items[1].(type) {
-		case *gRepeat0:
-			if len(rets[1].([]any)) == 0 {
-				result = rets[0]
-				return
-			}
-		case *gToken:
-			if v.tok == token.SEMICOLON || v.tok == token.EOF {
-				result = rets[0]
-				return
-			}
-		}
-	}
 	result = rets
 	return
+}
+
+func (p *gSequence) IsList() bool {
+	return true
 }
 
 // Sequence: R1 R2 ... Rn
@@ -229,6 +232,10 @@ func (p *gRepeat0) Match(src []*types.Token, ctx *Context) (n int, result any, e
 		n += n1
 		src = src[n1:]
 	}
+}
+
+func (p *gRepeat0) IsList() bool {
+	return true
 }
 
 // Repeat0: *R
@@ -263,6 +270,10 @@ func (p *gRepeat1) Match(src []*types.Token, ctx *Context) (n int, result any, e
 	}
 }
 
+func (p *gRepeat1) IsList() bool {
+	return true
+}
+
 // Repeat1: +R
 func Repeat1(r Matcher) Matcher {
 	return &gRepeat1{r}
@@ -282,6 +293,10 @@ func (p *gRepeat01) Match(src []*types.Token, ctx *Context) (n int, result any, 
 	return
 }
 
+func (p *gRepeat01) IsList() bool {
+	return false
+}
+
 // Repeat01: ?R
 func Repeat01(r Matcher) Matcher {
 	return &gRepeat01{r}
@@ -296,10 +311,15 @@ func List(a, b Matcher) Matcher {
 
 // -----------------------------------------------------------------------------
 
+type RetProc = func(any) any
+type ListRetProc = func([]any) any
+
 type Var struct {
 	Elem Matcher
 	Name string
 	Pos  token.Pos
+
+	RetProc any
 }
 
 func (p *Var) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
@@ -308,7 +328,15 @@ func (p *Var) Match(src []*types.Token, ctx *Context) (n int, result any, err er
 		return 0, nil, ctx.NewErrorf(p.Pos, "variable `%s` not assigned", p.Name)
 	}
 	n, result, err = g.Match(src, ctx)
-	if err == errMultiMismatch {
+	if err == nil {
+		if retProc := p.RetProc; retProc != nil {
+			if g.IsList() {
+				result = retProc.(ListRetProc)(result.([]any))
+			} else {
+				result = retProc.(RetProc)(result)
+			}
+		}
+	} else if err == errMultiMismatch {
 		var posErr token.Pos
 		var tokErr any
 		if len(src) > 0 {
@@ -319,6 +347,10 @@ func (p *Var) Match(src []*types.Token, ctx *Context) (n int, result any, err er
 		err = ctx.NewErrorf(posErr, "expect `%s`, but got `%s`", p.Name, tokErr)
 	}
 	return
+}
+
+func (p *Var) IsList() bool {
+	return false
 }
 
 // Assign assigns a value to this variable.

@@ -40,12 +40,15 @@ type Compiler struct {
 }
 
 // New creates a new TPL compiler.
-func New(src any) (ret Compiler, err error) {
-	return FromFile("", src, nil)
+// params: ruleName1, retProc1, ..., ruleNameN, retProcN
+func New(src any, params ...any) (ret Compiler, err error) {
+	return FromFile(nil, "", src, params...)
 }
 
 // FromFile creates a new TPL compiler from a file.
-func FromFile(filename string, src any, fset *token.FileSet) (ret Compiler, err error) {
+// fset can be nil.
+// params: ruleName1, retProc1, ..., ruleNameN, retProcN
+func FromFile(fset *token.FileSet, filename string, src any, params ...any) (ret Compiler, err error) {
 	if fset == nil {
 		fset = token.NewFileSet()
 	}
@@ -56,6 +59,18 @@ func FromFile(filename string, src any, fset *token.FileSet) (ret Compiler, err 
 	ret.Result, err = cl.New(fset, f)
 	ret.Fset = fset
 	return
+}
+
+func retProcs(params []any) map[string]any {
+	n := len(params)
+	if n&1 != 0 {
+		panic("tpl.New: invalid params. should be in form `ruleName1, retProc1, ..., ruleNameN, retProcN`")
+	}
+	ret := make(map[string]any, n>>1)
+	for i := 0; i < n; i += 2 {
+		ret[params[i].(string)] = params[i+1]
+	}
+	return ret
 }
 
 // -----------------------------------------------------------------------------
@@ -161,13 +176,44 @@ func isEOL(tok token.Token) bool {
 
 func isPlain(result []any) bool {
 	for _, v := range result {
-		if _, ok := v.(*Token); !ok {
-			if a, ok := v.([]any); !ok || len(a) != 0 {
-				return false
-			}
+		if _, ok := scalar(v); !ok {
+			return false
 		}
 	}
 	return true
+}
+
+func scalar(v any) (any, bool) {
+	if v == nil {
+		return nil, true
+	}
+retry:
+	switch result := v.(type) {
+	case *Token:
+		return v, true
+	case []any:
+		if len(result) == 2 {
+			if isVoid(result[1]) {
+				v = result[0]
+				goto retry
+			}
+		}
+		return v, len(result) == 0
+	}
+	return v, false
+}
+
+func isVoid(v any) bool {
+	if v == nil {
+		return true
+	}
+	switch v := v.(type) {
+	case *Token:
+		return v.Tok == token.SEMICOLON || v.Tok == token.EOF
+	case []any:
+		return len(v) == 0
+	}
+	return false
 }
 
 // -----------------------------------------------------------------------------
@@ -176,8 +222,9 @@ func Dump(result any, omitSemi ...bool) {
 	Fdump(os.Stdout, result, "", "  ", omitSemi != nil && omitSemi[0])
 }
 
-func Fdump(w io.Writer, result any, prefix, indent string, omitSemi bool) {
-	switch result := result.(type) {
+func Fdump(w io.Writer, ret any, prefix, indent string, omitSemi bool) {
+retry:
+	switch result := ret.(type) {
 	case *Token:
 		if result.Tok != token.SEMICOLON {
 			fmt.Fprint(w, prefix, result, "\n")
@@ -185,12 +232,19 @@ func Fdump(w io.Writer, result any, prefix, indent string, omitSemi bool) {
 			fmt.Fprint(w, prefix, ";\n")
 		}
 	case []any:
+		if len(result) == 2 {
+			if isVoid(result[1]) {
+				ret = result[0]
+				goto retry
+			}
+		}
 		if isPlain(result) {
 			fmt.Print(prefix, "[")
 			for i, v := range result {
 				if i > 0 {
 					fmt.Print(" ")
 				}
+				v, _ = scalar(v)
 				fmt.Fprint(w, v)
 			}
 			fmt.Print("]\n")
