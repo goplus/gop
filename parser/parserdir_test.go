@@ -125,6 +125,35 @@ func testFrom(t *testing.T, pkgDir, sel string, exclude Mode) {
 	}
 }
 
+func testExprFrom(t *testing.T, pkgDir, sel string, exclude Mode) {
+	if sel != "" && !strings.Contains(pkgDir, sel) {
+		return
+	}
+	t.Helper()
+	log.Println("Parsing", pkgDir)
+	fset := token.NewFileSet()
+	fname := pkgDir + "/in.gop"
+	src, err := os.ReadFile(fname)
+	if err != nil {
+		t.Fatal("os.ReadFile:", err)
+	}
+	file := fset.AddFile(fname, -1, len(src))
+	expr, errs := ParseExprEx(file, src, 0, (Trace|ParseComments)&^exclude)
+	if errs != nil {
+		if len(errs) > 0 {
+			for _, e := range errs {
+				t.Log(e)
+			}
+		}
+		t.Fatal("ParseExprEx failed:", errs)
+	}
+	b, err := os.ReadFile(pkgDir + "/out.expect")
+	if err != nil {
+		t.Fatal("Parsing", pkgDir, "-", err)
+	}
+	parsertest.ExpectNode(t, expr, string(b))
+}
+
 func TestParseGo(t *testing.T) {
 	fset := token.NewFileSet()
 	pkgs, err := ParseDirEx(fset, "./_testdata/functype", Config{Mode: Trace | ParseGoAsGoPlus})
@@ -341,7 +370,7 @@ func TestErrParse(t *testing.T) {
 	}
 }
 
-func testFromDir(t *testing.T, sel, relDir string) {
+func testFromDir(t *testing.T, sel, relDir string, testExpr ...bool) {
 	dir, err := os.Getwd()
 	if err != nil {
 		t.Fatal("Getwd failed:", err)
@@ -351,15 +380,25 @@ func testFromDir(t *testing.T, sel, relDir string) {
 	if err != nil {
 		t.Fatal("ReadDir failed:", err)
 	}
+	isTestExpr := len(testExpr) > 0 && testExpr[0]
 	for _, fi := range fis {
 		name := fi.Name()
 		if strings.HasPrefix(name, "_") {
 			continue
 		}
 		t.Run(name, func(t *testing.T) {
-			testFrom(t, dir+"/"+name, sel, 0)
+			pkgDir := dir + "/" + name
+			if isTestExpr {
+				testExprFrom(t, pkgDir, sel, 0)
+			} else {
+				testFrom(t, pkgDir, sel, 0)
+			}
 		})
 	}
+}
+
+func TestFromTestexpr(t *testing.T) {
+	testFromDir(t, "", "./_testexpr", true)
 }
 
 func TestFromTestdata(t *testing.T) {
