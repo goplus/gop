@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package parser
+package parser_test
 
 import (
-	"go/scanner"
 	"log"
 	"os"
 	"path"
@@ -25,7 +24,11 @@ import (
 	"strings"
 	"testing"
 
+	gopp "github.com/goplus/gop/parser"
+	"github.com/goplus/gop/tpl/ast"
+	"github.com/goplus/gop/tpl/parser"
 	"github.com/goplus/gop/tpl/parser/parsertest"
+	"github.com/goplus/gop/tpl/scanner"
 	"github.com/goplus/gop/tpl/token"
 )
 
@@ -36,7 +39,11 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 	t.Helper()
 	log.Println("Parsing", pkgDir)
 	fset := token.NewFileSet()
-	f, err := ParseFile(fset, pkgDir+"/in.gop", nil, nil)
+	f, err := parser.ParseFile(fset, pkgDir+"/in.gop", nil, &parser.Config{
+		ParseRetProc: func(file *token.File, src []byte, offset int) (ast.Node, scanner.ErrorList) {
+			return gopp.ParseExprEx(file, src, offset, 0)
+		},
+	})
 	if err != nil {
 		if errs, ok := err.(scanner.ErrorList); ok {
 			for _, e := range errs {
