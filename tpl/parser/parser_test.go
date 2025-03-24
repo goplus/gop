@@ -36,7 +36,7 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 	t.Helper()
 	log.Println("Parsing", pkgDir)
 	fset := token.NewFileSet()
-	f, err := ParseFile(fset, pkgDir+"/in.gop", nil, 0)
+	f, err := ParseFile(fset, pkgDir+"/in.gop", nil, nil)
 	if err != nil {
 		if errs, ok := err.(scanner.ErrorList); ok {
 			for _, e := range errs {

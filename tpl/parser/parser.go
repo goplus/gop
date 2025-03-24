@@ -25,19 +25,26 @@ import (
 
 // -----------------------------------------------------------------------------
 
-// A Mode value is a set of flags (or 0).
-// They control the amount of source code parsed and other optional
-// parser functionality.
-type Mode uint
+// RetProcParser parses a RetProc.
+type RetProcParser = func(file *token.File, src []byte, offset int) (ast.Node, scanner.ErrorList)
+
+// Config configures the behavior of the parser.
+type Config struct {
+	ParseRetProc RetProcParser
+}
 
 // ParseFile parses a file and returns the AST.
-func ParseFile(fset *token.FileSet, filename string, src any, _ Mode) (f *ast.File, err error) {
+func ParseFile(fset *token.FileSet, filename string, src any, conf *Config) (f *ast.File, err error) {
 	b, err := iox.ReadSourceLocal(filename, src)
 	if err != nil {
 		return nil, err
 	}
+
 	var p parser
 	p.init(fset, filename, b)
+	if conf != nil {
+		p.parseRetProc = conf.ParseRetProc
+	}
 	f = p.parseFile()
 	switch p.errors.Len() {
 	case 0:
@@ -61,6 +68,9 @@ type parser struct {
 	pos token.Pos
 	tok token.Token
 	lit string
+
+	// Callback to parse RetProc.
+	parseRetProc RetProcParser
 
 	// Error handling
 	errors scanner.ErrorList
@@ -161,7 +171,19 @@ func (p *parser) parseRule() *ast.Rule {
 
 	var retProc ast.Node
 	if p.tok == token.DRARROW { // => { ... }
-		panic("TODO: => { ... }")
+		if off, end, ok := p.lambdaExpr(); ok {
+			if p.parseRetProc != nil {
+				file := p.file
+				base := file.Base()
+				src := p.scanner.CodeTo(int(end) - base)
+				expr, err := p.parseRetProc(file, src, int(off)-base)
+				if err == nil {
+					retProc = expr
+				} else {
+					p.errors = append(p.errors, err...)
+				}
+			}
+		}
 	}
 
 	p.expect(token.SEMICOLON)
@@ -170,6 +192,29 @@ func (p *parser) parseRule() *ast.Rule {
 		TokPos:  tokPos,
 		Expr:    expr,
 		RetProc: retProc,
+	}
+}
+
+func (p *parser) lambdaExpr() (start, end token.Pos, ok bool) {
+	start = p.pos // => {
+	p.next()
+	p.expect(token.LBRACE)
+	level := 1
+	for {
+		switch p.tok {
+		case token.RBRACE:
+			level--
+			if level == 0 { // }
+				p.next()
+				end, ok = p.pos, true
+				return
+			}
+		case token.LBRACE:
+			level++
+		case token.EOF:
+			return
+		}
+		p.next()
 	}
 }
 

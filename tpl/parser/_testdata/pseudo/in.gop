@@ -1,0 +1,123 @@
+file = stmts => {
+	return &ast.File{
+		Stmts: this.([]ast.Stmt),
+	}
+}
+
+stmts = *(stmt ";") => {
+	return [n.(ast.Stmt) for n in this]
+}
+
+stmt = varStmt | constStmt | outputStmt | inputStmt | ifStmt | whileStmt | untilStmt | assignStmt
+
+varStmt = "DECLARE" namelist ":" typeExpr => {
+	return &ast.DeclareStmt{
+		Declare: this[0].(*tpl.Token).Pos,
+		Names:   this[1].([]*ast.Ident),
+		Type:    this[3].(ast.Expr),
+	}
+}
+
+constStmt = "CONSTANT" IDENT "<-" expr => {
+	return &ast.ConstantStmt{
+		Constant: this[0].(*tpl.Token).Pos,
+		Name:     this[1].(*ast.Ident),
+		Value:    this[3].(ast.Expr),
+	}
+}
+
+assignStmt = IDENT "<-" expr => {
+	return &ast.AssignStmt{
+		Name:  this[0].(*ast.Ident),
+		Value: this[2].(ast.Expr),
+	}
+}
+
+outputStmt = "OUTPUT" exprlist => {
+	return &ast.OutputStmt{
+		Output: this[0].(*tpl.Token).Pos,
+		Values: this[1].([]ast.Expr),
+	}
+}
+
+inputStmt = "INPUT" namelist => {
+	return &ast.InputStmt{
+		Input: this[0].(*tpl.Token).Pos,
+		Names: this[1].([]*ast.Ident),
+	}
+}
+
+ifStmt = "IF" expr "THEN" ";" stmts ?("ELSE" ";" stmts) "ENDIF" => {
+	var elseBody []ast.Stmt
+	if v := this[5]; v != nil {
+		elseStmt := v.([]any)
+		elseBody = elseStmt[2].([]ast.Stmt)
+	}
+	return &ast.IfStmt{
+		If:    this[0].(*tpl.Token).Pos,
+		Cond:  this[1].(ast.Expr),
+		Body:  this[4].([]ast.Stmt),
+		Else:  elseBody,
+		EndIf: this[6].(*tpl.Token).Pos,
+	}
+}
+
+whileStmt = "WHILE" expr "DO" ";" stmts "ENDWHILE" => {
+	return &ast.WhileStmt{
+		While:    this[0].(*tpl.Token).Pos,
+		Cond:     this[1].(ast.Expr),
+		Body:     this[4].([]ast.Stmt),
+		EndWhile: this[5].(*tpl.Token).Pos,
+	}
+}
+
+untilStmt = "REPEAT" ";" stmts "UNTIL" expr => {
+	return &ast.UntilStmt{
+		Repeat: this[0].(*tpl.Token).Pos,
+		Body:   this[2].([]ast.Stmt),
+		Until:  this[3].(*tpl.Token).Pos,
+		Cond:   this[4].(ast.Expr),
+	}
+}
+
+typeExpr = "INTEGER" | "REAL" | "STRING" | "BOOLEAN" => {
+	return tpl.ident(this)
+}
+
+expr = binaryExpr2 % ("<" | "<=" | ">" | ">=" | "=" | "<>") => {
+	return tpl.binaryExpr(this)
+}
+
+binaryExpr2 = binaryExpr1 % ("+" | "-") => {
+	return tpl.binaryExpr(this)
+}
+
+binaryExpr1 = operand % ("*" | "/") => {
+	return tpl.binaryExpr(this)
+}
+
+operand = basicLit | ident | parenExpr | unaryExpr
+
+unaryExpr = "-" operand => {
+	return tpl.unaryExpr(this)
+}
+
+basicLit = INT | FLOAT | STRING => {
+	return tpl.basicLit(this)
+}
+
+ident = IDENT => {
+	return tpl.ident(this)
+}
+
+parenExpr = "(" expr ")" => {
+	return this[1]
+}
+
+exprlist = expr % "," => {
+	return [v.(ast.Expr) for v in tpl.list(this)]
+}
+
+namelist = IDENT % "," => {
+	return [tpl.ident(v) for v in tpl.list(this)]
+}

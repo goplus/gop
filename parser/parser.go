@@ -1714,7 +1714,7 @@ func (p *parser) stringLitExpr(parts []any, off, end token.Pos) []any {
 	file := p.file
 	base := file.Base()
 	src := p.scanner.CodeTo(int(end) - base)
-	expr, err := ParseExprEx(p.file, src, int(off)-base, 0)
+	expr, err := ParseExprEx(file, src, int(off)-base, 0)
 	if err != nil {
 		p.errors = append(p.errors, err...)
 		expr = &ast.BadExpr{From: off, To: end}
