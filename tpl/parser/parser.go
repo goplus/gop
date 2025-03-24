@@ -142,7 +142,10 @@ func (p *parser) parseIdent() *ast.Ident {
 	return &ast.Ident{NamePos: pos, Name: name}
 }
 
-// parseRule parses a rule: IDENT '=' expr ';'
+// parseRule parses a rule:
+//
+//	IDENT '=' expr ';'
+//	IDENT '=' expr => { ... } ';'
 func (p *parser) parseRule() *ast.Rule {
 	if p.tok != token.IDENT {
 		p.errorExpected(p.pos, "'IDENT'")
@@ -156,11 +159,17 @@ func (p *parser) parseRule() *ast.Rule {
 		return nil
 	}
 
+	var retProc ast.Node
+	if p.tok == token.DRARROW { // => { ... }
+		panic("TODO: => { ... }")
+	}
+
 	p.expect(token.SEMICOLON)
 	return &ast.Rule{
-		Name:   name,
-		TokPos: tokPos,
-		Expr:   expr,
+		Name:    name,
+		TokPos:  tokPos,
+		Expr:    expr,
+		RetProc: retProc,
 	}
 }
 

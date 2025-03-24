@@ -57,6 +57,11 @@ func (p *context) addError(pos token.Pos, msg string) {
 
 // New compiles a set of rules from the given files.
 func New(fset *token.FileSet, files ...*ast.File) (ret Result, err error) {
+	return NewEx(nil, fset, files...)
+}
+
+// NewEx compiles a set of rules from the given files.
+func NewEx(retProcs map[string]any, fset *token.FileSet, files ...*ast.File) (ret Result, err error) {
 	rules := make(map[string]*matcher.Var)
 	ctx := &context{rules: rules, fset: fset}
 	for _, f := range files {
@@ -84,8 +89,10 @@ func New(fset *token.FileSet, files ...*ast.File) (ret Result, err error) {
 			switch decl := decl.(type) {
 			case *ast.Rule:
 				ident := decl.Name
-				v := rules[ident.Name]
+				name := ident.Name
+				v := rules[name]
 				if r, ok := compileExpr(decl.Expr, ctx); ok {
+					v.RetProc = retProcs[name]
 					if e := v.Assign(r); e != nil {
 						ctx.addError(ident.Pos(), e.Error())
 					}
