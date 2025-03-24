@@ -90,10 +90,13 @@ func Walk(v Visitor, node Node) {
 
 	case *DomainTextLit:
 		Walk(v, n.Domain)
-		if n.Extra != nil { // Go+ extended
-			for _, part := range n.Extra.Parts {
-				if e, ok := part.(Expr); ok {
-					Walk(v, e)
+		if e := n.Extra; e != nil {
+			switch e := e.(type) {
+			case *StringLitEx:
+				for _, part := range e.Parts {
+					if e, ok := part.(Expr); ok {
+						Walk(v, e)
+					}
 				}
 			}
 		}

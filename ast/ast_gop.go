@@ -64,10 +64,10 @@ func (*OverloadFuncDecl) declNode() {}
 //
 //	tpl`...`
 type DomainTextLit struct {
-	Domain   *Ident       // domain name
-	ValuePos token.Pos    // literal position
-	Value    string       // literal string; e.g. `\m\n\o`
-	Extra    *StringLitEx // optional
+	Domain   *Ident    // domain name
+	ValuePos token.Pos // literal position
+	Value    string    // literal string; e.g. `\m\n\o`
+	Extra    any       // *ast.StringLitEx or *gop/tpl/ast.File, optional
 }
 
 // Pos returns position of first character belonging to the node.
