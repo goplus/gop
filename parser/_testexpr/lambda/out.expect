@@ -1,0 +1,8 @@
+ast.LambdaExpr2:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.ReturnStmt:
+          Results:
+            ast.Ident:
+              Name: this

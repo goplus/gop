@@ -121,10 +121,21 @@ func Fprint(w io.Writer, pkg *ast.Package) {
 	}
 }
 
-// Expect asserts a Go+ package AST equals output or not.
+// Expect asserts a Go+ AST package equals output or not.
 func Expect(t *testing.T, pkg *ast.Package, expected string) {
 	b := bytes.NewBuffer(nil)
 	Fprint(b, pkg)
+	output := b.String()
+	if expected != output {
+		fmt.Fprint(os.Stderr, output)
+		t.Fatal("gop.Parser: unexpect result")
+	}
+}
+
+// ExpectNode asserts a Go+ AST node equals output or not.
+func ExpectNode(t *testing.T, node any, expected string) {
+	b := bytes.NewBuffer(nil)
+	FprintNode(b, "", node, "", "  ")
 	output := b.String()
 	if expected != output {
 		fmt.Fprint(os.Stderr, output)
