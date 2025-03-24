@@ -84,14 +84,14 @@ type Token = types.Token
 // Scanner represents a TPL scanner.
 type Scanner interface {
 	Scan() Token
-	Init(file *token.File, src []byte, err scanner.ScanErrorHandler, mode scanner.ScanMode)
+	Init(file *token.File, src []byte, err scanner.ErrorHandler, mode scanner.Mode)
 }
 
 // Config represents a parsing configuration of [Compiler.Parse].
 type Config struct {
 	Scanner          Scanner
-	ScanMode         scanner.ScanMode
-	ScanErrorHandler scanner.ScanErrorHandler
+	ScanMode         scanner.Mode
+	ScanErrorHandler scanner.ErrorHandler
 }
 
 // ParseExpr parses an expression.
