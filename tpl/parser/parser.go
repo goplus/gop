@@ -39,9 +39,14 @@ func ParseFile(fset *token.FileSet, filename string, src any, conf *Config) (f *
 	if err != nil {
 		return nil, err
 	}
+	file := fset.AddFile(filename, -1, len(b))
+	return Parse(file, b, 0, conf)
+}
 
+// Parse parses src[offset:] and returns the AST.
+func Parse(file *token.File, src []byte, offset int, conf *Config) (f *ast.File, err error) {
 	var p parser
-	p.init(fset, filename, b)
+	p.init(file, src, offset)
 	if conf != nil {
 		p.parseRetProc = conf.ParseRetProc
 	}
@@ -76,10 +81,10 @@ type parser struct {
 	errors scanner.ErrorList
 }
 
-func (p *parser) init(fset *token.FileSet, filename string, src []byte) {
-	p.file = fset.AddFile(filename, -1, len(src))
+func (p *parser) init(file *token.File, src []byte, offset int) {
+	p.file = file
 	eh := func(pos token.Position, msg string) { p.errors.Add(pos, msg) }
-	p.scanner.Init(p.file, src, eh, 0)
+	p.scanner.InitEx(p.file, src, offset, eh, 0)
 	p.next() // initialize first token
 }
 
