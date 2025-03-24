@@ -22,6 +22,7 @@ import (
 	"os"
 
 	"github.com/goplus/gop/parser/iox"
+	"github.com/goplus/gop/tpl/ast"
 	"github.com/goplus/gop/tpl/cl"
 	"github.com/goplus/gop/tpl/matcher"
 	"github.com/goplus/gop/tpl/parser"
@@ -209,8 +210,7 @@ func Fdump(w io.Writer, result any, prefix, indent string, omitSemi bool) {
 
 // List converts the matching result of (R % ",") to a flat list.
 // R % "," means R *("," R)
-func List(this any) []any {
-	in := this.([]any)
+func List(in []any) []any {
 	next := in[1].([]any)
 	ret := make([]any, len(next)+1)
 	ret[0] = in[0]
@@ -218,6 +218,52 @@ func List(this any) []any {
 		ret[i+1] = v.([]any)[1]
 	}
 	return ret
+}
+
+// BinaryExpr converts the matching result of (X % op) to a binary expression.
+// X % op means X *(op X)
+func BinaryExpr(in []any) ast.Expr {
+	ret := in[0].(ast.Expr)
+	for _, v := range in[1].([]any) {
+		next := v.([]any)
+		op := next[0].(*Token)
+		ret = &ast.BinaryExpr{
+			X:     ret,
+			OpPos: op.Pos,
+			Op:    op.Tok,
+			Y:     next[1].(ast.Expr),
+		}
+	}
+	return ret
+}
+
+// UnaryExpr converts the matching result of (op X) to a unary expression.
+func UnaryExpr(in []any) ast.Expr {
+	op := in[0].(*Token)
+	return &ast.UnaryExpr{
+		OpPos: op.Pos,
+		Op:    op.Tok,
+		X:     in[1].(ast.Expr),
+	}
+}
+
+// Ident converts the matching result of an identifier to an ast.Ident expression.
+func Ident(this any) *ast.Ident {
+	v := this.(*Token)
+	return &ast.Ident{
+		NamePos: v.Pos,
+		Name:    v.Lit,
+	}
+}
+
+// BasicLit converts the matching result of a basic literal to an ast.BasicLit expression.
+func BasicLit(this any) *ast.BasicLit {
+	v := this.(*Token)
+	return &ast.BasicLit{
+		ValuePos: v.Pos,
+		Kind:     v.Tok,
+		Value:    v.Lit,
+	}
 }
 
 // -----------------------------------------------------------------------------

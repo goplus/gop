@@ -64,16 +64,26 @@ func (p *File) End() token.Pos {
 
 // -----------------------------------------------------------------------------
 
-// Rule: IDENT '=' Expr
+// Rule:
+//
+//	IDENT '=' Expr
+//	IDENT '=' Expr => { ... }
 type Rule struct {
-	Name   *Ident
-	TokPos token.Pos // position of '='
-	Expr   Expr
+	Name    *Ident
+	TokPos  token.Pos // position of '='
+	Expr    Expr
+	RetProc Node // => { ... } (see gop/ast.LambdaExpr2) or nil
 }
 
 func (p *Rule) Pos() token.Pos { return p.Name.Pos() }
-func (p *Rule) End() token.Pos { return p.Expr.End() }
-func (p *Rule) declNode()      {}
+func (p *Rule) End() token.Pos {
+	if p.RetProc != nil {
+		return p.RetProc.End()
+	}
+	return p.Expr.End()
+}
+
+func (p *Rule) declNode() {}
 
 // -----------------------------------------------------------------------------
 
