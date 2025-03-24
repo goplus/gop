@@ -34,4 +34,82 @@ unaryExpr = operand | "-" unaryExpr
 
 operand = INT | FLOAT | "(" expr ")"
 `
+                  Extra:
+                    ast.File:
+                      Decls:
+                        ast.Rule:
+                          Name:
+                            ast.Ident:
+                              Name: expr
+                          Expr:
+                            ast.BinaryExpr:
+                              X:
+                                ast.Ident:
+                                  Name: termExpr
+                              Op: %
+                              Y:
+                                ast.Choice:
+                                  Options:
+                                    ast.BasicLit:
+                                      Kind: STRING
+                                      Value: "+"
+                                    ast.BasicLit:
+                                      Kind: STRING
+                                      Value: "-"
+                        ast.Rule:
+                          Name:
+                            ast.Ident:
+                              Name: termExpr
+                          Expr:
+                            ast.BinaryExpr:
+                              X:
+                                ast.Ident:
+                                  Name: unaryExpr
+                              Op: %
+                              Y:
+                                ast.Choice:
+                                  Options:
+                                    ast.BasicLit:
+                                      Kind: STRING
+                                      Value: "*"
+                                    ast.BasicLit:
+                                      Kind: STRING
+                                      Value: "/"
+                        ast.Rule:
+                          Name:
+                            ast.Ident:
+                              Name: unaryExpr
+                          Expr:
+                            ast.Choice:
+                              Options:
+                                ast.Ident:
+                                  Name: operand
+                                ast.Sequence:
+                                  Items:
+                                    ast.BasicLit:
+                                      Kind: STRING
+                                      Value: "-"
+                                    ast.Ident:
+                                      Name: unaryExpr
+                        ast.Rule:
+                          Name:
+                            ast.Ident:
+                              Name: operand
+                          Expr:
+                            ast.Choice:
+                              Options:
+                                ast.Ident:
+                                  Name: INT
+                                ast.Ident:
+                                  Name: FLOAT
+                                ast.Sequence:
+                                  Items:
+                                    ast.BasicLit:
+                                      Kind: STRING
+                                      Value: "("
+                                    ast.Ident:
+                                      Name: expr
+                                    ast.BasicLit:
+                                      Kind: STRING
+                                      Value: ")"
               Tok: !

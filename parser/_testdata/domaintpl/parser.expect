@@ -1,0 +1,146 @@
+package main
+
+file tpl.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: cl
+          Tok: :=
+          Rhs:
+            ast.ErrWrapExpr:
+              X:
+                ast.DomainTextLit:
+                  Domain:
+                    ast.Ident:
+                      Name: tpl
+                  Value: `
+file = stmts => {
+	return &ast.File{
+		Stmts: this.([]ast.Stmt),
+	}
+}
+
+stmts = *(stmt ";") => {
+	return [n.([]any)[0].(ast.Stmt) for n in this]
+}
+`
+                  Extra:
+                    ast.File:
+                      Decls:
+                        ast.Rule:
+                          Name:
+                            ast.Ident:
+                              Name: file
+                          Expr:
+                            ast.Ident:
+                              Name: stmts
+                          RetProc:
+                            ast.LambdaExpr2:
+                              Body:
+                                ast.BlockStmt:
+                                  List:
+                                    ast.ReturnStmt:
+                                      Results:
+                                        ast.UnaryExpr:
+                                          Op: &
+                                          X:
+                                            ast.CompositeLit:
+                                              Type:
+                                                ast.SelectorExpr:
+                                                  X:
+                                                    ast.Ident:
+                                                      Name: ast
+                                                  Sel:
+                                                    ast.Ident:
+                                                      Name: File
+                                              Elts:
+                                                ast.KeyValueExpr:
+                                                  Key:
+                                                    ast.Ident:
+                                                      Name: Stmts
+                                                  Value:
+                                                    ast.TypeAssertExpr:
+                                                      X:
+                                                        ast.Ident:
+                                                          Name: this
+                                                      Type:
+                                                        ast.ArrayType:
+                                                          Elt:
+                                                            ast.SelectorExpr:
+                                                              X:
+                                                                ast.Ident:
+                                                                  Name: ast
+                                                              Sel:
+                                                                ast.Ident:
+                                                                  Name: Stmt
+                        ast.Rule:
+                          Name:
+                            ast.Ident:
+                              Name: stmts
+                          Expr:
+                            ast.UnaryExpr:
+                              Op: *
+                              X:
+                                ast.Sequence:
+                                  Items:
+                                    ast.Ident:
+                                      Name: stmt
+                                    ast.BasicLit:
+                                      Kind: STRING
+                                      Value: ";"
+                          RetProc:
+                            ast.LambdaExpr2:
+                              Body:
+                                ast.BlockStmt:
+                                  List:
+                                    ast.ReturnStmt:
+                                      Results:
+                                        ast.ComprehensionExpr:
+                                          Tok: [
+                                          Elt:
+                                            ast.TypeAssertExpr:
+                                              X:
+                                                ast.IndexExpr:
+                                                  X:
+                                                    ast.TypeAssertExpr:
+                                                      X:
+                                                        ast.Ident:
+                                                          Name: n
+                                                      Type:
+                                                        ast.ArrayType:
+                                                          Elt:
+                                                            ast.Ident:
+                                                              Name: any
+                                                  Index:
+                                                    ast.BasicLit:
+                                                      Kind: INT
+                                                      Value: 0
+                                              Type:
+                                                ast.SelectorExpr:
+                                                  X:
+                                                    ast.Ident:
+                                                      Name: ast
+                                                  Sel:
+                                                    ast.Ident:
+                                                      Name: Stmt
+                                          Fors:
+                                            ast.ForPhrase:
+                                              Value:
+                                                ast.Ident:
+                                                  Name: n
+                                              X:
+                                                ast.Ident:
+                                                  Name: this
+              Tok: !
