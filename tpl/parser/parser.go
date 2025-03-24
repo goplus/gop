@@ -40,26 +40,26 @@ func ParseFile(fset *token.FileSet, filename string, src any, conf *Config) (f *
 		return nil, err
 	}
 	file := fset.AddFile(filename, -1, len(b))
-	return Parse(file, b, 0, conf)
+	f, errs := ParseEx(file, b, 0, conf)
+	switch errs.Len() {
+	case 0:
+	case 1:
+		err = errs[0]
+	default:
+		errs.Sort()
+		err = errs
+	}
+	return
 }
 
-// Parse parses src[offset:] and returns the AST.
-func Parse(file *token.File, src []byte, offset int, conf *Config) (f *ast.File, err error) {
+// ParseEx parses src[offset:] and returns the AST.
+func ParseEx(file *token.File, src []byte, offset int, conf *Config) (f *ast.File, errs scanner.ErrorList) {
 	var p parser
 	p.init(file, src, offset)
 	if conf != nil {
 		p.parseRetProc = conf.ParseRetProc
 	}
-	f = p.parseFile()
-	switch p.errors.Len() {
-	case 0:
-	case 1:
-		err = p.errors[0]
-	default:
-		p.errors.Sort()
-		err = p.errors
-	}
-	return
+	return p.parseFile(), p.errors
 }
 
 // -----------------------------------------------------------------------------

@@ -29,6 +29,7 @@ import (
 
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
+	tpltoken "github.com/goplus/gop/tpl/token"
 )
 
 func sortedKeys(m any) []string {
@@ -47,6 +48,7 @@ var (
 	tyString    = reflect.TypeOf("")
 	tyToken     = reflect.TypeOf(token.Token(0))
 	tyObjectPtr = reflect.TypeOf((*ast.Object)(nil))
+	tplToken    = reflect.TypeOf(tpltoken.Token(0))
 )
 
 // FprintNode prints a Go+ AST node.
@@ -78,7 +80,7 @@ func FprintNode(w io.Writer, lead string, v any, prefix, indent string) {
 				sf := tyElem.Field(i)
 				sfv := elem.Field(i).Interface()
 				switch sf.Type {
-				case tyString, tyToken:
+				case tyString, tyToken, tplToken:
 					fmt.Fprintf(w, "%s%v: %v\n", prefix, sf.Name, sfv)
 				default:
 					FprintNode(w, fmt.Sprintf("%s%v:\n", prefix, sf.Name), sfv, prefix+indent, indent)
