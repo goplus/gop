@@ -18,11 +18,13 @@ package variant
 
 // -----------------------------------------------------------------------------
 
+// Module represents a module.
 type Module struct {
 	Name string
 	objs map[string]any
 }
 
+// NewModule creates a new module.
 func NewModule(name string) *Module {
 	mod := &Module{
 		Name: name,
@@ -32,11 +34,13 @@ func NewModule(name string) *Module {
 	return mod
 }
 
+// Lookup looks up an object in the module.
 func (p *Module) Lookup(name string) (v any, ok bool) {
 	v, ok = p.objs[name]
 	return
 }
 
+// Insert inserts an object into the module.
 func (p *Module) Insert(name string, v any) {
 	objs := p.objs
 	if _, ok := objs[name]; ok {
@@ -45,6 +49,7 @@ func (p *Module) Insert(name string, v any) {
 	objs[name] = v
 }
 
+// Merge merges a module into the current module.
 func (p *Module) Merge(mod *Module) {
 	for name, obj := range mod.objs {
 		p.Insert(name, obj)
@@ -61,6 +66,7 @@ var (
 	}
 )
 
+// CastInt converts a value to int.
 func CastInt(args ...any) any {
 	if len(args) != 1 {
 		panic("int: arity mismatch")
@@ -85,15 +91,9 @@ func Call(name string, args ...any) any {
 	panic("function not found: " + name)
 }
 
-// DelayCall delays to call a function.
-func DelayCall(name string, args ...any) any {
-	return func() any {
-		return Call(name, args...)
-	}
-}
-
 // -----------------------------------------------------------------------------
 
+// InitUniverse initializes the universe module with the specified modules.
 func InitUniverse(names ...string) {
 	for _, name := range names {
 		if o, ok := universe.objs[name]; ok {

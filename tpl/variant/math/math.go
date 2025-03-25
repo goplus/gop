@@ -96,6 +96,7 @@ func topValue(op token.Token, args []any) any {
 	return ret
 }
 
+// Max returns the maximum value.
 func Max(args ...any) any {
 	if len(args) == 0 {
 		panic("max: arity mismatch")
@@ -103,6 +104,7 @@ func Max(args ...any) any {
 	return topValue(token.GT, args)
 }
 
+// Min returns the minimum value.
 func Min(args ...any) any {
 	if len(args) == 0 {
 		panic("min: arity mismatch")

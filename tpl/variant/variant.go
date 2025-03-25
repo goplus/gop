@@ -149,13 +149,6 @@ func Compare(op token.Token, x, y any) bool {
 	panic("compare: invalid operation")
 }
 
-// DelayCompare delays a compare operation.
-func DelayCompare(op token.Token, x, y any) any {
-	return func() any {
-		return Compare(op, x, y)
-	}
-}
-
 // -----------------------------------------------------------------------------
 
 func mopInt(op token.Token, x, y int) int {
@@ -222,13 +215,6 @@ func MathOp(op token.Token, x, y any) any {
 	panic("mathOp: invalid operation")
 }
 
-// DelayMathOp delays a math operation.
-func DelayMathOp(op token.Token, x, y any) any {
-	return func() any {
-		return MathOp(op, x, y)
-	}
-}
-
 // -----------------------------------------------------------------------------
 
 // LogicOp does a logic operation.
@@ -246,13 +232,6 @@ func LogicOp(op token.Token, x, y any) bool {
 		}
 	}
 	panic("logicOp: invalid operation")
-}
-
-// DelayLogicOp delays a logic operation.
-func DelayLogicOp(op token.Token, x, y any) any {
-	return func() any {
-		return LogicOp(op, x, y)
-	}
 }
 
 // -----------------------------------------------------------------------------
@@ -281,13 +260,6 @@ func UnaryOp(op token.Token, x any) any {
 		}
 	}
 	panic("unaryOp: invalid operation")
-}
-
-// DelayUnaryOp delays a unary operation.
-func DelayUnaryOp(op token.Token, x any) any {
-	return func() any {
-		return UnaryOp(op, x)
-	}
 }
 
 // -----------------------------------------------------------------------------

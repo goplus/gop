@@ -1,7 +1,7 @@
 import (
 	"fmt"
 	"gop/tpl"
-	"gop/tpl/variant"
+	"gop/tpl/variant/delay"
 	"os"
 	"reflect"
 
@@ -43,7 +43,7 @@ cl := tpl`
 stmts = *stmtEOS => {
 	return func() any {
 		for stmt in self {
-			variant.eval(stmt)
+			delay.eval(stmt)
 		}
 		return nil
 	}
@@ -79,7 +79,7 @@ constStmt = "CONSTANT" IDENT "<-" expr => {
 		if exists(name) {
 			tpl.panic t.Pos, "${name} exists"
 		}
-		consts[name] = variant.eval(expr)
+		consts[name] = delay.eval(expr)
 		return nil
 	}
 }
@@ -92,7 +92,7 @@ assignStmt = IDENT "<-" expr => {
 		if _, ok := global[name]; !ok {
 			tpl.panic t.Pos, "variable ${name} is undefined"
 		}
-		global[name] = variant.eval(expr)
+		global[name] = delay.eval(expr)
 		return nil
 	}
 }
@@ -100,7 +100,7 @@ assignStmt = IDENT "<-" expr => {
 outputStmt = "OUTPUT" exprlist => {
 	exprlist := self[1].([]any)
 	return func() any {
-		echo [variant.eval(v) for v in exprlist]...
+		echo [delay.eval(v) for v in exprlist]...
 		return nil
 	}
 }
@@ -123,12 +123,12 @@ inputStmt = "INPUT" IDENT => {
 ifStmt = "IF" expr "THEN" ";" stmts ?("ELSE" ";" stmts) "ENDIF" => {
 	return func() any {
 		cond := self[1]
-		if variant.eval(cond).(bool) {
+		if delay.eval(cond).(bool) {
 			ifBody := self[4]
-			variant.eval(ifBody)
+			delay.eval(ifBody)
 		} else if elseStmt := self[5]; elseStmt != nil {
 			elseBody := elseStmt.([]any)[2]
-			variant.eval(elseBody)
+			delay.eval(elseBody)
 		}
 		return nil
 	}
@@ -137,9 +137,9 @@ ifStmt = "IF" expr "THEN" ";" stmts ?("ELSE" ";" stmts) "ENDIF" => {
 whileStmt = "WHILE" expr "DO" ";" stmts "ENDWHILE" => {
 	return func() any {
 		cond := self[1]
-		for variant.eval(cond).(bool) {
+		for delay.eval(cond).(bool) {
 			body := self[4]
-			variant.eval(body)
+			delay.eval(body)
 		}
 		return nil
 	}
@@ -150,8 +150,8 @@ untilStmt = "REPEAT" ";" stmts "UNTIL" expr => {
 		body := self[2]
 		cond := self[4]
 		for {
-			variant.eval(body)
-			if variant.eval(cond).(bool) { // TODO(xsw): check condition
+			delay.eval(body)
+			if delay.eval(cond).(bool) { // TODO(xsw): check condition
 				break
 			}
 		}
@@ -179,13 +179,13 @@ boolean = "BOOLEAN" => {
 
 expr = mathExpr % ("<" | "<=" | ">" | ">=" | "=" | "<>") => {
 	return tpl.binaryOp(false, self, (op, x, y) => {
-		return variant.delayCompare(op.Tok, x, y)
+		return delay.compare(op.Tok, x, y)
 	})
 }
 
 mathExpr = operand % ("*" | "/" | "%") % ("+" | "-") => {
 	return tpl.binaryOp(true, self, (op, x, y) => {
-		return variant.delayMathOp(op.Tok, x, y)
+		return delay.mathOp(op.Tok, x, y)
 	})
 }
 
@@ -209,13 +209,13 @@ parenExpr = "(" expr ")" => {
 
 unaryExpr = ("-" | "+" | "!") operand => {
 	op := self[0].(*tpl.Token)
-	return variant.delayUnaryOp(op.Tok, self[1])
+	return delay.unaryOp(op.Tok, self[1])
 }
 
 callExpr = IDENT "(" ?exprlist ")" => {
 	fn := self[0].(*tpl.Token).Lit
 	args, _ := self[2].([]any)
-	return variant.delayCall(fn, args...)
+	return delay.call(fn, args...)
 }
 
 basicLit = intVal | floatVal | stringVal | true | false
@@ -249,11 +249,11 @@ namelist = IDENT % "," => {
 }
 `!
 
-variant.initUniverse "math", "time"
+delay.initUniverse "math", "time"
 
 e, err := cl.parse(os.Args[1], nil, nil)
 if err != nil {
 	fprintln os.Stderr, err
 } else {
-	variant.eval e
+	delay.eval e
 }
