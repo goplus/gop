@@ -390,6 +390,7 @@ func toErr(e any, op *Token) error {
 		return &matcher.Error{
 			Pos: op.Pos,
 			Msg: e,
+			Dyn: true,
 		}
 	}
 	return e.(error)
