@@ -1,0 +1,259 @@
+import (
+	"fmt"
+	"gop/tpl"
+	"gop/tpl/variant"
+	"os"
+	"reflect"
+
+	_ "gop/tpl/variant/math"
+	_ "gop/tpl/variant/time"
+)
+
+var (
+	global map[string]any
+	consts map[string]any
+)
+
+func exists(name string) bool {
+	_, ok := global[name]
+	if !ok {
+		_, ok = consts[name]
+	}
+	return ok
+}
+
+func value(name string) (v any, ok bool) {
+	v, ok = global[name]
+	if !ok {
+		v, ok = consts[name]
+	}
+	return
+}
+
+if len(os.Args) < 2 {
+	echo "Usage: tpl-pseudo <file>"
+	return
+}
+
+global = {}
+consts = {}
+
+cl := tpl`
+
+stmts = *stmtEOS => {
+	return func() any {
+		for stmt in self {
+			variant.eval(stmt)
+		}
+		return nil
+	}
+}
+
+stmtEOS = stmt ";" => {
+	return self[0]
+}
+
+stmt = varStmt | constStmt | outputStmt | inputStmt | ifStmt | whileStmt | untilStmt | assignStmt
+
+varStmt = "DECLARE" namelist ":" typeExpr => {
+	namelist := self[1].([]any)
+	typeVal := self[3]
+	return func() any {
+		for v in namelist {
+			t := v.(*tpl.Token)
+			name := t.Lit
+			if exists(name) {
+				tpl.panic t.Pos, "${name} exists"
+			}
+			global[name] = typeVal
+		}
+		return nil
+	}
+}
+
+constStmt = "CONSTANT" IDENT "<-" expr => {
+	t := self[1].(*tpl.Token)
+	expr := self[3]
+	return func() any {
+		name := t.Lit
+		if exists(name) {
+			tpl.panic t.Pos, "${name} exists"
+		}
+		consts[name] = variant.eval(expr)
+		return nil
+	}
+}
+
+assignStmt = IDENT "<-" expr => {
+	t := self[0].(*tpl.Token)
+	expr := self[2]
+	return func() any {
+		name := t.Lit
+		if _, ok := global[name]; !ok {
+			tpl.panic t.Pos, "variable ${name} is undefined"
+		}
+		global[name] = variant.eval(expr)
+		return nil
+	}
+}
+
+outputStmt = "OUTPUT" exprlist => {
+	exprlist := self[1].([]any)
+	return func() any {
+		echo [variant.eval(v) for v in exprlist]...
+		return nil
+	}
+}
+
+inputStmt = "INPUT" IDENT => {
+	t := self[1].(*tpl.Token)
+	return func() any {
+		name := t.Lit
+		oldv, ok := global[name]
+		if !ok {
+			tpl.panic t.Pos, "variable ${name} is undefined"
+		}
+		v := reflect.new(type(oldv))
+		fmt.scanln(v.Interface())!
+		global[name] = v.elem.Interface()
+		return nil
+	}
+}
+
+ifStmt = "IF" expr "THEN" ";" stmts ?("ELSE" ";" stmts) "ENDIF" => {
+	return func() any {
+		cond := self[1]
+		if variant.eval(cond).(bool) {
+			ifBody := self[4]
+			variant.eval(ifBody)
+		} else if elseStmt := self[5]; elseStmt != nil {
+			elseBody := elseStmt.([]any)[2]
+			variant.eval(elseBody)
+		}
+		return nil
+	}
+}
+
+whileStmt = "WHILE" expr "DO" ";" stmts "ENDWHILE" => {
+	return func() any {
+		cond := self[1]
+		for variant.eval(cond).(bool) {
+			body := self[4]
+			variant.eval(body)
+		}
+		return nil
+	}
+}
+
+untilStmt = "REPEAT" ";" stmts "UNTIL" expr => {
+	return func() any {
+		body := self[2]
+		cond := self[4]
+		for {
+			variant.eval(body)
+			if variant.eval(cond).(bool) { // TODO(xsw): check condition
+				break
+			}
+		}
+		return nil
+	}
+}
+
+typeExpr = integer | real | string | boolean
+
+integer = "INTEGER" => {
+	return 0
+}
+
+real = "REAL" => {
+	return 0.0
+}
+
+string = "STRING" => {
+	return ""
+}
+
+boolean = "BOOLEAN" => {
+	return false
+}
+
+expr = mathExpr % ("<" | "<=" | ">" | ">=" | "=" | "<>") => {
+	return tpl.binaryOp(false, self, (op, x, y) => {
+		return variant.delayCompare(op.Tok, x, y)
+	})
+}
+
+mathExpr = operand % ("*" | "/" | "%") % ("+" | "-") => {
+	return tpl.binaryOp(true, self, (op, x, y) => {
+		return variant.delayMathOp(op.Tok, x, y)
+	})
+}
+
+operand = basicLit | ident | parenExpr | unaryExpr | callExpr
+
+ident = IDENT => {
+	t := self.(*tpl.Token)
+	return func() any {
+		name := t.Lit
+		v, ok := value(name)
+		if !ok {
+			tpl.panic t.Pos, "${name} is undefined"
+		}
+		return v
+	}
+}
+
+parenExpr = "(" expr ")" => {
+	return self[1]
+}
+
+unaryExpr = ("-" | "+" | "!") operand => {
+	op := self[0].(*tpl.Token)
+	return variant.delayUnaryOp(op.Tok, self[1])
+}
+
+callExpr = IDENT "(" ?exprlist ")" => {
+	fn := self[0].(*tpl.Token).Lit
+	args, _ := self[2].([]any)
+	return variant.delayCall(fn, args...)
+}
+
+basicLit = intVal | floatVal | stringVal | true | false
+
+true = "true" => {
+	return true
+}
+
+false = "false" => {
+	return false
+}
+
+stringVal = STRING => {
+	return self.(*tpl.Token).Lit.unquote!
+}
+
+floatVal = FLOAT => {
+	return self.(*tpl.Token).Lit.float!
+}
+
+intVal = INT => {
+	return self.(*tpl.Token).Lit.int!
+}
+
+exprlist = expr % "," => {
+	return tpl.list(self)
+}
+
+namelist = IDENT % "," => {
+	return tpl.list(self)
+}
+`!
+
+variant.initUniverse "math", "time"
+
+e, err := cl.parse(os.Args[1], nil, nil)
+if err != nil {
+	fprintln os.Stderr, err
+} else {
+	variant.eval e
+}
