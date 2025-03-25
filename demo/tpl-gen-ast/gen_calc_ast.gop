@@ -31,10 +31,10 @@ cl := tpl`
 expr = operand % ("*" | "/") % ("+" | "-") => {
 	return tpl.binaryOp(true, this, (op, x, y) => {
 		return &BinaryExpr{
-			X:	   x,
+			X:     x,
 			OpPos: op.Pos,
-			Op:	   op.Tok,
-			Y:	   y,
+			Op:    op.Tok,
+			Y:     y,
 		}
 	})
 }
