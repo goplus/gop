@@ -38,6 +38,26 @@ func Eval(v any) any {
 	return v
 }
 
+// Float converts a value to float64.
+func Float(v any) float64 {
+	switch v := Eval(v).(type) {
+	case int:
+		return float64(v)
+	case float64:
+		return v
+	}
+	panic("can't convert to float")
+}
+
+// Int ensures a value is int.
+// It doesn't convert float to int.
+func Int(v any) int {
+	if v, ok := Eval(v).(int); ok {
+		return v
+	}
+	panic("not an int")
+}
+
 // -----------------------------------------------------------------------------
 
 func cmpInt(op token.Token, x, y int) bool {
