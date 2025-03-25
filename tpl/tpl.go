@@ -428,3 +428,14 @@ func BasicLit(this any) *ast.BasicLit {
 }
 
 // -----------------------------------------------------------------------------
+
+func Panic(pos token.Pos, msg string) {
+	err := &matcher.Error{
+		Pos: pos,
+		Msg: msg,
+		Dyn: true,
+	}
+	panic(err)
+}
+
+// -----------------------------------------------------------------------------

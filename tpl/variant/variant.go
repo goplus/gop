@@ -25,11 +25,6 @@ import (
 // DelayValue represents a delayed value.
 type DelayValue = func() any
 
-// Delay delays a value.
-func Delay(getter DelayValue) any {
-	return getter
-}
-
 // Eval evaluates a value.
 func Eval(v any) any {
 	if d, ok := v.(DelayValue); ok {

@@ -36,7 +36,11 @@ mathExpr = operand % ("*" | "/" | "%") % ("+" | "-") => {
 	})
 }
 
-operand = basicLit | unaryExpr | callExpr
+operand = basicLit | parenExpr | unaryExpr | callExpr
+
+parenExpr = "(" expr ")" => {
+	return this[1]
+}
 
 unaryExpr = ("-" | "+" | "!") operand => {
 	op := this[0].(*tpl.Token)
