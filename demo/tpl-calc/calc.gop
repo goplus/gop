@@ -6,7 +6,7 @@ import (
 cl := tpl`
 
 expr = operand % ("*" | "/") % ("+" | "-") => {
-	return tpl.binaryOp(true, this, (op, x, y) => {
+	return tpl.binaryOp(true, self, (op, x, y) => {
 		switch op.Tok {
 		case '+': return x.(float64) + y.(float64)
 		case '-': return x.(float64) - y.(float64)
@@ -20,11 +20,11 @@ expr = operand % ("*" | "/") % ("+" | "-") => {
 operand = basicLit | unaryExpr
 
 unaryExpr = "-" operand => {
-	return -(this[1].(float64))
+	return -(self[1].(float64))
 }
 
 basicLit = INT | FLOAT => {
-	return this.(*tpl.Token).Lit.float!
+	return self.(*tpl.Token).Lit.float!
 }
 `!
 
