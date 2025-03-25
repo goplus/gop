@@ -55,9 +55,24 @@ func (p *Module) Merge(mod *Module) {
 
 var (
 	universe = &Module{
-		objs: make(map[string]any),
+		objs: map[string]any{
+			"int": CastInt,
+		},
 	}
 )
+
+func CastInt(args ...any) any {
+	if len(args) != 1 {
+		panic("int: arity mismatch")
+	}
+	switch v := Eval(args[0]).(type) {
+	case float64:
+		return int(v)
+	case int:
+		return v
+	}
+	panic("can't convert to int")
+}
 
 // Call calls a function.
 func Call(name string, args ...any) any {
