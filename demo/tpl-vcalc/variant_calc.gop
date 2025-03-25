@@ -1,0 +1,74 @@
+import (
+	"gop/tpl"
+	"gop/tpl/token"
+	"gop/tpl/variant"
+	"os"
+)
+
+cl := tpl`
+
+expr = cmpExpr % ("||" | "&&" | and | or) => {
+	return tpl.binaryOp(false, this, (op, x, y) => {
+		return variant.logicOp(op.Tok, x, y)
+	})
+}
+
+and = "and" | "AND" => {
+	return &tpl.Token{Tok: token.LAND}
+}
+
+or = "or" | "OR" => {
+	return &tpl.Token{Tok: token.LOR}
+}
+
+cmpExpr = mathExpr % ("==" | "=" | "!=" | "<>" | "<" | "<=" | ">" | ">=") => {
+	return tpl.binaryOp(false, this, (op, x, y) => {
+		return variant.compare(op.Tok, x, y)
+	})
+}
+
+mathExpr = operand % ("*" | "/" | "%") % ("+" | "-") => {
+	return tpl.binaryOp(true, this, (op, x, y) => {
+		return variant.mathOp(op.Tok, x, y)
+	})
+}
+
+operand = basicLit | unaryExpr
+
+unaryExpr = ("-" | "+" | "!") operand => {
+	op := this[0].(*tpl.Token)
+	return variant.unaryOp(op.Tok, this[1])
+}
+
+basicLit = intVal | floatVal | stringVal | true | false
+
+true = "true" => {
+	return true
+}
+
+false = "false" => {
+	return false
+}
+
+stringVal = STRING => {
+	return this.(*tpl.Token).Lit.unquote!
+}
+
+floatVal = FLOAT => {
+	return this.(*tpl.Token).Lit.float!
+}
+
+intVal = INT => {
+	return this.(*tpl.Token).Lit.int!
+}
+`!
+
+print "> "
+for line in os.Stdin {
+	e, err := cl.parseExpr(line, nil)
+	if err != nil {
+		print err, "\n> "
+	} else {
+		print e, "\n> "
+	}
+}
