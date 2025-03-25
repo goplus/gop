@@ -29,7 +29,7 @@ type BasicLit struct {
 cl := tpl`
 
 expr = operand % ("*" | "/") % ("+" | "-") => {
-	return tpl.binaryOp(true, this, (op, x, y) => {
+	return tpl.binaryOp(true, self, (op, x, y) => {
 		return &BinaryExpr{
 			X:     x,
 			OpPos: op.Pos,
@@ -42,16 +42,16 @@ expr = operand % ("*" | "/") % ("+" | "-") => {
 operand = basicLit | unaryExpr
 
 unaryExpr = "-" operand => {
-	op := this[0].(*tpl.Token)
+	op := self[0].(*tpl.Token)
 	return &UnaryExpr{
 		OpPos: op.Pos,
 		Op:    op.Tok,
-		X:     this[1],
+		X:     self[1],
 	}
 }
 
 basicLit = INT | FLOAT => {
-	op := this.(*tpl.Token)
+	op := self.(*tpl.Token)
 	return &BasicLit{
 		ValuePos: op.Pos,
 		Kind:     op.Tok,

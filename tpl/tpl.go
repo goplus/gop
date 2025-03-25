@@ -36,7 +36,6 @@ import (
 // Compiler represents a TPL compiler.
 type Compiler struct {
 	cl.Result
-	Fset *token.FileSet
 }
 
 // New creates a new TPL compiler.
@@ -57,7 +56,6 @@ func FromFile(fset *token.FileSet, filename string, src any, params ...any) (ret
 		return
 	}
 	ret.Result, err = cl.NewEx(retProcs(params), fset, f)
-	ret.Fset = fset
 	return
 }
 
@@ -90,8 +88,9 @@ type Scanner interface {
 // Config represents a parsing configuration of [Compiler.Parse].
 type Config struct {
 	Scanner          Scanner
-	ScanMode         scanner.Mode
 	ScanErrorHandler scanner.ErrorHandler
+	ScanMode         scanner.Mode
+	Fset             *token.FileSet
 }
 
 // ParseExpr parses an expression.
@@ -109,7 +108,7 @@ func (p *Compiler) ParseExprFrom(filename string, src any, conf *Config) (result
 		return
 	}
 	t := ms.Next()
-	err = &matcher.Error{Fset: p.Fset, Pos: t.Pos, Msg: fmt.Sprintf("unexpected token: %v", t)}
+	err = ms.Ctx.NewErrorf(t.Pos, "unexpected token: %v", t)
 	return
 }
 
@@ -121,7 +120,7 @@ func (p *Compiler) Parse(filename string, src any, conf *Config) (result any, er
 	}
 	if len(ms.Toks) > ms.N {
 		t := ms.Next()
-		err = &matcher.Error{Fset: p.Fset, Pos: t.Pos, Msg: fmt.Sprintf("unexpected token: %v", t)}
+		err = ms.Ctx.NewErrorf(t.Pos, "unexpected token: %v", t)
 	}
 	return
 }
@@ -155,7 +154,10 @@ func (p *Compiler) Match(filename string, src any, conf *Config) (ms MatchState,
 	if s == nil {
 		s = new(scanner.Scanner)
 	}
-	fset := p.Fset
+	fset := conf.Fset
+	if fset == nil {
+		fset = token.NewFileSet()
+	}
 	f := fset.AddFile(filename, fset.Base(), len(b))
 	s.Init(f, b, conf.ScanErrorHandler, conf.ScanMode)
 	n := (len(b) >> 3) &^ 7
@@ -357,7 +359,7 @@ func BinaryOpR(in []any, fn func(op *Token, x, y any) any) any {
 		if v, ok := y.([]any); ok {
 			y = BinaryOpR(v, fn)
 		}
-		ret = fn(op, ret, y)
+		ret = fncall(fn, op, ret, y)
 	}
 	return ret
 }
@@ -368,9 +370,32 @@ func BinaryOpNR(in []any, fn func(op *Token, x, y any) any) any {
 		next := v.([]any)
 		op := next[0].(*Token)
 		y := next[1]
-		ret = fn(op, ret, y)
+		ret = fncall(fn, op, ret, y)
 	}
 	return ret
+}
+
+func fncall(fn func(op *Token, x, y any) any, op *Token, x, y any) any {
+	defer func() {
+		if e := recover(); e != nil {
+			panic(toErr(e, op))
+		}
+	}()
+	return fn(op, x, y)
+}
+
+func toErr(e any, op *Token) error {
+	switch e := e.(type) {
+	case *matcher.Error:
+		return e
+	case string:
+		return &matcher.Error{
+			Pos: op.Pos,
+			Msg: e,
+			Dyn: true,
+		}
+	}
+	return e.(error)
 }
 
 // UnaryExpr converts the matching result of (op X) to a unary expression.
@@ -400,6 +425,17 @@ func BasicLit(this any) *ast.BasicLit {
 		Kind:     v.Tok,
 		Value:    v.Lit,
 	}
+}
+
+// -----------------------------------------------------------------------------
+
+func Panic(pos token.Pos, msg string) {
+	err := &matcher.Error{
+		Pos: pos,
+		Msg: msg,
+		Dyn: true,
+	}
+	panic(err)
 }
 
 // -----------------------------------------------------------------------------

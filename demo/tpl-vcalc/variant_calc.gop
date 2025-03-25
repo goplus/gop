@@ -3,12 +3,15 @@ import (
 	"gop/tpl/token"
 	"gop/tpl/variant"
 	"os"
+
+	_ "gop/tpl/variant/math"
+	_ "gop/tpl/variant/time"
 )
 
 cl := tpl`
 
 expr = cmpExpr % ("||" | "&&" | and | or) => {
-	return tpl.binaryOp(false, this, (op, x, y) => {
+	return tpl.binaryOp(false, self, (op, x, y) => {
 		return variant.logicOp(op.Tok, x, y)
 	})
 }
@@ -22,22 +25,36 @@ or = "or" | "OR" => {
 }
 
 cmpExpr = mathExpr % ("==" | "=" | "!=" | "<>" | "<" | "<=" | ">" | ">=") => {
-	return tpl.binaryOp(false, this, (op, x, y) => {
+	return tpl.binaryOp(false, self, (op, x, y) => {
 		return variant.compare(op.Tok, x, y)
 	})
 }
 
 mathExpr = operand % ("*" | "/" | "%") % ("+" | "-") => {
-	return tpl.binaryOp(true, this, (op, x, y) => {
+	return tpl.binaryOp(true, self, (op, x, y) => {
 		return variant.mathOp(op.Tok, x, y)
 	})
 }
 
-operand = basicLit | unaryExpr
+operand = basicLit | parenExpr | unaryExpr | callExpr
+
+parenExpr = "(" expr ")" => {
+	return self[1]
+}
 
 unaryExpr = ("-" | "+" | "!") operand => {
-	op := this[0].(*tpl.Token)
-	return variant.unaryOp(op.Tok, this[1])
+	op := self[0].(*tpl.Token)
+	return variant.unaryOp(op.Tok, self[1])
+}
+
+callExpr = IDENT "(" ?arglist ")" => {
+	fn := self[0].(*tpl.Token).Lit
+	args, _ := self[2].([]any)
+	return variant.call(fn, args...)
+}
+
+arglist = expr % "," => {
+	return tpl.list(self)
 }
 
 basicLit = intVal | floatVal | stringVal | true | false
@@ -51,17 +68,19 @@ false = "false" => {
 }
 
 stringVal = STRING => {
-	return this.(*tpl.Token).Lit.unquote!
+	return self.(*tpl.Token).Lit.unquote!
 }
 
 floatVal = FLOAT => {
-	return this.(*tpl.Token).Lit.float!
+	return self.(*tpl.Token).Lit.float!
 }
 
 intVal = INT => {
-	return this.(*tpl.Token).Lit.int!
+	return self.(*tpl.Token).Lit.int!
 }
 `!
+
+variant.initUniverse "math", "time"
 
 print "> "
 for line in os.Stdin {

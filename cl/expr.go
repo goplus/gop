@@ -1136,7 +1136,7 @@ func compileDomainTextLit(ctx *blockCtx, v *ast.DomainTextLit) {
 func lambdaRetFunc(expr *ast.LambdaExpr2) *ast.LambdaExpr2 {
 	v := *expr
 	v.Lhs = []*ast.Ident{
-		{NamePos: expr.Pos(), Name: "this"},
+		{NamePos: expr.Pos(), Name: "self"},
 	}
 	return &v
 }

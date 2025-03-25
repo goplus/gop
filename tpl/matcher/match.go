@@ -38,11 +38,21 @@ type Error struct {
 	Fset *token.FileSet
 	Pos  token.Pos
 	Msg  string
+
+	// is a runtime error
+	Dyn bool
 }
 
 func (p *Error) Error() string {
 	pos := p.Fset.Position(p.Pos)
 	return fmt.Sprintf("%v: %s", pos, p.Msg)
+}
+
+func isDyn(err error) bool {
+	if e, ok := err.(*Error); ok {
+		return e.Dyn
+	}
+	return false
 }
 
 // -----------------------------------------------------------------------------
@@ -74,12 +84,12 @@ func (p *Context) SetLastError(left int, err error) {
 
 // NewError creates a new error.
 func (p *Context) NewError(pos token.Pos, msg string) *Error {
-	return &Error{p.Fset, pos, msg}
+	return &Error{p.Fset, pos, msg, false}
 }
 
 // NewErrorf creates a new error with a format string.
 func (p *Context) NewErrorf(pos token.Pos, format string, args ...any) error {
-	return &Error{p.Fset, pos, fmt.Sprintf(format, args...)}
+	return &Error{p.Fset, pos, fmt.Sprintf(format, args...), false}
 }
 
 // -----------------------------------------------------------------------------
@@ -194,7 +204,11 @@ func (p *gSequence) Match(src []*types.Token, ctx *Context) (n int, result any, 
 	for i, g := range p.items {
 		n1, ret1, err1 := g.Match(src[n:], ctx)
 		if err1 != nil {
-			return n + n1, nil, err1
+			if isDyn(err1) {
+				err = err1
+			} else {
+				return n + n1, nil, err1
+			}
 		}
 		rets[i] = ret1
 		n += n1
@@ -224,9 +238,13 @@ func (p *gRepeat0) Match(src []*types.Token, ctx *Context) (n int, result any, e
 	for {
 		n1, ret1, err1 := g.Match(src, ctx)
 		if err1 != nil {
-			ctx.SetLastError(len(src)-n1, err1)
-			result = rets
-			return
+			if isDyn(err1) {
+				err = err1
+			} else {
+				ctx.SetLastError(len(src)-n1, err1)
+				result = rets
+				return
+			}
 		}
 		rets = append(rets, ret1)
 		n += n1
@@ -261,9 +279,13 @@ func (p *gRepeat1) Match(src []*types.Token, ctx *Context) (n int, result any, e
 	for {
 		n1, ret1, err1 := g.Match(src[n:], ctx)
 		if err1 != nil {
-			ctx.SetLastError(len(src)-n-n1, err1)
-			result = rets
-			return
+			if isDyn(err1) {
+				err = err1
+			} else {
+				ctx.SetLastError(len(src)-n-n1, err1)
+				result = rets
+				return
+			}
 		}
 		rets = append(rets, ret1)
 		n += n1
@@ -330,6 +352,26 @@ func (p *Var) Match(src []*types.Token, ctx *Context) (n int, result any, err er
 	n, result, err = g.Match(src, ctx)
 	if err == nil {
 		if retProc := p.RetProc; retProc != nil {
+			defer func() {
+				if e := recover(); e != nil {
+					switch e := e.(type) {
+					case *Error:
+						if e.Fset == nil {
+							e.Fset = ctx.Fset
+						}
+						err = e
+					case string:
+						err = &Error{
+							Fset: ctx.Fset,
+							Pos:  src[0].Pos,
+							Msg:  e,
+							Dyn:  true,
+						}
+					default:
+						err = e.(error)
+					}
+				}
+			}()
 			if g.IsList() {
 				result = retProc.(ListRetProc)(result.([]any))
 			} else {

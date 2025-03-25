@@ -25,17 +25,32 @@ import (
 // DelayValue represents a delayed value.
 type DelayValue = func() any
 
-// Delay delays a value.
-func Delay(getter DelayValue) any {
-	return getter
-}
-
 // Eval evaluates a value.
 func Eval(v any) any {
 	if d, ok := v.(DelayValue); ok {
 		return d()
 	}
 	return v
+}
+
+// Float converts a value to float64.
+func Float(v any) float64 {
+	switch v := Eval(v).(type) {
+	case int:
+		return float64(v)
+	case float64:
+		return v
+	}
+	panic("can't convert to float")
+}
+
+// Int ensures a value is int.
+// It doesn't convert float to int.
+func Int(v any) int {
+	if v, ok := Eval(v).(int); ok {
+		return v
+	}
+	panic("not an int")
 }
 
 // -----------------------------------------------------------------------------

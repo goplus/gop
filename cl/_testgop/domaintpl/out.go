@@ -5,11 +5,11 @@ import "github.com/goplus/gop/tpl"
 func main() {
 	tpl.New(`
 file = stmts => {
-	return this
+	return self
 }
 
 stmts = *(stmt ";") => {
-	return [n.([]any)[0] for n in this]
+	return [n.([]any)[0] for n in self]
 }
 
 stmt = varStmt | constStmt | outputStmt | inputStmt | ifStmt | whileStmt | untilStmt | assignStmt
@@ -51,11 +51,11 @@ parenExpr = "(" expr ")"
 exprlist = expr % ","
 
 namelist = IDENT % ","
-`, "file", func(this interface{}) interface{} {
-		return this
-	}, "stmts", func(this []interface{}) interface{} {
+`, "file", func(self interface{}) interface{} {
+		return self
+	}, "stmts", func(self []interface{}) interface{} {
 		return func() (_gop_ret []interface{}) {
-			for _, n := range this {
+			for _, n := range self {
 				_gop_ret = append(_gop_ret, n.([]interface{})[0])
 			}
 			return
