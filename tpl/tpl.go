@@ -357,7 +357,7 @@ func BinaryOpR(in []any, fn func(op *Token, x, y any) any) any {
 		if v, ok := y.([]any); ok {
 			y = BinaryOpR(v, fn)
 		}
-		ret = fn(op, ret, y)
+		ret = fncall(fn, op, ret, y)
 	}
 	return ret
 }
@@ -368,9 +368,31 @@ func BinaryOpNR(in []any, fn func(op *Token, x, y any) any) any {
 		next := v.([]any)
 		op := next[0].(*Token)
 		y := next[1]
-		ret = fn(op, ret, y)
+		ret = fncall(fn, op, ret, y)
 	}
 	return ret
+}
+
+func fncall(fn func(op *Token, x, y any) any, op *Token, x, y any) any {
+	defer func() {
+		if e := recover(); e != nil {
+			panic(toErr(e, op))
+		}
+	}()
+	return fn(op, x, y)
+}
+
+func toErr(e any, op *Token) error {
+	switch e := e.(type) {
+	case *matcher.Error:
+		return e
+	case string:
+		return &matcher.Error{
+			Pos: op.Pos,
+			Msg: e,
+		}
+	}
+	return e.(error)
 }
 
 // UnaryExpr converts the matching result of (op X) to a unary expression.

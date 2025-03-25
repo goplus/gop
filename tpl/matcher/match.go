@@ -330,6 +330,25 @@ func (p *Var) Match(src []*types.Token, ctx *Context) (n int, result any, err er
 	n, result, err = g.Match(src, ctx)
 	if err == nil {
 		if retProc := p.RetProc; retProc != nil {
+			defer func() {
+				if e := recover(); e != nil {
+					switch e := e.(type) {
+					case *Error:
+						if e.Fset == nil {
+							e.Fset = ctx.Fset
+						}
+						err = e
+					case string:
+						err = &Error{
+							Fset: ctx.Fset,
+							Pos:  src[0].Pos,
+							Msg:  e,
+						}
+					default:
+						err = e.(error)
+					}
+				}
+			}()
 			if g.IsList() {
 				result = retProc.(ListRetProc)(result.([]any))
 			} else {

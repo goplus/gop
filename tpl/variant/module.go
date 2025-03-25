@@ -71,9 +71,9 @@ func Call(name string, args ...any) any {
 }
 
 // DelayCall delays to call a function.
-func DelayCall(fn string, args ...any) any {
+func DelayCall(name string, args ...any) any {
 	return func() any {
-		return Call(fn, args...)
+		return Call(name, args...)
 	}
 }
 
