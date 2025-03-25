@@ -1,0 +1,39 @@
+import (
+	"gop/tpl"
+	"os"
+)
+
+cl := tpl`
+
+expr = operand % ("*" | "/") % ("+" | "-") => {
+	return tpl.binaryOp(true, this, (op, x, y) => {
+		switch op.Tok {
+		case '+': return x.(float64) + y.(float64)
+		case '-': return x.(float64) - y.(float64)
+		case '*': return x.(float64) * y.(float64)
+		case '/': return x.(float64) / y.(float64)
+		}
+		panic("unexpected")
+	})
+}
+
+operand = basicLit | unaryExpr
+
+unaryExpr = "-" operand => {
+	return -(this[1].(float64))
+}
+
+basicLit = INT | FLOAT => {
+	return this.(*tpl.Token).Lit.float!
+}
+`!
+
+print "> "
+for line in os.Stdin {
+	e, err := cl.parseExpr(line, nil)
+	if err != nil {
+		print err, "\n> "
+	} else {
+		print e, "\n> "
+	}
+}

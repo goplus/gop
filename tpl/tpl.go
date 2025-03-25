@@ -108,7 +108,7 @@ func (p *Compiler) ParseExprFrom(filename string, src any, conf *Config) (result
 	if len(ms.Toks) == ms.N || isEOL(ms.Toks[ms.N].Tok) {
 		return
 	}
-	t := ms.Toks[len(ms.Toks)-ms.Ctx.Left]
+	t := ms.Next()
 	err = &matcher.Error{Fset: p.Fset, Pos: t.Pos, Msg: fmt.Sprintf("unexpected token: %v", t)}
 	return
 }
@@ -120,7 +120,7 @@ func (p *Compiler) Parse(filename string, src any, conf *Config) (result any, er
 		return
 	}
 	if len(ms.Toks) > ms.N {
-		t := ms.Toks[len(ms.Toks)-ms.Ctx.Left]
+		t := ms.Next()
 		err = &matcher.Error{Fset: p.Fset, Pos: t.Pos, Msg: fmt.Sprintf("unexpected token: %v", t)}
 	}
 	return
@@ -131,6 +131,15 @@ type MatchState struct {
 	Toks []*Token
 	Ctx  *matcher.Context
 	N    int
+}
+
+// Next returns the next token.
+func (p *MatchState) Next() *Token {
+	n := p.Ctx.Left
+	if n > 0 {
+		return p.Toks[len(p.Toks)-n]
+	}
+	return &Token{Tok: token.EOF}
 }
 
 // Match matches a source file.
@@ -279,17 +288,87 @@ func List(in []any) []any {
 
 // BinaryExpr converts the matching result of (X % op) to a binary expression.
 // X % op means X *(op X)
-func BinaryExpr(in []any) ast.Expr {
-	ret := in[0].(ast.Expr)
+func BinaryExpr(recursive bool, in []any) ast.Expr {
+	if recursive {
+		return BinaryExprR(in)
+	}
+	return BinaryExprNR(in)
+}
+
+func BinaryExprR(in []any) ast.Expr {
+	var ret, y ast.Expr
+	switch v := in[0].(type) {
+	case []any:
+		ret = BinaryExprR(v)
+	default:
+		ret = v.(ast.Expr)
+	}
 	for _, v := range in[1].([]any) {
 		next := v.([]any)
 		op := next[0].(*Token)
+		switch v := next[1].(type) {
+		case []any:
+			y = BinaryExprR(v)
+		default:
+			y = v.(ast.Expr)
+		}
 		ret = &ast.BinaryExpr{
 			X:     ret,
 			OpPos: op.Pos,
 			Op:    op.Tok,
-			Y:     next[1].(ast.Expr),
+			Y:     y,
 		}
+	}
+	return ret
+}
+
+func BinaryExprNR(in []any) ast.Expr {
+	ret := in[0].(ast.Expr)
+	for _, v := range in[1].([]any) {
+		next := v.([]any)
+		op := next[0].(*Token)
+		y := next[1].(ast.Expr)
+		ret = &ast.BinaryExpr{
+			X:     ret,
+			OpPos: op.Pos,
+			Op:    op.Tok,
+			Y:     y,
+		}
+	}
+	return ret
+}
+
+func BinaryOp(recursive bool, in []any, fn func(op *Token, x, y any) any) any {
+	if recursive {
+		return BinaryOpR(in, fn)
+	}
+	return BinaryOpNR(in, fn)
+}
+
+func BinaryOpR(in []any, fn func(op *Token, x, y any) any) any {
+	ret := in[0]
+	if v, ok := ret.([]any); ok {
+		ret = BinaryOpR(v, fn)
+	}
+	for _, v := range in[1].([]any) {
+		next := v.([]any)
+		op := next[0].(*Token)
+		y := next[1]
+		if v, ok := y.([]any); ok {
+			y = BinaryOpR(v, fn)
+		}
+		ret = fn(op, ret, y)
+	}
+	return ret
+}
+
+func BinaryOpNR(in []any, fn func(op *Token, x, y any) any) any {
+	ret := in[0]
+	for _, v := range in[1].([]any) {
+		next := v.([]any)
+		op := next[0].(*Token)
+		y := next[1]
+		ret = fn(op, ret, y)
 	}
 	return ret
 }

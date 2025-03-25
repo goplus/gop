@@ -1,0 +1,71 @@
+import (
+	"encoding/json"
+	"gop/tpl"
+	"gop/tpl/token"
+	"os"
+)
+
+type Expr any
+
+type UnaryExpr struct {
+	OpPos token.Pos
+	Op    token.Token
+	X     Expr
+}
+
+type BinaryExpr struct {
+	X     Expr
+	OpPos token.Pos
+	Op    token.Token
+	Y     Expr
+}
+
+type BasicLit struct {
+	ValuePos token.Pos
+	Kind     token.Token
+	Value    string
+}
+
+cl := tpl`
+
+expr = operand % ("*" | "/") % ("+" | "-") => {
+	return tpl.binaryOp(true, this, (op, x, y) => {
+		return &BinaryExpr{
+			X:	   x,
+			OpPos: op.Pos,
+			Op:	   op.Tok,
+			Y:	   y,
+		}
+	})
+}
+
+operand = basicLit | unaryExpr
+
+unaryExpr = "-" operand => {
+	op := this[0].(*tpl.Token)
+	return &UnaryExpr{
+		OpPos: op.Pos,
+		Op:    op.Tok,
+		X:     this[1],
+	}
+}
+
+basicLit = INT | FLOAT => {
+	op := this.(*tpl.Token)
+	return &BasicLit{
+		ValuePos: op.Pos,
+		Kind:     op.Tok,
+		Value:    op.Lit,
+	}
+}
+`!
+
+print "> "
+for line in os.Stdin {
+	e, err := cl.parseExpr(line, nil)
+	if err != nil {
+		print err, "\n> "
+	} else {
+		print string(json.marshalIndent(e, "", "  ")!), "\n> "
+	}
+}
