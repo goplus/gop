@@ -42,6 +42,14 @@ func setValue(name string, v any) {
 	vars[name] = v
 }
 
+func chgValue(name string, chg func(oldv any) any) {
+	oldv, ok := vars[name]
+	if !ok {
+		panic "variable ${name} is undefined"
+	}
+	vars[name] = chg(oldv)
+}
+
 if len(os.Args) < 2 {
 	echo "Usage: tpl-pseudo <file>"
 	return
@@ -62,33 +70,28 @@ stmtEOS = stmt ";" => {
 
 stmt = varStmt | constStmt | outputStmt | inputStmt | ifStmt | whileStmt | untilStmt | assignStmt
 
-varStmt = "DECLARE" namelist ":" typeExpr => {
+varStmt = "DECLARE" (IDENT % ",") ":" typeExpr => {
 	namelist := self[1].([]any)
 	typeVal := self[3]
-	return func() any {
-		for v in namelist {
-			t := v.(*tpl.Token)
-			name := t.Lit
-			if exists(name) {
-				tpl.panic t.Pos, "${name} exists"
-			}
-			vars[name] = typeVal
-		}
-		return nil
-	}
-}
-
-constStmt = "CONSTANT" IDENT "<-" expr => {
-	t := self[1].(*tpl.Token)
-	expr := self[3]
-	return func() any {
+	return delay.rangeOp(namelist, v => {
+		t := v.(*tpl.Token)
 		name := t.Lit
 		if exists(name) {
 			tpl.panic t.Pos, "${name} exists"
 		}
-		consts[name] = delay.eval(expr)
-		return nil
-	}
+		vars[name] = typeVal
+	})
+}
+
+constStmt = "CONSTANT" IDENT "<-" expr => {
+	t := self[1].(*tpl.Token)
+	return delay.evalOp(self[3], v => {
+		name := t.Lit
+		if exists(name) {
+			tpl.panic t.Pos, "${name} exists"
+		}
+		consts[name] = v
+	})
 }
 
 assignStmt = IDENT "<-" expr => {
@@ -96,27 +99,20 @@ assignStmt = IDENT "<-" expr => {
 	return delay.setValue(t.Lit, self[2], setValue)
 }
 
-outputStmt = "OUTPUT" expr % "," => {
+outputStmt = "OUTPUT" (expr % ",") => {
 	exprlist := self[1].([]any)
-	return func() any {
-		echo [delay.eval(v) for v in tpl.list(exprlist)]...
-		return nil
-	}
+	return delay.listOp(exprlist, vals => {
+		echo vals...
+	})
 }
 
 inputStmt = "INPUT" IDENT => {
 	t := self[1].(*tpl.Token)
-	return func() any {
-		name := t.Lit
-		oldv, ok := vars[name]
-		if !ok {
-			tpl.panic t.Pos, "variable ${name} is undefined"
-		}
+	return delay.chgValue(t.Lit, chgValue, oldv => {
 		v := reflect.new(type(oldv))
 		fmt.scanln(v.Interface())!
-		vars[name] = v.elem.Interface()
-		return nil
-	}
+		return v.elem.Interface()
+	})
 }
 
 ifStmt = "IF" expr "THEN" ";" stmts ?("ELSE" ";" stmts) "ENDIF" => {
@@ -200,10 +196,6 @@ floatVal = FLOAT => {
 
 intVal = INT => {
 	return self.(*tpl.Token).Lit.int!
-}
-
-namelist = IDENT % "," => {
-	return tpl.list(self)
 }
 `!
 
