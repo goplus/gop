@@ -5,6 +5,7 @@ import (
 	"os"
 	"reflect"
 
+	_ "gop/tpl/variant/builtin"
 	_ "gop/tpl/variant/math"
 	_ "gop/tpl/variant/time"
 )
@@ -189,10 +190,15 @@ mathExpr = operand % ("*" | "/" | "%") % ("+" | "-") => {
 	})
 }
 
-operand = basicLit | ident | parenExpr | unaryExpr | callExpr
+operand = basicLit | parenExpr | unaryExpr | identOrCall
 
-ident = IDENT => {
-	t := self.(*tpl.Token)
+identOrCall = IDENT ?("(" ?exprlist ")") => {
+	t := self[0].(*tpl.Token)
+	if params := self[1]; params != nil {
+		fn := t.Lit
+		args, _ := params.([]any)[1].([]any)
+		return delay.call(fn, args...)
+	}
 	return func() any {
 		name := t.Lit
 		v, ok := value(name)
@@ -210,12 +216,6 @@ parenExpr = "(" expr ")" => {
 unaryExpr = ("-" | "+" | "!") operand => {
 	op := self[0].(*tpl.Token)
 	return delay.unaryOp(op.Tok, self[1])
-}
-
-callExpr = IDENT "(" ?exprlist ")" => {
-	fn := self[0].(*tpl.Token).Lit
-	args, _ := self[2].([]any)
-	return delay.call(fn, args...)
 }
 
 basicLit = intVal | floatVal | stringVal | true | false
@@ -249,7 +249,7 @@ namelist = IDENT % "," => {
 }
 `!
 
-delay.initUniverse "math", "time"
+delay.initUniverse "builtin", "math", "time"
 
 e, err := cl.parse(os.Args[1], nil, nil)
 if err != nil {
