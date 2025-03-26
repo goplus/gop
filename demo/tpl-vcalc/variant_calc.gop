@@ -6,7 +6,6 @@ import (
 
 	_ "gop/tpl/variant/builtin"
 	_ "gop/tpl/variant/math"
-	_ "gop/tpl/variant/reflect"
 	_ "gop/tpl/variant/time"
 )
 
@@ -82,7 +81,7 @@ intVal = INT => {
 }
 `!
 
-variant.initUniverse "builtin", "math", "time", "reflect"
+variant.initUniverse "builtin", "math", "time"
 
 print "> "
 for line in os.Stdin {

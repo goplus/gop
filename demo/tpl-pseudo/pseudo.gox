@@ -7,7 +7,6 @@ import (
 
 	_ "gop/tpl/variant/builtin"
 	_ "gop/tpl/variant/math"
-	_ "gop/tpl/variant/reflect"
 	_ "gop/tpl/variant/time"
 )
 
@@ -250,7 +249,7 @@ namelist = IDENT % "," => {
 }
 `!
 
-delay.initUniverse "builtin", "math", "time", "reflect"
+delay.initUniverse "builtin", "math", "time"
 
 e, err := cl.parse(os.Args[1], nil, nil)
 if err != nil {

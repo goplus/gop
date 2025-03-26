@@ -17,6 +17,8 @@
 package buitin
 
 import (
+	"reflect"
+
 	"github.com/goplus/gop/tpl/variant"
 )
 
@@ -38,9 +40,20 @@ func CastInt(args ...any) any {
 
 // -----------------------------------------------------------------------------
 
+// Type returns the type of an value.
+func Type(args ...any) any {
+	if len(args) != 1 {
+		panic("type: arity mismatch")
+	}
+	return reflect.TypeOf(variant.Eval(args[0]))
+}
+
+// -----------------------------------------------------------------------------
+
 func init() {
 	mod := variant.NewModule("builtin")
 	mod.Insert("int", CastInt)
+	mod.Insert("type", Type)
 }
 
 // -----------------------------------------------------------------------------
