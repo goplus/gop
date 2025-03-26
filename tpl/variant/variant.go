@@ -70,7 +70,7 @@ func cmpInt(op token.Token, x, y int) bool {
 	case token.GE:
 		return x >= y
 	}
-	panic("unreachable")
+	panic("invalid int comparison operator: " + op.String())
 }
 
 func cmpFloat(op token.Token, x, y float64) bool {
@@ -88,7 +88,7 @@ func cmpFloat(op token.Token, x, y float64) bool {
 	case token.GE:
 		return x >= y
 	}
-	panic("unreachable")
+	panic("invalid float comparison operator: " + op.String())
 }
 
 func cmpString(op token.Token, x, y string) bool {
@@ -106,7 +106,7 @@ func cmpString(op token.Token, x, y string) bool {
 	case token.GE:
 		return x >= y
 	}
-	panic("unreachable")
+	panic("invalid string comparison operator: " + op.String())
 }
 
 func cmpBool(op token.Token, x, y bool) bool {
@@ -116,7 +116,7 @@ func cmpBool(op token.Token, x, y bool) bool {
 	case token.NE, token.BIDIARROW:
 		return x != y
 	}
-	panic("unreachable")
+	panic("invalid bool comparison operator: " + op.String())
 }
 
 // Compare compares two values.
@@ -164,7 +164,7 @@ func mopInt(op token.Token, x, y int) int {
 	case token.REM:
 		return x % y
 	}
-	panic("unreachable")
+	panic("invalid int operator: " + op.String())
 }
 
 func mopFloat(op token.Token, x, y float64) float64 {
@@ -178,7 +178,7 @@ func mopFloat(op token.Token, x, y float64) float64 {
 	case token.QUO:
 		return x / y
 	}
-	panic("unreachable")
+	panic("invalid float operator: " + op.String())
 }
 
 func mopString(op token.Token, x, y string) string {
@@ -186,7 +186,7 @@ func mopString(op token.Token, x, y string) string {
 	case token.ADD:
 		return x + y
 	}
-	panic("unreachable")
+	panic("invalid string operator: " + op.String())
 }
 
 // MathOp does a math operation.

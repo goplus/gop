@@ -4,7 +4,9 @@ import (
 	"gop/tpl/variant"
 	"os"
 
+	_ "gop/tpl/variant/builtin"
 	_ "gop/tpl/variant/math"
+	_ "gop/tpl/variant/reflect"
 	_ "gop/tpl/variant/time"
 )
 
@@ -80,7 +82,7 @@ intVal = INT => {
 }
 `!
 
-variant.initUniverse "math", "time"
+variant.initUniverse "builtin", "math", "time", "reflect"
 
 print "> "
 for line in os.Stdin {
