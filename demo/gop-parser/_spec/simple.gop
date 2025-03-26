@@ -1,7 +1,0 @@
-expr = termExpr | expr ("+" | "-") expr
-
-termExpr = unaryExpr | termExpr ("*" | "/") termExpr
-
-unaryExpr = operand | "-" unaryExpr
-
-operand = INT | FLOAT | "(" expr ")"
