@@ -34,6 +34,35 @@ func Eval(v any) any {
 	return v
 }
 
+// EvalOp delays to evaluate a value.
+func EvalOp(expr any, fn func(v any)) any {
+	return func() any {
+		fn(Eval(expr))
+		return nil
+	}
+}
+
+// ListOp delays to convert the matching result of (R % ",") to a flat list.
+func ListOp(in []any, fn func(flat []any)) any {
+	return func() any {
+		fn(variant.List(in))
+		return nil
+	}
+}
+
+// RangeOp delays to travel the matching result of (R % ",") and call fn(result of R).
+// R % "," means R *("," R)
+func RangeOp(in []any, fn func(v any)) any {
+	return func() any {
+		next := in[1].([]any)
+		fn(Eval(in[0]))
+		for _, v := range next {
+			fn(Eval(v.([]any)[1]))
+		}
+		return nil
+	}
+}
+
 // -----------------------------------------------------------------------------
 
 // Compare delays a compare operation.
@@ -88,6 +117,14 @@ func ValueOf(name string, get func(name string) (any, bool)) any {
 func SetValue(name string, expr any, set func(name string, val any)) any {
 	return func() any {
 		set(name, Eval(expr))
+		return nil
+	}
+}
+
+// ChgValue delays to change a value.
+func ChgValue(name string, chgval func(string, func(oldv any) any), chg func(oldv any) any) any {
+	return func() any {
+		chgval(name, chg)
 		return nil
 	}
 }

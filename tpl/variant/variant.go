@@ -33,6 +33,18 @@ func Eval(v any) any {
 	return v
 }
 
+// List converts the matching result of (R % ",") to a flat list.
+// R % "," means R *("," R)
+func List(in []any) []any {
+	next := in[1].([]any)
+	ret := make([]any, len(next)+1)
+	ret[0] = Eval(in[0])
+	for i, v := range next {
+		ret[i+1] = Eval(v.([]any)[1])
+	}
+	return ret
+}
+
 // Float converts a value to float64.
 func Float(v any) float64 {
 	switch v := Eval(v).(type) {

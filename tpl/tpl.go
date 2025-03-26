@@ -288,6 +288,16 @@ func List(in []any) []any {
 	return ret
 }
 
+// RangeOp travels the matching result of (R % ",") and call fn(result of R).
+// R % "," means R *("," R)
+func RangeOp(in []any, fn func(v any)) {
+	next := in[1].([]any)
+	fn(in[0])
+	for _, v := range next {
+		fn(v.([]any)[1])
+	}
+}
+
 // BinaryExpr converts the matching result of (X % op) to a binary expression.
 // X % op means X *(op X)
 func BinaryExpr(recursive bool, in []any) ast.Expr {
