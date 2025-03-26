@@ -65,9 +65,77 @@ func UnaryOp(op token.Token, x any) any {
 }
 
 // Call delays to call a function.
-func Call(name string, args ...any) any {
+func Call(needList bool, name string, arglist any) any {
 	return func() any {
-		return variant.Call(name, args...)
+		return variant.Call(needList, name, arglist)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+// ValueOf delays to get a value.
+func ValueOf(name string, get func(name string) (any, bool)) any {
+	return func() any {
+		v, ok := get(name)
+		if !ok {
+			panic(name + " is undefined")
+		}
+		return v
+	}
+}
+
+// SetValue delays to set a value.
+func SetValue(name string, expr any, set func(name string, val any)) any {
+	return func() any {
+		set(name, Eval(expr))
+		return nil
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+// StmtList delays a statement list.
+func StmtList(stmts []any) any {
+	return func() any {
+		for _, stmt := range stmts {
+			Eval(stmt)
+		}
+		return nil
+	}
+}
+
+// IfElse delays an if-else statement.
+func IfElse(cond, ifBody, elseStmt any, elseBodyAt int) any {
+	return func() any {
+		if Eval(cond).(bool) {
+			Eval(ifBody)
+		} else if elseStmt != nil {
+			Eval(elseStmt.([]any)[elseBodyAt])
+		}
+		return nil
+	}
+}
+
+// While delays a while loop.
+func While(cond, body any) any {
+	return func() any {
+		for Eval(cond).(bool) {
+			Eval(body)
+		}
+		return nil
+	}
+}
+
+// RepeatUntil delays a repeat-until loop.
+func RepeatUntil(body, cond any) any {
+	return func() any {
+		for {
+			Eval(body)
+			if Eval(cond).(bool) {
+				break
+			}
+		}
+		return nil
 	}
 }
 

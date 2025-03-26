@@ -11,12 +11,12 @@ import (
 )
 
 var (
-	global map[string]any
+	vars   map[string]any
 	consts map[string]any
 )
 
 func exists(name string) bool {
-	_, ok := global[name]
+	_, ok := vars[name]
 	if !ok {
 		_, ok = consts[name]
 	}
@@ -24,11 +24,22 @@ func exists(name string) bool {
 }
 
 func value(name string) (v any, ok bool) {
-	v, ok = global[name]
+	v, ok = vars[name]
 	if !ok {
 		v, ok = consts[name]
 	}
 	return
+}
+
+func setValue(name string, v any) {
+	oldv, ok := vars[name]
+	if !ok {
+		panic "variable ${name} is undefined"
+	}
+	if reflect.typeOf(oldv) != reflect.typeOf(v) {
+		panic("assignment of ${name}: type mismatch")
+	}
+	vars[name] = v
 }
 
 if len(os.Args) < 2 {
@@ -36,18 +47,13 @@ if len(os.Args) < 2 {
 	return
 }
 
-global = {}
+vars = {}
 consts = {}
 
 cl := tpl`
 
 stmts = *stmtEOS => {
-	return func() any {
-		for stmt in self {
-			delay.eval(stmt)
-		}
-		return nil
-	}
+	return delay.stmtList(self)
 }
 
 stmtEOS = stmt ";" => {
@@ -66,7 +72,7 @@ varStmt = "DECLARE" namelist ":" typeExpr => {
 			if exists(name) {
 				tpl.panic t.Pos, "${name} exists"
 			}
-			global[name] = typeVal
+			vars[name] = typeVal
 		}
 		return nil
 	}
@@ -87,21 +93,13 @@ constStmt = "CONSTANT" IDENT "<-" expr => {
 
 assignStmt = IDENT "<-" expr => {
 	t := self[0].(*tpl.Token)
-	expr := self[2]
-	return func() any {
-		name := t.Lit
-		if _, ok := global[name]; !ok {
-			tpl.panic t.Pos, "variable ${name} is undefined"
-		}
-		global[name] = delay.eval(expr)
-		return nil
-	}
+	return delay.setValue(t.Lit, self[2], setValue)
 }
 
-outputStmt = "OUTPUT" exprlist => {
+outputStmt = "OUTPUT" expr % "," => {
 	exprlist := self[1].([]any)
 	return func() any {
-		echo [delay.eval(v) for v in exprlist]...
+		echo [delay.eval(v) for v in tpl.list(exprlist)]...
 		return nil
 	}
 }
@@ -110,54 +108,27 @@ inputStmt = "INPUT" IDENT => {
 	t := self[1].(*tpl.Token)
 	return func() any {
 		name := t.Lit
-		oldv, ok := global[name]
+		oldv, ok := vars[name]
 		if !ok {
 			tpl.panic t.Pos, "variable ${name} is undefined"
 		}
 		v := reflect.new(type(oldv))
 		fmt.scanln(v.Interface())!
-		global[name] = v.elem.Interface()
+		vars[name] = v.elem.Interface()
 		return nil
 	}
 }
 
 ifStmt = "IF" expr "THEN" ";" stmts ?("ELSE" ";" stmts) "ENDIF" => {
-	return func() any {
-		cond := self[1]
-		if delay.eval(cond).(bool) {
-			ifBody := self[4]
-			delay.eval(ifBody)
-		} else if elseStmt := self[5]; elseStmt != nil {
-			elseBody := elseStmt.([]any)[2]
-			delay.eval(elseBody)
-		}
-		return nil
-	}
+	return delay.ifElse(self[1], self[4], self[5], 2)
 }
 
 whileStmt = "WHILE" expr "DO" ";" stmts "ENDWHILE" => {
-	return func() any {
-		cond := self[1]
-		for delay.eval(cond).(bool) {
-			body := self[4]
-			delay.eval(body)
-		}
-		return nil
-	}
+	return delay.while(self[1], self[4])
 }
 
 untilStmt = "REPEAT" ";" stmts "UNTIL" expr => {
-	return func() any {
-		body := self[2]
-		cond := self[4]
-		for {
-			delay.eval(body)
-			if delay.eval(cond).(bool) { // TODO(xsw): check condition
-				break
-			}
-		}
-		return nil
-	}
+	return delay.repeatUntil(self[2], self[4])
 }
 
 typeExpr = integer | real | string | boolean
@@ -192,21 +163,12 @@ mathExpr = operand % ("*" | "/" | "%") % ("+" | "-") => {
 
 operand = basicLit | parenExpr | unaryExpr | identOrCall
 
-identOrCall = IDENT ?("(" ?exprlist ")") => {
+identOrCall = IDENT ?("(" ?(expr % ",") ")") => {
 	t := self[0].(*tpl.Token)
 	if params := self[1]; params != nil {
-		fn := t.Lit
-		args, _ := params.([]any)[1].([]any)
-		return delay.call(fn, args...)
+		return delay.call(true, t.Lit, params.([]any)[1])
 	}
-	return func() any {
-		name := t.Lit
-		v, ok := value(name)
-		if !ok {
-			tpl.panic t.Pos, "${name} is undefined"
-		}
-		return v
-	}
+	return delay.valueOf(t.Lit, value)
 }
 
 parenExpr = "(" expr ")" => {
@@ -238,10 +200,6 @@ floatVal = FLOAT => {
 
 intVal = INT => {
 	return self.(*tpl.Token).Lit.int!
-}
-
-exprlist = expr % "," => {
-	return tpl.list(self)
 }
 
 namelist = IDENT % "," => {

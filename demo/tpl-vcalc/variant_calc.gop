@@ -48,14 +48,9 @@ unaryExpr = ("-" | "+" | "!") operand => {
 	return variant.unaryOp(op.Tok, self[1])
 }
 
-callExpr = IDENT "(" ?arglist ")" => {
+callExpr = IDENT "(" ?(expr % ",") ")" => {
 	fn := self[0].(*tpl.Token).Lit
-	args, _ := self[2].([]any)
-	return variant.call(fn, args...)
-}
-
-arglist = expr % "," => {
-	return tpl.list(self)
+	return variant.call(true, fn, self[2])
 }
 
 basicLit = intVal | floatVal | stringVal | true | false

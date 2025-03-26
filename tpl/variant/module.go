@@ -16,6 +16,10 @@
 
 package variant
 
+import (
+	"github.com/goplus/gop/tpl"
+)
+
 // -----------------------------------------------------------------------------
 
 // Module represents a module.
@@ -65,9 +69,16 @@ var (
 )
 
 // Call calls a function.
-func Call(name string, args ...any) any {
+func Call(needList bool, name string, arglist any) any {
 	if o, ok := universe.objs[name]; ok {
 		if fn, ok := o.(func(...any) any); ok {
+			var args []any
+			if arglist != nil {
+				args = arglist.([]any)
+				if needList {
+					args = tpl.List(args)
+				}
+			}
 			return fn(args...)
 		}
 		panic("not a function: " + name)

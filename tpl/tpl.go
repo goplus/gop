@@ -429,6 +429,7 @@ func BasicLit(this any) *ast.BasicLit {
 
 // -----------------------------------------------------------------------------
 
+// Panic panics with a matcher error.
 func Panic(pos token.Pos, msg string) {
 	err := &matcher.Error{
 		Pos: pos,
