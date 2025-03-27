@@ -1,6 +1,7 @@
 import (
 	"fmt"
 	"gop/tpl"
+	"gop/tpl/token"
 	"gop/tpl/variant/delay"
 	"os"
 	"reflect"
@@ -145,7 +146,21 @@ boolean = "BOOLEAN" => {
 	return false
 }
 
-expr = mathExpr % ("<" | "<=" | ">" | ">=" | "=" | "<>") => {
+expr = cmpExpr % (and | or) => {
+	return tpl.binaryOp(false, self, (op, x, y) => {
+		return delay.logicOp(op.Tok, x, y)
+	})
+}
+
+and = "AND" => {
+	return &tpl.Token{Tok: token.LAND}
+}
+
+or = "OR" => {
+	return &tpl.Token{Tok: token.LOR}
+}
+
+cmpExpr = mathExpr % ("<" | "<=" | ">" | ">=" | "=" | "<>") => {
 	return tpl.binaryOp(false, self, (op, x, y) => {
 		return delay.compare(op.Tok, x, y)
 	})
