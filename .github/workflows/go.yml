@@ -52,3 +52,41 @@ jobs:
       uses: codecov/codecov-action@v5
       with:
         slug: goplus/gop
+
+  TestTypeAlias:
+    strategy:
+      matrix:
+        os:
+        - ubuntu-latest
+        - windows-latest
+        - macos-latest
+        go:
+        - 1.23.x
+        - 1.24.x
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.go }}
+
+    - name: Update golang.org/x/tools
+      run: |
+        go work init .
+        go work edit -replace golang.org/x/tools=golang.org/x/tools@v0.30
+
+    - name: Test Go+ installer
+      run: |
+        git config --global user.email "build-robot@goplus.org"
+        git config --global user.name "build robot"
+        go test -v cmd/make_test.go
+
+    - name: Run testcases
+      run: go test -v -coverprofile="coverage.txt" -covermode=atomic ./...
+
+    - name: Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        slug: goplus/gop

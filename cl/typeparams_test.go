@@ -314,7 +314,13 @@ _ = At[int]
 }
 
 func TestTypeParamsErrInferFunc(t *testing.T) {
-	mixedErrorTest(t, `b.gop:2:5: cannot infer T2 (/foo/a.go:4:21)`, `
+	var expect string
+	if cltest.Go1Point() == 24 {
+		expect = `b.gop:2:5: cannot infer T2 (declared at /foo/a.go:4:21)`
+	} else {
+		expect = `b.gop:2:5: cannot infer T2 (/foo/a.go:4:21)`
+	}
+	mixedErrorTest(t, expect, `
 package main
 
 func Loader[T1 any, T2 any](p1 T1, p2 T2) T1 {
