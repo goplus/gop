@@ -933,14 +933,22 @@ func main() {
 }
 
 func TestOverloadNamed(t *testing.T) {
-	gopClTest(t, `
+	var excepted string
+	if gotypesalias {
+		excepted = `package main
+
 import "github.com/goplus/gop/cl/internal/overload/bar"
 
-var a bar.Var[int]
-var b bar.Var[bar.M]
-c := bar.Var(string)
-d := bar.Var(bar.M)
-`, `package main
+var a bar.Var__0[int]
+var b bar.Var__1[bar.M]
+
+func main() {
+	c := bar.Gopx_Var_Cast__0[string]()
+	d := bar.Gopx_Var_Cast__1[bar.M]()
+}
+`
+	} else {
+		excepted = `package main
 
 import "github.com/goplus/gop/cl/internal/overload/bar"
 
@@ -951,7 +959,16 @@ func main() {
 	c := bar.Gopx_Var_Cast__0[string]()
 	d := bar.Gopx_Var_Cast__1[map[string]any]()
 }
-`)
+`
+	}
+	gopClTest(t, `
+import "github.com/goplus/gop/cl/internal/overload/bar"
+
+var a bar.Var[int]
+var b bar.Var[bar.M]
+c := bar.Var(string)
+d := bar.Var(bar.M)
+`, excepted)
 }
 
 func TestMixedOverloadNamed(t *testing.T) {

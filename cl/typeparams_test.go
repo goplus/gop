@@ -136,6 +136,56 @@ func main() {
 }
 
 func TestTypeParamsType(t *testing.T) {
+	var expect string
+	if gotypesalias {
+		expect = `package main
+
+import "fmt"
+
+type DataString = Data[string]
+type SliceString = Slice[[]string, string]
+
+func main() {
+	fmt.Println(Data[int]{1}.v)
+	fmt.Println(DataString{"hello"}.v)
+	fmt.Println(Data[int]{100}.v)
+	fmt.Println(Data[string]{"hello"}.v)
+	fmt.Println(Data[struct {
+		X int
+		Y int
+	}]{}.v.X)
+	v1 := Slice[[]int, int]{}
+	v2 := SliceString{}
+	v3 := Slice[[]int, int]{}
+	v3.Append([]int{1, 2, 3, 4}...)
+	v3.Append2([]int{1, 2, 3, 4}...)
+}
+`
+	} else {
+		expect = `package main
+
+import "fmt"
+
+type DataString = Data[string]
+type SliceString = Slice[[]string, string]
+
+func main() {
+	fmt.Println(Data[int]{1}.v)
+	fmt.Println(Data[string]{"hello"}.v)
+	fmt.Println(Data[int]{100}.v)
+	fmt.Println(Data[string]{"hello"}.v)
+	fmt.Println(Data[struct {
+		X int
+		Y int
+	}]{}.v.X)
+	v1 := Slice[[]int, int]{}
+	v2 := Slice[[]string, string]{}
+	v3 := Slice[[]int, int]{}
+	v3.Append([]int{1, 2, 3, 4}...)
+	v3.Append2([]int{1, 2, 3, 4}...)
+}
+`
+	}
 	gopMixedClTest(t, "main", `package main
 type Data[T any] struct {
 	v T
@@ -178,29 +228,7 @@ v2 := SliceString{}
 v3 := Slice[[]int,int]{}
 v3.Append([1,2,3,4]...)
 v3.Append2([1,2,3,4]...)
-`, `package main
-
-import "fmt"
-
-type DataString = Data[string]
-type SliceString = Slice[[]string, string]
-
-func main() {
-	fmt.Println(Data[int]{1}.v)
-	fmt.Println(Data[string]{"hello"}.v)
-	fmt.Println(Data[int]{100}.v)
-	fmt.Println(Data[string]{"hello"}.v)
-	fmt.Println(Data[struct {
-		X int
-		Y int
-	}]{}.v.X)
-	v1 := Slice[[]int, int]{}
-	v2 := Slice[[]string, string]{}
-	v3 := Slice[[]int, int]{}
-	v3.Append([]int{1, 2, 3, 4}...)
-	v3.Append2([]int{1, 2, 3, 4}...)
-}
-`)
+`, expect)
 }
 
 func TestTypeParamsComparable(t *testing.T) {
@@ -314,7 +342,13 @@ _ = At[int]
 }
 
 func TestTypeParamsErrInferFunc(t *testing.T) {
-	mixedErrorTest(t, `b.gop:2:5: cannot infer T2 (/foo/a.go:4:21)`, `
+	var expect string
+	if cltest.Go1Point() == 24 {
+		expect = `b.gop:2:5: cannot infer T2 (declared at /foo/a.go:4:21)`
+	} else {
+		expect = `b.gop:2:5: cannot infer T2 (/foo/a.go:4:21)`
+	}
+	mixedErrorTest(t, expect, `
 package main
 
 func Loader[T1 any, T2 any](p1 T1, p2 T2) T1 {

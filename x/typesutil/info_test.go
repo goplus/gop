@@ -17,6 +17,7 @@ import (
 
 	"github.com/goplus/gogen"
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/cl/cltest"
 	"github.com/goplus/gop/format"
 	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
@@ -34,11 +35,13 @@ var spxProject = &modfile.Project{
 	PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx", "math"}}
 
 var spxMod *gopmod.Module
+var gotypesalias bool
 
 func init() {
 	spxMod = gopmod.New(modload.Default)
 	spxMod.Opt.Projects = append(spxMod.Opt.Projects, spxProject)
 	spxMod.ImportClasses()
+	gotypesalias = cltest.EnableTypesalias()
 }
 
 func lookupClass(ext string) (c *modfile.Project, ok bool) {
@@ -105,7 +108,6 @@ func parseMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string,
 	err = check.Files(gofiles, []*ast.File{f})
 	return chkOpts.Types, info, ginfo, err
 }
-
 func parseSource(fset *token.FileSet, filename string, src any, mode parser.Mode) (*types.Package, *typesutil.Info, error) {
 	f, err := parser.ParseEntry(fset, filename, src, parser.Config{
 		Mode: mode,
@@ -116,7 +118,8 @@ func parseSource(fset *token.FileSet, filename string, src any, mode parser.Mode
 
 	pkg := types.NewPackage("", f.Name.Name)
 	conf := &types.Config{}
-	conf.Importer = importer.Default()
+	Gop := &env.Gop{Version: "1.0"}
+	conf.Importer = tool.NewImporter(nil, Gop, fset)
 	chkOpts := &typesutil.Config{
 		Types: pkg,
 		Fset:  fset,
@@ -1484,14 +1487,49 @@ func (p *N) Test__1(n int) {
 }
 
 func TestOverloadNamed(t *testing.T) {
-	testGopInfo(t, `
-import "github.com/goplus/gop/cl/internal/overload/bar"
-
-var a bar.Var[int]
-var b bar.Var[bar.M]
-c := bar.Var(string)
-d := bar.Var(bar.M)
-`, ``, `== types ==
+	var expect string
+	if gotypesalias {
+		expect = `== types ==
+000:  4: 7 | bar.Var             *ast.SelectorExpr              | type    : github.com/goplus/gop/cl/internal/overload/bar.Var__0[int] | type
+001:  4: 7 | bar.Var[int]        *ast.IndexExpr                 | type    : github.com/goplus/gop/cl/internal/overload/bar.Var__0[int] | type
+002:  4:15 | int                 *ast.Ident                     | type    : int | type
+003:  5: 7 | bar.Var             *ast.SelectorExpr              | type    : github.com/goplus/gop/cl/internal/overload/bar.Var__1[github.com/goplus/gop/cl/internal/overload/bar.M] | type
+004:  5: 7 | bar.Var[bar.M]      *ast.IndexExpr                 | type    : github.com/goplus/gop/cl/internal/overload/bar.Var__1[github.com/goplus/gop/cl/internal/overload/bar.M] | type
+005:  5:15 | bar.M               *ast.SelectorExpr              | type    : github.com/goplus/gop/cl/internal/overload/bar.M | type
+006:  6: 6 | bar.Var             *ast.SelectorExpr              | value   : func[T github.com/goplus/gop/cl/internal/overload/bar.basetype]() *github.com/goplus/gop/cl/internal/overload/bar.Var__0[T] | value
+007:  6: 6 | bar.Var(string)     *ast.CallExpr                  | value   : *github.com/goplus/gop/cl/internal/overload/bar.Var__0[string] | value
+008:  6:14 | string              *ast.Ident                     | type    : string | type
+009:  7: 6 | bar.Var             *ast.SelectorExpr              | value   : func[T map[string]any]() *github.com/goplus/gop/cl/internal/overload/bar.Var__1[T] | value
+010:  7: 6 | bar.Var(bar.M)      *ast.CallExpr                  | value   : *github.com/goplus/gop/cl/internal/overload/bar.Var__1[github.com/goplus/gop/cl/internal/overload/bar.M] | value
+011:  7:14 | bar.M               *ast.SelectorExpr              | var     : github.com/goplus/gop/cl/internal/overload/bar.M | variable
+== defs ==
+000:  4: 5 | a                   | var main.a github.com/goplus/gop/cl/internal/overload/bar.Var__0[int]
+001:  5: 5 | b                   | var main.b github.com/goplus/gop/cl/internal/overload/bar.Var__1[github.com/goplus/gop/cl/internal/overload/bar.M]
+002:  6: 1 | c                   | var c *github.com/goplus/gop/cl/internal/overload/bar.Var__0[string]
+003:  6: 1 | main                | func main.main()
+004:  7: 1 | d                   | var d *github.com/goplus/gop/cl/internal/overload/bar.Var__1[github.com/goplus/gop/cl/internal/overload/bar.M]
+== uses ==
+000:  4: 7 | bar                 | package bar ("github.com/goplus/gop/cl/internal/overload/bar")
+001:  4:11 | Var                 | type github.com/goplus/gop/cl/internal/overload/bar.Var__0[T github.com/goplus/gop/cl/internal/overload/bar.basetype] struct{val T}
+002:  4:15 | int                 | type int
+003:  5: 7 | bar                 | package bar ("github.com/goplus/gop/cl/internal/overload/bar")
+004:  5:11 | Var                 | type github.com/goplus/gop/cl/internal/overload/bar.Var__1[T map[string]any] struct{val T}
+005:  5:15 | bar                 | package bar ("github.com/goplus/gop/cl/internal/overload/bar")
+006:  5:19 | M                   | type github.com/goplus/gop/cl/internal/overload/bar.M = map[string]any
+007:  6: 6 | bar                 | package bar ("github.com/goplus/gop/cl/internal/overload/bar")
+008:  6:10 | Var                 | func github.com/goplus/gop/cl/internal/overload/bar.Gopx_Var_Cast__0[T github.com/goplus/gop/cl/internal/overload/bar.basetype]() *github.com/goplus/gop/cl/internal/overload/bar.Var__0[T]
+009:  6:14 | string              | type string
+010:  7: 6 | bar                 | package bar ("github.com/goplus/gop/cl/internal/overload/bar")
+011:  7:10 | Var                 | func github.com/goplus/gop/cl/internal/overload/bar.Gopx_Var_Cast__1[T map[string]any]() *github.com/goplus/gop/cl/internal/overload/bar.Var__1[T]
+012:  7:14 | bar                 | package bar ("github.com/goplus/gop/cl/internal/overload/bar")
+013:  7:18 | M                   | type github.com/goplus/gop/cl/internal/overload/bar.M = map[string]any
+== overloads ==
+000:  4:11 | Var                 | type github.com/goplus/gop/cl/internal/overload/bar.Var = func(__gop_overload_args__ interface{_()})
+001:  5:11 | Var                 | type github.com/goplus/gop/cl/internal/overload/bar.Var = func(__gop_overload_args__ interface{_()})
+002:  6:10 | Var                 | type github.com/goplus/gop/cl/internal/overload/bar.Var = func(__gop_overload_args__ interface{_()})
+003:  7:10 | Var                 | type github.com/goplus/gop/cl/internal/overload/bar.Var = func(__gop_overload_args__ interface{_()})`
+	} else {
+		expect = `== types ==
 000:  4: 7 | bar.Var             *ast.SelectorExpr              | type    : github.com/goplus/gop/cl/internal/overload/bar.Var__0[int] | type
 001:  4: 7 | bar.Var[int]        *ast.IndexExpr                 | type    : github.com/goplus/gop/cl/internal/overload/bar.Var__0[int] | type
 002:  4:15 | int                 *ast.Ident                     | type    : int | type
@@ -1529,7 +1567,16 @@ d := bar.Var(bar.M)
 000:  4:11 | Var                 | type github.com/goplus/gop/cl/internal/overload/bar.Var = func(__gop_overload_args__ interface{_()})
 001:  5:11 | Var                 | type github.com/goplus/gop/cl/internal/overload/bar.Var = func(__gop_overload_args__ interface{_()})
 002:  6:10 | Var                 | type github.com/goplus/gop/cl/internal/overload/bar.Var = func(__gop_overload_args__ interface{_()})
-003:  7:10 | Var                 | type github.com/goplus/gop/cl/internal/overload/bar.Var = func(__gop_overload_args__ interface{_()})`)
+003:  7:10 | Var                 | type github.com/goplus/gop/cl/internal/overload/bar.Var = func(__gop_overload_args__ interface{_()})`
+	}
+	testGopInfo(t, `
+import "github.com/goplus/gop/cl/internal/overload/bar"
+
+var a bar.Var[int]
+var b bar.Var[bar.M]
+c := bar.Var(string)
+d := bar.Var(bar.M)
+`, ``, expect)
 }
 
 func TestMixedOverloadNamed(t *testing.T) {
@@ -2443,4 +2490,19 @@ func add = (
 012: 13:10 | a                   | var a float64
 013: 13:14 | b                   | var b float64
 014: 15: 2 | addString           | func (*main.Rect).addString(a string, b string) string`)
+}
+
+func TestTypesAlias(t *testing.T) {
+	testInfo(t, `package main
+import "fmt"
+
+type T = int
+var v T
+func demo(v T) {
+	fmt.Println(v)
+}
+func main() {
+	demo(100)
+}
+`)
 }

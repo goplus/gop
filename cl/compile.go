@@ -1040,7 +1040,12 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 								if debugLoad {
 									log.Println("==> Load > AliasType", name)
 								}
-								defs.AliasType(name, toType(ctx, t.Type), tName)
+								typ := defs.AliasType(name, toType(ctx, t.Type), tName)
+								if rec := ctx.recorder(); rec != nil {
+									if obj, ok := typ.(interface{ Obj() *types.TypeName }); ok {
+										rec.Def(tName, obj.Obj())
+									}
+								}
 								return
 							}
 							if debugLoad {
