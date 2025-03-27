@@ -1957,6 +1957,42 @@ func main() {
 }
 
 func TestStructType(t *testing.T) {
+	var expect string
+	if gotypesalias {
+		expect = `package main
+
+type bar = foo
+type foo struct {
+	p *bar
+	A int
+	B string ` + "`tag1:123`" + `
+}
+
+func main() {
+	type a struct {
+		p *a
+	}
+	type b = a
+}
+`
+	} else {
+		expect = `package main
+
+type bar = foo
+type foo struct {
+	p *foo
+	A int
+	B string ` + "`tag1:123`" + `
+}
+
+func main() {
+	type a struct {
+		p *a
+	}
+	type b = a
+}
+`
+	}
 	gopClTest(t, `
 type bar = foo
 
@@ -1972,22 +2008,7 @@ func main() {
 	}
 	type b = a
 }
-`, `package main
-
-type bar = foo
-type foo struct {
-	p *foo
-	A int
-	B string `+"`tag1:123`"+`
-}
-
-func main() {
-	type a struct {
-		p *a
-	}
-	type b = a
-}
-`)
+`, expect)
 }
 
 func TestDeferGo(t *testing.T) {

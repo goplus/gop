@@ -91,6 +91,11 @@ func newBuiltinDefault(pkg *gogen.Package, conf *gogen.Config) *types.Package {
 	pkg.TryImport("strings")
 	if ng.Types != nil {
 		initMathBig(pkg, conf, ng)
+		if obj := ng.Types.Scope().Lookup("Gop_ninteger"); obj != nil {
+			if _, ok := obj.Type().(*types.Basic); !ok {
+				conf.EnableTypesalias = true
+			}
+		}
 	}
 	initBuiltin(pkg, builtin, os, fmt, ng, iox, buil, reflect)
 	gogen.InitBuiltin(pkg, builtin, conf)
