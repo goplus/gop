@@ -108,7 +108,6 @@ func parseMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string,
 	err = check.Files(gofiles, []*ast.File{f})
 	return chkOpts.Types, info, ginfo, err
 }
-
 func parseSource(fset *token.FileSet, filename string, src any, mode parser.Mode) (*types.Package, *typesutil.Info, error) {
 	f, err := parser.ParseEntry(fset, filename, src, parser.Config{
 		Mode: mode,
@@ -119,7 +118,8 @@ func parseSource(fset *token.FileSet, filename string, src any, mode parser.Mode
 
 	pkg := types.NewPackage("", f.Name.Name)
 	conf := &types.Config{}
-	conf.Importer = importer.Default()
+	Gop := &env.Gop{Version: "1.0"}
+	conf.Importer = tool.NewImporter(nil, Gop, fset)
 	chkOpts := &typesutil.Config{
 		Types: pkg,
 		Fset:  fset,
@@ -2490,4 +2490,19 @@ func add = (
 012: 13:10 | a                   | var a float64
 013: 13:14 | b                   | var b float64
 014: 15: 2 | addString           | func (*main.Rect).addString(a string, b string) string`)
+}
+
+func TestTypesAlias(t *testing.T) {
+	testInfo(t, `package main
+import "fmt"
+
+type T = int
+var v T
+func demo(v T) {
+	fmt.Println(v)
+}
+func main() {
+	demo(100)
+}
+`)
 }
