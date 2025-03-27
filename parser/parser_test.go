@@ -125,6 +125,10 @@ func TestErrLabel(t *testing.T) {
 	testErrCode(t, `a.x:`, `/foo/bar.gop:1:4: illegal label declaration`, ``)
 }
 
+func TestErrTplLit(t *testing.T) {
+	testErrCode(t, "tpl`a =`", `/foo/bar.gop:1:8: expected ';', found 'EOF' (and 1 more errors)`, ``)
+}
+
 func TestErrTuple(t *testing.T) {
 	testErrCode(t, `println (1,2)*2`, `/foo/bar.gop:1:9: tuple is not supported`, ``)
 	testErrCode(t, `println 2*(1,2)`, `/foo/bar.gop:1:13: expected ')', found ','`, ``)

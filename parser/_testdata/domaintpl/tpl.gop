@@ -1,0 +1,11 @@
+cl := tpl`
+file = stmts => {
+	return &ast.File{
+		Stmts: this.([]ast.Stmt),
+	}
+}
+
+stmts = *(stmt ";") => {
+	return [n.([]any)[0].(ast.Stmt) for n in this]
+}
+`!

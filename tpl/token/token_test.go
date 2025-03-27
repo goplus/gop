@@ -17,10 +17,19 @@
 package token
 
 import (
+	"go/token"
 	"testing"
 )
 
 func TestToken(t *testing.T) {
+	if literal_beg != 3 {
+		t.Fatal("literal_beg")
+	}
+	for i := Token(0); i < literal_end; i++ {
+		if i.String() != token.Token(i).String() {
+			t.Fatal("String:", i)
+		}
+	}
 	if IDENT.String() != "IDENT" {
 		t.Fatal("IDENT")
 	}

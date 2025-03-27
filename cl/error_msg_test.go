@@ -37,6 +37,12 @@ func codeErrorTestAst(t *testing.T, pkgname, filename, msg, src string) {
 	cltest.ErrorAst(t, pkgname, filename, msg, src)
 }
 
+func TestErrTplLit(t *testing.T) {
+	codeErrorTest(t, `bar.gop:1:18: not enough arguments to return
+	have ()
+	want (interface{})`, "tpl`a = INT => { return }`")
+}
+
 func TestErrSendStmt(t *testing.T) {
 	codeErrorTest(t, `bar.gop:3:8: can't send multiple values to a channel`, `
 	var a chan int

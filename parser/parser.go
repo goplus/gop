@@ -36,6 +36,8 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
+	tplast "github.com/goplus/gop/tpl/ast"
+	tpl "github.com/goplus/gop/tpl/parser"
 	"github.com/qiniu/x/log"
 )
 
@@ -1714,13 +1716,31 @@ func (p *parser) stringLitExpr(parts []any, off, end token.Pos) []any {
 	file := p.file
 	base := file.Base()
 	src := p.scanner.CodeTo(int(end) - base)
-	expr, err := parseExprEx(p.file, src, int(off)-base, 0)
+	expr, err := ParseExprEx(file, src, int(off)-base, 0)
 	if err != nil {
 		p.errors = append(p.errors, err...)
 		expr = &ast.BadExpr{From: off, To: end}
 	}
 	parts = append(parts, expr)
 	return parts
+}
+
+func (p *parser) tplLit(off, end token.Pos) any {
+	file := p.file
+	base := file.Base()
+	src := p.scanner.CodeTo(int(end) - base)
+	expr, err := tpl.ParseEx(file, src, int(off)-base, &tpl.Config{
+		ParseRetProc: parseTplRetProc,
+	})
+	if err != nil {
+		p.errors = append(p.errors, err...)
+		return nil
+	}
+	return expr
+}
+
+func parseTplRetProc(file *token.File, src []byte, offset int) (tplast.Node, scanner.ErrorList) {
+	return ParseExprEx(file, src, offset, 0)
 }
 
 // parseOperand may return an expression or a raw type (incl. array
@@ -1736,13 +1756,19 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTup
 		ident := p.parseIdent()
 		if p.tok == token.STRING && p.pos == ident.End() && strings.HasPrefix(p.lit, "`") {
 			// domain text: tpl`...`
+			var pos, lit = p.pos, p.lit
+			var extra any
+			if ident.Name == "tpl" {
+				extra = p.tplLit(pos+1, pos+token.Pos(len(lit))-1)
+			}
 			x = &ast.DomainTextLit{
 				Domain:   ident,
-				ValuePos: p.pos,
-				Value:    p.lit,
+				ValuePos: pos,
+				Value:    lit,
+				Extra:    extra,
 			}
 			if debugParseOutput {
-				log.Printf("ast.DomainTextLit{Domain: %s, Value: %s}\n", ident.Name, p.lit)
+				log.Printf("ast.DomainTextLit{Domain: %s, Value: %s}\n", ident.Name, lit)
 			}
 			p.next()
 		} else {

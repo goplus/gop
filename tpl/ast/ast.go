@@ -64,16 +64,45 @@ func (p *File) End() token.Pos {
 
 // -----------------------------------------------------------------------------
 
-// Rule: IDENT '=' Expr
+// Rule:
+//
+//	IDENT '=' Expr
+//	IDENT '=' Expr => { ... }
 type Rule struct {
-	Name   *Ident
-	TokPos token.Pos // position of '='
-	Expr   Expr
+	Name    *Ident
+	TokPos  token.Pos // position of '='
+	Expr    Expr
+	RetProc Node // => { ... } (see gop/ast.LambdaExpr2) or nil
+}
+
+// IsList reports whether the rule is a list rule.
+func (p *Rule) IsList() bool {
+	switch e := p.Expr.(type) {
+	case *Sequence:
+		return true
+	case *UnaryExpr:
+		switch e.Op {
+		case token.MUL, token.ADD: // *R, +R
+			return true
+		}
+	case *BinaryExpr:
+		switch e.Op {
+		case token.REM: // R1 % R2
+			return true
+		}
+	}
+	return false
 }
 
 func (p *Rule) Pos() token.Pos { return p.Name.Pos() }
-func (p *Rule) End() token.Pos { return p.Expr.End() }
-func (p *Rule) declNode()      {}
+func (p *Rule) End() token.Pos {
+	if p.RetProc != nil {
+		return p.RetProc.End()
+	}
+	return p.Expr.End()
+}
+
+func (p *Rule) declNode() {}
 
 // -----------------------------------------------------------------------------
 

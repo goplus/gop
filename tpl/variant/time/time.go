@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2025 The GoPlus Authors (goplus.org). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,37 +14,26 @@
  * limitations under the License.
  */
 
-package spx3
+package time
 
-const (
-	GopPackage = true
+import (
+	"time"
+
+	"github.com/goplus/gop/tpl/variant"
 )
 
-type Game struct {
+// -----------------------------------------------------------------------------
+
+func now(args ...any) any {
+	if len(args) > 0 {
+		panic("function call: arity mismatch")
+	}
+	return time.Now()
 }
 
-func New() *Game {
-	return nil
+func init() {
+	mod := variant.NewModule("time")
+	mod.Insert("now", now)
 }
 
-func (p *Game) initGame() {}
-
-func (p *Game) Run() {}
-
-type Sprite struct {
-}
-
-func (p *Sprite) Name() string {
-	return "sprite"
-}
-
-func (p *Sprite) Main(name string) {}
-
-type Handler interface {
-	Main(name string)
-	Classfname() string
-	Classclone() Handler
-}
-
-func Gopt_Game_Main(game interface{ initGame() }, workers ...Handler) {
-}
+// -----------------------------------------------------------------------------

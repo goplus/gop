@@ -32,6 +32,7 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/printer"
 	"github.com/goplus/gop/token"
+	tpl "github.com/goplus/gop/tpl/ast"
 )
 
 /*-----------------------------------------------------------------------------
@@ -873,12 +874,12 @@ retry:
 
 func compileLambda(ctx *blockCtx, lambda ast.Expr, sig *types.Signature) {
 	switch expr := lambda.(type) {
-	case *ast.LambdaExpr:
-		if err := compileLambdaExpr(ctx, expr, sig); err != nil {
-			panic(err)
-		}
 	case *ast.LambdaExpr2:
 		if err := compileLambdaExpr2(ctx, expr, sig); err != nil {
+			panic(err)
+		}
+	case *ast.LambdaExpr:
+		if err := compileLambdaExpr(ctx, expr, sig); err != nil {
 			panic(err)
 		}
 	}
@@ -1083,9 +1084,11 @@ func compileDomainTextLit(ctx *blockCtx, v *ast.DomainTextLit) {
 	var cb = ctx.cb
 	var imp gogen.PkgRef
 	var name = v.Domain.Name
+	var path string
 	if pi, ok := ctx.findImport(name); ok {
 		imp = pi.PkgRef
-		if pi.Path() == "golang.org/x/net/html" {
+		path = pi.Path()
+		if path == "golang.org/x/net/html" {
 			// html`...` => html.Parse(strings.NewReader(`...`))
 			cb.Val(imp.Ref("Parse")).
 				Val(ctx.pkg.Import("strings").Ref("NewReader")).
@@ -1095,7 +1098,6 @@ func compileDomainTextLit(ctx *blockCtx, v *ast.DomainTextLit) {
 			return
 		}
 	} else {
-		var path string
 		if name == "tpl" {
 			path = tplPkgPath
 		} else {
@@ -1108,9 +1110,54 @@ func compileDomainTextLit(ctx *blockCtx, v *ast.DomainTextLit) {
 		}
 		*/
 	}
+
 	cb.Val(imp.Ref("New")).
-		Val(&goast.BasicLit{Kind: gotoken.STRING, Value: v.Value}, v).
-		CallWith(1, 0, v)
+		Val(&goast.BasicLit{Kind: gotoken.STRING, Value: v.Value}, v)
+
+	n := 1
+	if path == tplPkgPath {
+		if f, ok := v.Extra.(*tpl.File); ok {
+			decls := f.Decls
+			for _, decl := range decls {
+				if r, ok := decl.(*tpl.Rule); ok {
+					if expr, ok := r.RetProc.(*ast.LambdaExpr2); ok {
+						cb.Val(r.Name.Name)
+						sig := sigRetFunc(ctx.pkg, r.IsList())
+						compileLambdaExpr2(ctx, lambdaRetFunc(expr), sig)
+						n += 2
+					}
+				}
+			}
+		}
+	}
+	cb.CallWith(n, 0, v)
+}
+
+func lambdaRetFunc(expr *ast.LambdaExpr2) *ast.LambdaExpr2 {
+	v := *expr
+	v.Lhs = []*ast.Ident{
+		{NamePos: expr.Pos(), Name: "self"},
+	}
+	return &v
+}
+
+func sigRetFunc(pkg *gogen.Package, isList bool) *types.Signature {
+	rets := types.NewTuple(anyParam(pkg))
+	var args *types.Tuple
+	if isList {
+		args = types.NewTuple(anySliceParam(pkg))
+	} else {
+		args = rets
+	}
+	return types.NewSignatureType(nil, nil, nil, args, rets, false)
+}
+
+func anyParam(pkg *gogen.Package) *types.Var {
+	return pkg.NewParam(token.NoPos, "", gogen.TyEmptyInterface)
+}
+
+func anySliceParam(pkg *gogen.Package) *types.Var {
+	return pkg.NewParam(token.NoPos, "", types.NewSlice(gogen.TyEmptyInterface))
 }
 
 const (

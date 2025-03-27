@@ -64,10 +64,10 @@ func (*OverloadFuncDecl) declNode() {}
 //
 //	tpl`...`
 type DomainTextLit struct {
-	Domain   *Ident       // domain name
-	ValuePos token.Pos    // literal position
-	Value    string       // literal string; e.g. `\m\n\o`
-	Extra    *StringLitEx // optional
+	Domain   *Ident    // domain name
+	ValuePos token.Pos // literal position
+	Value    string    // literal string; e.g. `\m\n\o`
+	Extra    any       // *ast.StringLitEx or *gop/tpl/ast.File, optional
 }
 
 // Pos returns position of first character belonging to the node.
@@ -481,6 +481,22 @@ func (f *File) HasShadowEntry() bool {
 // HasPkgDecl checks if `package xxx` exists or not.
 func (f *File) HasPkgDecl() bool {
 	return f.Package != token.NoPos
+}
+
+// ClassFieldsDecl returns the class fields declaration.
+func (f *File) ClassFieldsDecl() *GenDecl {
+	if f.IsClass {
+		for _, decl := range f.Decls {
+			if g, ok := decl.(*GenDecl); ok {
+				if g.Tok == token.VAR {
+					return g
+				}
+				continue
+			}
+			break
+		}
+	}
+	return nil
 }
 
 // Pos returns position of first character belonging to the node.

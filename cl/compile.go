@@ -368,6 +368,7 @@ type blockCtx struct {
 	pystr_     gogen.Ref
 	relBaseDir string
 
+	classDecl *ast.GenDecl   // available when isClass
 	classRecv *ast.FieldList // available when isClass
 	baseClass types.Object   // available when isClass
 
@@ -727,9 +728,8 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 	var baseTypeName string
 	var baseType types.Type
 	var spxProj string
+	var spfeats spriteFeat
 	var spxClass bool
-	var spxClassfname bool
-	var spxClassclone bool
 	var goxTestFile bool
 	var parent = ctx.pkgCtx
 	if f.IsClass {
@@ -766,9 +766,8 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 				o := sp.obj
 				ctx.baseClass = o
 				baseTypeName, baseType, spxProj = o.Name(), o.Type(), sp.proj
-				spxClassfname = (proj.spfeats & spriteClassfname) != 0
-				spxClassclone = (proj.spfeats & spriteClassclone) != 0
 				spxClass = true
+				spfeats = proj.spfeats
 			}
 		}
 	}
@@ -785,7 +784,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 		}
 		syms := parent.syms
 		pos := f.Pos()
-		specs := getFields(f)
+		ctx.classDecl = f.ClassFieldsDecl()
 		ld := getTypeLoader(parent, syms, pos, classType)
 		ld.typ = func() {
 			if debugLoad {
@@ -826,32 +825,34 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 					}
 				}
 				rec := ctx.recorder()
-				for _, v := range specs {
-					spec := v.(*ast.ValueSpec)
-					typ := toType(ctx, spec.Type)
-					tag := toFieldTag(spec.Tag)
-					if len(spec.Names) == 0 {
-						name := parseTypeEmbedName(spec.Type)
-						if chk.chkRedecl(ctx, name.Name, spec.Type.Pos()) {
-							continue
-						}
-						fld := types.NewField(spec.Type.Pos(), pkg, name.Name, typ, true)
-						if rec != nil {
-							rec.Def(name, fld)
-						}
-						flds = append(flds, fld)
-						tags = append(tags, tag)
-					} else {
-						for _, name := range spec.Names {
-							if chk.chkRedecl(ctx, name.Name, name.Pos()) {
+				if classDecl := ctx.classDecl; classDecl != nil {
+					for _, v := range classDecl.Specs {
+						spec := v.(*ast.ValueSpec)
+						typ := toType(ctx, spec.Type)
+						tag := toFieldTag(spec.Tag)
+						if len(spec.Names) == 0 {
+							name := parseTypeEmbedName(spec.Type)
+							if chk.chkRedecl(ctx, name.Name, spec.Type.Pos()) {
 								continue
 							}
-							fld := types.NewField(name.Pos(), pkg, name.Name, typ, false)
+							fld := types.NewField(spec.Type.Pos(), pkg, name.Name, typ, true)
 							if rec != nil {
 								rec.Def(name, fld)
 							}
 							flds = append(flds, fld)
 							tags = append(tags, tag)
+						} else {
+							for _, name := range spec.Names {
+								if chk.chkRedecl(ctx, name.Name, name.Pos()) {
+									continue
+								}
+								fld := types.NewField(name.Pos(), pkg, name.Name, typ, false)
+								if rec != nil {
+									rec.Def(name, fld)
+								}
+								flds = append(flds, fld)
+								tags = append(tags, tag)
+							}
 						}
 					}
 				}
@@ -871,14 +872,6 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 				X: &ast.Ident{Name: classType},
 			},
 		}}}
-		// func Classfname() string
-		if spxClassfname {
-			f.Decls = append(f.Decls, astFnClassfname(c))
-		}
-		// func Classclone() any
-		if spxClassclone {
-			f.Decls = append(f.Decls, astFnClassclone())
-		}
 	}
 
 	if d := f.ShadowEntry; d != nil {
@@ -888,6 +881,25 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 	}
 
 	preloadFile(p, ctx, f, goFile, !conf.Outline)
+	if spfeats != 0 {
+		ld := getTypeLoader(parent, parent.syms, token.NoPos, classType)
+		if (spfeats & spriteClassfname) != 0 { // Classfname() string
+			ld.methods = append(ld.methods, func() {
+				old, _ := p.SetCurFile(goFile, true)
+				defer p.RestoreCurFile(old)
+				doInitType(ld)
+				genClassfname(ctx, c)
+			})
+		}
+		if (spfeats & spriteClassclone) != 0 { // Classclone() clonetype
+			ld.methods = append(ld.methods, func() {
+				old, _ := p.SetCurFile(goFile, true)
+				defer p.RestoreCurFile(old)
+				doInitType(ld)
+				genClassclone(ctx, proj.classclone)
+			})
+		}
+	}
 	if goxTestFile {
 		parent.inits = append(parent.inits, func() {
 			old, _ := p.SetCurFile(testingGoFile, true)
@@ -913,13 +925,10 @@ retry:
 
 func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, genFnBody bool) {
 	parent := ctx.pkgCtx
+	classDecl := ctx.classDecl
 	syms := parent.syms
 	old, _ := p.SetCurFile(goFile, true)
 	defer p.RestoreCurFile(old)
-	var skipClassFields bool
-	if f.IsClass {
-		skipClassFields = true
-	}
 
 	preloadFuncDecl := func(d *ast.FuncDecl) {
 		if ctx.classRecv != nil { // in class file (.spx/.gmx)
@@ -1081,8 +1090,7 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 			case token.CONST:
 				preloadConst(d)
 			case token.VAR:
-				if skipClassFields {
-					skipClassFields = false
+				if d == classDecl { // skip class fields
 					continue
 				}
 				for _, spec := range d.Specs {

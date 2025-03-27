@@ -165,7 +165,7 @@ func ParseExprFrom(fset *token.FileSet, filename string, src any, mode Mode) (ex
 	return
 }
 
-// parseExprEx is a convenience function for parsing an expression.
+// ParseExprEx is a convenience function for parsing an expression.
 // The arguments have the same meaning as for ParseFile, but the source must
 // be a valid Go/Go+ (type or value) expression. Specifically, fset must not
 // be nil.
@@ -175,7 +175,7 @@ func ParseExprFrom(fset *token.FileSet, filename string, src any, mode Mode) (ex
 // errors were found, the result is a partial AST (with ast.Bad* nodes
 // representing the fragments of erroneous source code). Multiple errors
 // are returned via a scanner.ErrorList which is sorted by source position.
-func parseExprEx(file *token.File, src []byte, offset int, mode Mode) (expr ast.Expr, err scanner.ErrorList) {
+func ParseExprEx(file *token.File, src []byte, offset int, mode Mode) (expr ast.Expr, err scanner.ErrorList) {
 	var p parser
 	defer func() {
 		if e := recover(); e != nil {

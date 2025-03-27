@@ -506,7 +506,7 @@ func (this *Kai) Main(_gop_arg0 string) {
 func (this *Kai) Classfname() string {
 	return "Kai"
 }
-func (this *Kai) Classclone() interface{} {
+func (this *Kai) Classclone() spx3.Handler {
 	_gop_ret := *this
 	return &_gop_ret
 }
@@ -546,15 +546,15 @@ func (this *Game) MainEntry() {
 func (this *Game) Main() {
 	spx3.Gopt_Game_Main(this, new(Kai))
 }
+func (this *Kai) Main(_gop_arg0 string) {
+	this.Sprite.Main(_gop_arg0)
+}
 func (this *Kai) Classfname() string {
 	return "Kai"
 }
-func (this *Kai) Classclone() interface{} {
+func (this *Kai) Classclone() spx3.Handler {
 	_gop_ret := *this
 	return &_gop_ret
-}
-func (this *Kai) Main(_gop_arg0 string) {
-	this.Sprite.Main(_gop_arg0)
 }
 func main() {
 	new(Game).Main()

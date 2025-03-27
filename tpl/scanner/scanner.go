@@ -28,22 +28,22 @@ import (
 	"github.com/goplus/gop/tpl/types"
 )
 
-// An ScanErrorHandler may be provided to Scanner.Init. If a syntax error is
+// An ErrorHandler may be provided to Scanner.Init. If a syntax error is
 // encountered and a handler was installed, the handler is called with a
 // position and an error message. The position points to the beginning of
 // the offending token.
-type ScanErrorHandler func(pos token.Position, msg string)
+type ErrorHandler func(pos token.Position, msg string)
 
 // A Scanner holds the scanner's internal state while processing
 // a given text.  It can be allocated as part of another data
 // structure but must be initialized via Init before use.
 type Scanner struct {
 	// immutable state
-	file *token.File      // source file handle
-	dir  string           // directory portion of file.Name()
-	src  []byte           // source
-	err  ScanErrorHandler // error reporting; or nil
-	mode ScanMode         // scanning mode
+	file *token.File  // source file handle
+	dir  string       // directory portion of file.Name()
+	src  []byte       // source
+	err  ErrorHandler // error reporting; or nil
+	mode Mode         // scanning mode
 
 	// scanning state
 	ch         rune // current character
@@ -92,13 +92,13 @@ func (s *Scanner) next() {
 	}
 }
 
-// A ScanMode value is a set of flags (or 0).
+// A Mode value is a set of flags (or 0).
 // They control scanner behavior.
-type ScanMode uint
+type Mode uint
 
 const (
 	// ScanComments means returning comments as COMMENT tokens
-	ScanComments ScanMode = 1 << iota
+	ScanComments Mode = 1 << iota
 
 	// NoInsertSemis means don't automatically insert semicolons
 	NoInsertSemis
@@ -118,11 +118,16 @@ const (
 //
 // Note that Init may call err if there is an error in the first character
 // of the file.
-func (s *Scanner) Init(file *token.File, src []byte, err ScanErrorHandler, mode ScanMode) {
+func (s *Scanner) Init(file *token.File, src []byte, err ErrorHandler, mode Mode) {
 	// Explicitly initialize all fields since a scanner may be reused.
 	if file.Size() != len(src) {
 		panic(fmt.Sprintf("file size (%d) does not match src len (%d)", file.Size(), len(src)))
 	}
+	s.InitEx(file, src, 0, err, mode)
+}
+
+// InitEx init the scanner with an offset (this means src[offset:] is all the code to scan).
+func (s *Scanner) InitEx(file *token.File, src []byte, offset int, err ErrorHandler, mode Mode) {
 	s.file = file
 	s.dir, _ = filepath.Split(file.Name())
 	s.src = src
@@ -131,7 +136,7 @@ func (s *Scanner) Init(file *token.File, src []byte, err ScanErrorHandler, mode 
 
 	s.ch = ' '
 	s.offset = 0
-	s.rdOffset = 0
+	s.rdOffset = offset
 	s.lineOffset = 0
 	s.insertSemi = false
 	s.ErrorCount = 0
@@ -140,6 +145,11 @@ func (s *Scanner) Init(file *token.File, src []byte, err ScanErrorHandler, mode 
 	if s.ch == bom {
 		s.next() // ignore BOM at file beginning
 	}
+}
+
+// CodeTo returns the source code snippet for the given end.
+func (s *Scanner) CodeTo(end int) []byte {
+	return s.src[:end]
 }
 
 func (s *Scanner) error(offs int, msg string) {
