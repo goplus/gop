@@ -31,7 +31,8 @@ const (
 )
 
 var (
-	gblConfLine *cl.Config
+	gblConfLine  *cl.Config
+	gotypesalias bool
 )
 
 func init() {
@@ -45,6 +46,7 @@ func init() {
 		NoFileLine:    false,
 		NoAutoGenMain: true,
 	}
+	gotypesalias = cltest.EnableTypesalias()
 }
 
 func gopClNamedTest(t *testing.T, name string, gopcode, expected string) {
