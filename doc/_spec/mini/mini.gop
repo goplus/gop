@@ -1,0 +1,156 @@
+cl := tpl`
+
+SourceFile = ?PackageClause *(ImportDecl ";") *(TopLevelDecl ";")
+
+PackageClause = "package" IDENT ";"
+
+ImportDecl = "import" (ImportSpec | "(" *(ImportSpec ";") ")")
+
+ImportSpec = ?(IDENT | ".") STRING
+
+TopLevelDecl = Declaration | FuncDecl
+
+Declaration = ConstDecl | VarDecl | TypeDecl
+
+ConstDecl = "const" (ConstSpec | "(" *(ConstSpec ";") ")")
+
+ConstSpec = IdentifierList ?(?Type "=" ExpressionList)
+
+IdentifierList = IDENT % ","
+
+ExpressionList = Expression % ","
+
+VarDecl = "var" (VarSpec | "(" *(VarSpec ";") ")")
+
+VarSpec = IdentifierList ("=" ExpressionList | Type ?("=" ExpressionList))
+
+TypeDecl = "type" (TypeSpec | "(" *(TypeSpec ";") ")")
+
+TypeSpec = IDENT ?"=" Type
+
+FuncDecl = "func" IDENT Signature ?Block
+
+Signature = Parameters ?Result
+
+Parameters = "(" ?(ParameterList ?",") ")"
+
+ParameterList = ParameterDecl % ","
+
+ParameterDecl = ?IdentifierList ?"..." Type
+
+Result = Parameters | Type
+
+// -----------------------------------------------------------------
+
+Block = "{" StatementList "}"
+
+StatementList = *(Statement ";")
+
+Statement =
+	Declaration | ReturnStmt | BreakStmt | ContinueStmt | GotoStmt | FallthroughStmt |
+	IfStmt | SwitchStmt | ForStmt | DeferStmt | Block | LabeledStmt | SimpleStmt
+
+ReturnStmt = "return" ?ExpressionList
+
+BreakStmt = "break" ?IDENT
+
+ContinueStmt = "continue" ?IDENT
+
+GotoStmt = "goto" IDENT
+
+FallthroughStmt = "fallthrough"
+
+IfStmt = "if" ?(SimpleStmt ";") Expression Block ?("else" (IfStmt | Block))
+
+SwitchStmt = "switch" ?(SimpleStmt ";") SwitchGuard "{" *CaseClause "}"
+
+SwitchGuard = ?(IDENT ":=") PrimaryExpr "." "(" "type" ")" | ?Expression
+
+CaseClause = ("case" ExpressionList | "default") ":" StatementList
+
+LabeledStmt = IDENT ":" Statement
+
+SimpleStmt = ShortVarDecl | IncDecStmt | Assignment | ExpressionStmt | EmptyStmt
+
+ShortVarDecl = IdentifierList ":=" ExpressionList
+
+IncDecStmt = Expression ("++" | "--")
+
+Assignment = ExpressionList (
+	"=" | "+=" | "-=" | "|=" | "^=" |
+	"*=" | "/=" | "%=" | "<<=" | ">>=" | "&=" | "&^=") ExpressionList
+
+ExpressionStmt = Expression
+
+EmptyStmt = ""
+
+// -----------------------------------------------------------------
+
+Type = TypeName | TypeLit | "(" Type ")"
+
+TypeName = IDENT ?("." IDENT)
+
+TypeLit = PointerType | ArrayType | MapType | FuncType | StructType | InterfaceType
+
+PointerType = "*" Type
+
+ArrayType = "[" ?Expression "]" Type
+
+MapType = "map" "[" Type "]" Type
+
+FuncType = "func" Signature
+
+StructType = "struct" "{" *(FieldDecl ";") "}"
+
+FieldDecl = (IdentifierList Type | EmbeddedField) ?Tag
+
+EmbeddedField = ?"*" TypeName
+
+Tag = STRING
+
+InterfaceType = "interface" "{" *(InterfaceElem ";") "}"
+
+InterfaceElem = MethodElem
+
+MethodElem = IDENT Signature
+
+// -----------------------------------------------------------------
+
+Expression = cmpExpr % "&&" % "||"
+
+cmpExpr = mathExpr % ("==" | "!=" | "<" | "<=" | ">" | ">=")
+
+mathExpr = UnaryExpr % ("*" | "/" | "%" | "<<" | ">>" | "&" | "&^") % ("+" | "-" | "|" | "^")
+
+UnaryExpr = PrimaryExpr | ("-" | "!" | "^" | "*" | "&" | "+") UnaryExpr
+
+PrimaryExpr = Operand | PrimaryExpr (
+	CallOrConversion | SelectorOrTypeAssertion | IndexOrSlice | LiteralValue)
+
+Operand =
+	IDENT | INT | FLOAT | STRING | CHAR | IMAG |
+	CompositeLit | FunctionLit | "(" Expression ")"
+
+CompositeLit = LiteralTypeLit LiteralValue
+
+LiteralTypeLit = "[" "..." "]" Type | ArrayType | MapType | StructType
+
+LiteralValue = "{" ElementList ?"," "}"
+
+ElementList = KeyedElement % ","
+
+KeyedElement = ?(Key ":") Element
+
+Key = LiteralValue | Expression
+
+Element = LiteralValue | Expression
+
+FunctionLit = "func" Signature Block
+
+CallOrConversion = "(" ?(Expression % ",") ?"..." ?"," ")"
+
+SelectorOrTypeAssertion = "." (IDENT | "(" Type ")")
+
+IndexOrSlice = "[" (":" ?Expression | Expression (":" ?Expression | ?",")) "]"
+
+// -----------------------------------------------------------------
