@@ -1,4 +1,28 @@
-cl := tpl`
+/*
+ * Copyright (c) 2025 The GoPlus Authors (goplus.org). All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package mini
+
+import (
+	"github.com/goplus/gop/parser"
+	"github.com/goplus/gop/token"
+	"github.com/goplus/gop/tpl"
+)
+
+var cl = tpl`
 
 SourceFile = ?PackageClause *(ImportDecl ";") *(TopLevelDecl ";")
 
@@ -152,5 +176,18 @@ CallOrConversion = "(" ?(Expression % ",") ?"..." ?"," ")"
 SelectorOrTypeAssertion = "." (IDENT | "(" Type ")")
 
 IndexOrSlice = "[" (":" ?Expression | Expression (":" ?Expression | ?",")) "]"
+`!
+
+// -----------------------------------------------------------------
+
+// A Mode value is a set of flags (or 0). They control the amount of source code
+// parsed and other optional parser functionality.
+type Mode = parser.Mode
+
+func ParseFile(fset *token.FileSet, filename string, src any, _ Mode) (f any, err error) {
+	return cl.Parse(filename, src, &tpl.Config{
+		Fset: fset,
+	})
+}
 
 // -----------------------------------------------------------------

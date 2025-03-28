@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 
 	"github.com/goplus/gop/parser/iox"
 	"github.com/goplus/gop/tpl/ast"
@@ -29,7 +30,42 @@ import (
 	"github.com/goplus/gop/tpl/scanner"
 	"github.com/goplus/gop/tpl/token"
 	"github.com/goplus/gop/tpl/types"
+	"github.com/qiniu/x/errors"
 )
+
+// -----------------------------------------------------------------------------
+
+func relocPosition(ePos *token.Position, filename string, line, col int) {
+	ePos.Filename = filename
+	if ePos.Line == line {
+		ePos.Column += col - 1
+	} else {
+		ePos.Line += line - 1
+	}
+}
+
+// Relocate relocates the error positions.
+func Relocate(err error, filename string, line, col int) error {
+	switch e := err.(type) {
+	case *matcher.Error:
+		pos := e.Fset.Position(e.Pos)
+		relocPosition(&pos, filename, line, col)
+		return &scanner.Error{Pos: pos, Msg: e.Msg}
+	case errors.List:
+		for i, ie := range e {
+			e[i] = Relocate(ie, filename, line, col)
+		}
+	case scanner.ErrorList:
+		for _, ie := range e {
+			relocPosition(&ie.Pos, filename, line, col)
+		}
+	case *scanner.Error:
+		relocPosition(&e.Pos, filename, line, col)
+	default:
+		panic("todo: " + reflect.TypeOf(err).String())
+	}
+	return err
+}
 
 // -----------------------------------------------------------------------------
 
@@ -42,6 +78,16 @@ type Compiler struct {
 // params: ruleName1, retProc1, ..., ruleNameN, retProcN
 func New(src any, params ...any) (ret Compiler, err error) {
 	return FromFile(nil, "", src, params...)
+}
+
+// NewEx creates a new TPL compiler.
+// params: ruleName1, retProc1, ..., ruleNameN, retProcN
+func NewEx(src any, filename string, line, col int, params ...any) (ret Compiler, err error) {
+	ret, err = FromFile(nil, "", src, params...)
+	if err != nil {
+		err = Relocate(err, filename, line, col)
+	}
+	return
 }
 
 // FromFile creates a new TPL compiler from a file.
@@ -138,7 +184,7 @@ func (p *MatchState) Next() *Token {
 	if n > 0 {
 		return p.Toks[len(p.Toks)-n]
 	}
-	return &Token{Tok: token.EOF}
+	return &Token{Tok: token.EOF, Pos: p.Ctx.FileEnd}
 }
 
 // Match matches a source file.
