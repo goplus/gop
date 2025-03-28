@@ -11,17 +11,17 @@ import (
 
 cl := tpl`
 
-expr = cmpExpr % ("||" | "&&" | and | or) => {
-	return tpl.binaryOp(false, self, (op, x, y) => {
+expr = cmpExpr % and % or => {
+	return tpl.binaryOp(true, self, (op, x, y) => {
 		return variant.logicOp(op.Tok, x, y)
 	})
 }
 
-and = "and" | "AND" => {
+and = "and" | "AND" | "&&" => {
 	return &tpl.Token{Tok: token.LAND}
 }
 
-or = "or" | "OR" => {
+or = "or" | "OR" | "||" => {
 	return &tpl.Token{Tok: token.LOR}
 }
 

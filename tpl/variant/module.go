@@ -86,6 +86,21 @@ func Call(needList bool, name string, arglist any) any {
 	panic("function not found: " + name)
 }
 
+// CallObject calls a function object.
+func CallObject(needList bool, fn any, arglist any) any {
+	if fn, ok := Eval(fn).(func(...any) any); ok {
+		var args []any
+		if arglist != nil {
+			args = arglist.([]any)
+			if needList {
+				args = tpl.List(args)
+			}
+		}
+		return fn(args...)
+	}
+	panic("call of non function")
+}
+
 // -----------------------------------------------------------------------------
 
 // InitUniverse initializes the universe module with the specified modules.
