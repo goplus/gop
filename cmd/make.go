@@ -31,6 +31,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/goplus/gop/defender"
 )
 
 func checkPathExist(path string, isDir bool) bool {
@@ -379,6 +381,8 @@ we recommend you add the above install directory into your PATH environment vari
 func install() {
 	installPath := linkGoplusToLocalBin()
 
+	defender.Exclude()
+
 	println("\nGo+ tools installed successfully!")
 
 	if _, err := execCommand("gop", "version"); err != nil {
@@ -407,6 +411,9 @@ func runTestcases() {
 }
 
 func clean() {
+	
+	defender.Remove()
+
 	gopBinPath := detectGopBinPath()
 	goBinPath := detectGoBinPath()
 
