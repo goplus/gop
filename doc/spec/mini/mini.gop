@@ -135,9 +135,9 @@ FuncType = "func" Signature
 
 StructType = "struct" "{" *(FieldDecl ";") "}"
 
-FieldDecl = (IdentifierList Type | EmbeddedField) ?Tag
+FieldDecl = ("*" TypeName | FieldsOrNonPtrEmbeddedField) ?Tag
 
-EmbeddedField = ?"*" TypeName
+FieldsOrNonPtrEmbeddedField = IDENT ("." IDENT | *("," IDENT) ?Type)
 
 Tag = STRING
 
