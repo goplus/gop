@@ -157,7 +157,7 @@ mathExpr = UnaryExpr % ("*" | "/" | "%" | "<<" | ">>" | "&" | "&^") % ("+" | "-"
 
 UnaryExpr = PrimaryExpr | ("-" | "!" | "^" | "*" | "&" | "+") UnaryExpr
 
-PrimaryExpr = Operand | PrimaryExpr (
+PrimaryExpr = Operand *(
 	CallOrConversion | SelectorOrTypeAssertion | IndexOrSlice | LiteralValue)
 
 Operand =
