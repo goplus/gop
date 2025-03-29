@@ -23,7 +23,7 @@ import (
 
 var cl = tpl`
 
-SourceFile = ?PackageClause *(ImportDecl ";") *(TopLevelDecl ";")
+SourceFile = ?PackageClause *(ImportDecl ";") *(TopLevelDecl ";") ?MainStmts
 
 PackageClause = "package" IDENT ";"
 
@@ -63,6 +63,8 @@ ParameterDecl = ?IdentifierList ?"..." Type
 
 Result = Parameters | Type
 
+MainStmts = StatementList
+
 // -----------------------------------------------------------------
 
 Block = "{" StatementList "}"
@@ -90,6 +92,10 @@ SwitchStmt = "switch" ?(SimpleStmt ";") SwitchGuard "{" *CaseClause "}"
 SwitchGuard = ?(IDENT ":=") PrimaryExpr "." "(" "type" ")" | ?Expression
 
 CaseClause = ("case" ExpressionList | "default") ":" StatementList
+
+ForStmt = "for" ?Expression Block
+
+DeferStmt = "defer" Expression
 
 LabeledStmt = IDENT ":" Statement
 
