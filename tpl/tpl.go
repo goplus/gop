@@ -35,7 +35,7 @@ import (
 
 // -----------------------------------------------------------------------------
 
-func relocPosition(ePos *token.Position, filename string, line, col int) {
+func relocatePos(ePos *token.Position, filename string, line, col int) {
 	ePos.Filename = filename
 	if ePos.Line == line {
 		ePos.Column += col - 1
@@ -49,7 +49,7 @@ func Relocate(err error, filename string, line, col int) error {
 	switch e := err.(type) {
 	case *matcher.Error:
 		pos := e.Fset.Position(e.Pos)
-		relocPosition(&pos, filename, line, col)
+		relocatePos(&pos, filename, line, col)
 		return &scanner.Error{Pos: pos, Msg: e.Msg}
 	case errors.List:
 		for i, ie := range e {
@@ -57,10 +57,10 @@ func Relocate(err error, filename string, line, col int) error {
 		}
 	case scanner.ErrorList:
 		for _, ie := range e {
-			relocPosition(&ie.Pos, filename, line, col)
+			relocatePos(&ie.Pos, filename, line, col)
 		}
 	case *scanner.Error:
-		relocPosition(&e.Pos, filename, line, col)
+		relocatePos(&e.Pos, filename, line, col)
 	default:
 		panic("todo: " + reflect.TypeOf(err).String())
 	}
@@ -77,13 +77,22 @@ type Compiler struct {
 // New creates a new TPL compiler.
 // params: ruleName1, retProc1, ..., ruleNameN, retProcN
 func New(src any, params ...any) (ret Compiler, err error) {
-	return FromFile(nil, "", src, params...)
+	return FromFile(nil, "", src, &cl.Config{
+		RetProcs: retProcs(params),
+	})
 }
 
 // NewEx creates a new TPL compiler.
 // params: ruleName1, retProc1, ..., ruleNameN, retProcN
 func NewEx(src any, filename string, line, col int, params ...any) (ret Compiler, err error) {
-	ret, err = FromFile(nil, "", src, params...)
+	ret, err = FromFile(nil, "", src, &cl.Config{
+		RetProcs: retProcs(params),
+		OnConflict: func(fset *token.FileSet, c *ast.Choice, firsts [][]any, i, at int) {
+			pos := fset.Position(c.Options[i].Pos())
+			relocatePos(&pos, filename, line, col)
+			fmt.Fprintf(os.Stderr, "%v: conflict between %v and %v\n", pos, firsts[i], firsts[at])
+		},
+	})
 	if err != nil {
 		err = Relocate(err, filename, line, col)
 	}
@@ -92,8 +101,7 @@ func NewEx(src any, filename string, line, col int, params ...any) (ret Compiler
 
 // FromFile creates a new TPL compiler from a file.
 // fset can be nil.
-// params: ruleName1, retProc1, ..., ruleNameN, retProcN
-func FromFile(fset *token.FileSet, filename string, src any, params ...any) (ret Compiler, err error) {
+func FromFile(fset *token.FileSet, filename string, src any, conf *cl.Config) (ret Compiler, err error) {
 	if fset == nil {
 		fset = token.NewFileSet()
 	}
@@ -101,7 +109,7 @@ func FromFile(fset *token.FileSet, filename string, src any, params ...any) (ret
 	if err != nil {
 		return
 	}
-	ret.Result, err = cl.NewEx(retProcs(params), fset, f)
+	ret.Result, err = cl.NewEx(conf, fset, f)
 	return
 }
 
