@@ -33,14 +33,16 @@ import (
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gop/tool"
+	"github.com/goplus/mod"
 	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modfile"
 )
 
 var (
-	Gop  *env.Gop
-	Conf *cl.Config
+	GopRoot string
+	Gop     *env.Gop
+	Conf    *cl.Config
 )
 
 func init() {
@@ -49,6 +51,7 @@ func init() {
 	cl.SetDebug(cl.DbgFlagAll | cl.FlagNoMarkAutogen)
 	fset := token.NewFileSet()
 	imp := tool.NewImporter(nil, Gop, fset)
+	GopRoot, _, _ = mod.FindGoMod("")
 	Conf = &cl.Config{
 		Fset:          fset,
 		Importer:      imp,
@@ -201,6 +204,10 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 			confCopy.Importer = tool.NewImporter(mod, Gop, conf.Fset)
 			conf = &confCopy
 		}
+	} else {
+		confCopy := *Conf
+		confCopy.RelativeBase = GopRoot
+		conf = &confCopy
 	}
 	DoFS(t, conf, fsx.Local, pkgDir, filter, "main", expected)
 }
