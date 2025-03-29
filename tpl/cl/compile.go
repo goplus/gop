@@ -124,6 +124,17 @@ func NewEx(conf *Config, fset *token.FileSet, files ...*ast.File) (ret Result, e
 		err = ErrNoDocFound
 		return
 	}
+	defer func() {
+		if e := recover(); e != nil {
+			switch e := e.(type) {
+			case matcher.RecursiveError:
+				ctx.addError(e.Pos, e.Error())
+			default:
+				panic(e)
+			}
+		}
+		err = ctx.errs.ToError()
+	}()
 	onConflict := conf.OnConflict
 	if onConflict == nil {
 		onConflict = onConflictDefault
@@ -133,7 +144,8 @@ func NewEx(conf *Config, fset *token.FileSet, files ...*ast.File) (ret Result, e
 			onConflict(fset, item.c, firsts, i, at)
 		})
 	}
-	return Result{doc, rules}, ctx.errs.ToError()
+	ret = Result{doc, rules}
+	return
 }
 
 func onConflictDefault(fset *token.FileSet, c *ast.Choice, firsts [][]any, i, at int) {
