@@ -150,9 +150,12 @@ func compileExpr(expr ast.Expr, ctx *context) (matcher.Matcher, bool) {
 			return tokenExpr(token.Token(v), expr, ctx)
 		case token.STRING:
 			v, e := strconv.Unquote(lit)
-			if e != nil || len(v) == 0 {
+			if e != nil {
 				ctx.addError(expr.Pos(), "invalid literal "+lit)
 				break
+			}
+			if v == "" {
+				return matcher.True(), true
 			}
 			if c := v[0]; c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_' {
 				return matcher.Literal(token.IDENT, v), true

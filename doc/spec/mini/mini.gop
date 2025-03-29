@@ -17,7 +17,6 @@
 package mini
 
 import (
-	"github.com/goplus/gop/parser"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gop/tpl"
 )
@@ -180,11 +179,7 @@ IndexOrSlice = "[" (":" ?Expression | Expression (":" ?Expression | ?",")) "]"
 
 // -----------------------------------------------------------------
 
-// A Mode value is a set of flags (or 0). They control the amount of source code
-// parsed and other optional parser functionality.
-type Mode = parser.Mode
-
-func ParseFile(fset *token.FileSet, filename string, src any, _ Mode) (f any, err error) {
+func ParseFile(fset *token.FileSet, filename string, src any) (f any, err error) {
 	return cl.Parse(filename, src, &tpl.Config{
 		Fset: fset,
 	})
