@@ -61,7 +61,7 @@ ParameterList = ParameterDecl % ","
 
 ParameterDecl = ?IdentifierList ?"..." Type
 
-Result = Parameters | Type
+Result = Parameters | NoParenType
 
 MainStmts = StatementList
 
@@ -115,7 +115,9 @@ EmptyStmt = ""
 
 // -----------------------------------------------------------------
 
-Type = TypeName | TypeLit | "(" Type ")"
+NoParenType = TypeLit | TypeName
+
+Type = TypeLit | TypeName | "(" Type ")"
 
 TypeName = IDENT ?("." IDENT)
 
@@ -124,6 +126,8 @@ TypeLit = PointerType | ArrayType | MapType | FuncType | StructType | InterfaceT
 PointerType = "*" Type
 
 ArrayType = "[" ?Expression "]" Type
+
+EllipsisArrayType = "[" ?("..." | Expression) "]" Type
 
 MapType = "map" "[" Type "]" Type
 
@@ -162,7 +166,7 @@ Operand =
 
 CompositeLit = LiteralTypeLit LiteralValue
 
-LiteralTypeLit = "[" "..." "]" Type | ArrayType | MapType | StructType
+LiteralTypeLit = EllipsisArrayType | MapType | StructType
 
 LiteralValue = "{" ElementList ?"," "}"
 
