@@ -35,6 +35,19 @@ import (
 
 // -----------------------------------------------------------------------------
 
+var showConflict = true
+
+// ShowConflict sets the flag to show or hide conflicts.
+func ShowConflict(f bool) int {
+	showConflict = f
+	return 0
+}
+
+func onConflictHidden(fset *token.FileSet, c *ast.Choice, firsts [][]any, i, at int) {
+}
+
+// -----------------------------------------------------------------------------
+
 func relocatePos(ePos *token.Position, filename string, line, col int) {
 	ePos.Filename = filename
 	if ePos.Line == line {
@@ -77,22 +90,33 @@ type Compiler struct {
 // New creates a new TPL compiler.
 // params: ruleName1, retProc1, ..., ruleNameN, retProcN
 func New(src any, params ...any) (ret Compiler, err error) {
-	return FromFile(nil, "", src, &cl.Config{
+	conf := &cl.Config{
 		RetProcs: retProcs(params),
-	})
+	}
+	if !showConflict {
+		conf.OnConflict = onConflictHidden
+	}
+	return FromFile(nil, "", src, conf)
 }
 
 // NewEx creates a new TPL compiler.
 // params: ruleName1, retProc1, ..., ruleNameN, retProcN
 func NewEx(src any, filename string, line, col int, params ...any) (ret Compiler, err error) {
-	ret, err = FromFile(nil, "", src, &cl.Config{
+	conf := &cl.Config{
 		RetProcs: retProcs(params),
-		OnConflict: func(fset *token.FileSet, c *ast.Choice, firsts [][]any, i, at int) {
-			pos := fset.Position(c.Options[i].Pos())
-			relocatePos(&pos, filename, line, col)
-			fmt.Fprintf(os.Stderr, "%v: [WARN] conflict between %v and %v\n", pos, firsts[i], firsts[at])
-		},
-	})
+	}
+	if showConflict {
+		conf.OnConflict = func(fset *token.FileSet, c *ast.Choice, firsts [][]any, i, at int) {
+			if showConflict {
+				pos := fset.Position(c.Options[i].Pos())
+				relocatePos(&pos, filename, line, col)
+				cl.LogConflict(pos, firsts, i, at)
+			}
+		}
+	} else {
+		conf.OnConflict = onConflictHidden
+	}
+	ret, err = FromFile(nil, "", src, conf)
 	if err != nil {
 		err = Relocate(err, filename, line, col)
 	}
