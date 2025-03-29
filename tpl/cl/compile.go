@@ -150,7 +150,12 @@ func NewEx(conf *Config, fset *token.FileSet, files ...*ast.File) (ret Result, e
 
 func onConflictDefault(fset *token.FileSet, c *ast.Choice, firsts [][]any, i, at int) {
 	pos := fset.Position(c.Options[i].Pos())
-	fmt.Fprintf(os.Stderr, "%v: conflict between %v and %v\n", pos, firsts[i], firsts[at])
+	LogConflict(pos, firsts, i, at)
+}
+
+// LogConflict logs a conflict between two choices.
+func LogConflict(pos token.Position, firsts [][]any, i, at int) {
+	fmt.Fprintf(os.Stderr, "%v: [WARN] conflict between %v and %v\n", pos, firsts[i], firsts[at])
 }
 
 var (

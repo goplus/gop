@@ -21,6 +21,8 @@ import (
 	"github.com/goplus/gop/tpl"
 )
 
+var _off = tpl.showConflict(false)
+
 var cl = tpl`
 
 SourceFile = ?PackageClause *(ImportDecl ";") *(TopLevelDecl ";") ?MainStmts
@@ -135,9 +137,9 @@ FuncType = "func" Signature
 
 StructType = "struct" "{" *(FieldDecl ";") "}"
 
-FieldDecl = (IdentifierList Type | EmbeddedField) ?Tag
+FieldDecl = ("*" TypeName | FieldsOrNonPtrEmbeddedField) ?Tag
 
-EmbeddedField = ?"*" TypeName
+FieldsOrNonPtrEmbeddedField = IDENT ("." IDENT | *("," IDENT) ?Type)
 
 Tag = STRING
 
