@@ -19,7 +19,6 @@ package matcher
 import (
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/goplus/gop/tpl/token"
 	"github.com/goplus/gop/tpl/types"
@@ -157,9 +156,9 @@ func hasConflict(me []any, next []any) bool {
 	return false
 }
 
-func conflictWith(me []any, next [][]any) int {
-	for i, n := range next {
-		if hasConflict(me, n) {
+func conflictWith(me []any, next [][]any, from int) int {
+	for i, n := from, len(next); i < n; i++ {
+		if hasConflict(me, next[i]) {
 			return i
 		}
 	}
@@ -257,40 +256,37 @@ func Literal(tok token.Token, lit string) Matcher {
 
 // -----------------------------------------------------------------------------
 
-type gChoice struct {
+// Choices represents a choice matcher.
+type Choices struct {
 	options []Matcher
 	stops   []bool
 }
 
-func (p *gChoice) needStops() (stops []bool) {
-	stops = p.stops
-	if stops == nil { // make stops
-		options := p.options
-		n := len(options)
-		firsts := make([][]any, n)
-		for i, g := range options {
-			firsts[i] = g.First(nil)
-		}
-		stops = make([]bool, n)
-		for i, me := range firsts {
-			at := conflictWith(me, firsts[i+1:])
-			if at >= 0 {
-				log.Println("conflict", me, "with:", firsts[at]) // TODO(xsw): conflict
-			} else {
-				stops[i] = true
-			}
-		}
-		p.stops = stops
+func (p *Choices) CheckConflicts(conflict func(firsts [][]any, i, at int)) {
+	options := p.options
+	n := len(options)
+	firsts := make([][]any, n)
+	for i, g := range options {
+		firsts[i] = g.First(nil)
 	}
-	return
+	stops := make([]bool, n)
+	for i, me := range firsts {
+		at := conflictWith(me, firsts, i+1)
+		if at >= 0 {
+			conflict(firsts, i, at)
+		} else {
+			stops[i] = true
+		}
+	}
+	p.stops = stops
 }
 
-func (p *gChoice) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
+func (p *Choices) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
 	var nMax = -1
 	var errMax error
 	var multiErr = true
 
-	stops := p.needStops()
+	stops := p.stops // be set by CheckConflicts
 	for i, g := range p.options {
 		if n, result, err = g.Match(src, ctx); err == nil || (n > 0 && stops[i]) {
 			return
@@ -309,20 +305,21 @@ func (p *gChoice) Match(src []*types.Token, ctx *Context) (n int, result any, er
 	return nMax, nil, errMax
 }
 
-func (p *gChoice) First(in []any) []any {
+func (p *Choices) First(in []any) []any {
 	for _, g := range p.options {
 		in = g.First(in)
 	}
 	return in
 }
 
-func (p *gChoice) IsList() bool {
+func (p *Choices) IsList() bool {
 	return false
 }
 
 // Choice: R1 | R2 | ... | Rn
-func Choice(options ...Matcher) Matcher {
-	return &gChoice{options, nil}
+// Should be used with CheckConflicts.
+func Choice(options ...Matcher) *Choices {
+	return &Choices{options, nil}
 }
 
 // -----------------------------------------------------------------------------
@@ -359,10 +356,8 @@ func (p *gSequence) IsList() bool {
 }
 
 // Sequence: R1 R2 ... Rn
+// Should length of items > 0
 func Sequence(items ...Matcher) Matcher {
-	if len(items) == 0 {
-		return gTrue{}
-	}
 	return &gSequence{items}
 }
 

@@ -18,6 +18,7 @@ package cl
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/goplus/gop/tpl/ast"
@@ -37,10 +38,16 @@ type Result struct {
 	Rules map[string]*matcher.Var
 }
 
+type choice struct {
+	m *matcher.Choices
+	c *ast.Choice
+}
+
 type context struct {
-	rules map[string]*matcher.Var
-	errs  errors.List
-	fset  *token.FileSet
+	rules   map[string]*matcher.Var
+	choices []choice
+	errs    errors.List
+	fset    *token.FileSet
 }
 
 func (p *context) newErrorf(pos token.Pos, format string, args ...any) error {
@@ -60,8 +67,18 @@ func New(fset *token.FileSet, files ...*ast.File) (ret Result, err error) {
 	return NewEx(nil, fset, files...)
 }
 
+// Config configures the behavior of the compiler.
+type Config struct {
+	RetProcs   map[string]any
+	OnConflict func(fset *token.FileSet, c *ast.Choice, firsts [][]any, i, at int)
+}
+
 // NewEx compiles a set of rules from the given files.
-func NewEx(retProcs map[string]any, fset *token.FileSet, files ...*ast.File) (ret Result, err error) {
+func NewEx(conf *Config, fset *token.FileSet, files ...*ast.File) (ret Result, err error) {
+	if conf == nil {
+		conf = &Config{}
+	}
+	retProcs := conf.RetProcs
 	rules := make(map[string]*matcher.Var)
 	ctx := &context{rules: rules, fset: fset}
 	for _, f := range files {
@@ -107,7 +124,21 @@ func NewEx(retProcs map[string]any, fset *token.FileSet, files ...*ast.File) (re
 		err = ErrNoDocFound
 		return
 	}
+	onConflict := conf.OnConflict
+	if onConflict == nil {
+		onConflict = onConflictDefault
+	}
+	for _, item := range ctx.choices {
+		item.m.CheckConflicts(func(firsts [][]any, i, at int) {
+			onConflict(fset, item.c, firsts, i, at)
+		})
+	}
 	return Result{doc, rules}, ctx.errs.ToError()
+}
+
+func onConflictDefault(fset *token.FileSet, c *ast.Choice, firsts [][]any, i, at int) {
+	pos := fset.Position(c.Options[i].Pos())
+	fmt.Fprintf(os.Stderr, "%v: conflict between %v and %v\n", pos, firsts[i], firsts[at])
 }
 
 var (
@@ -186,7 +217,9 @@ func compileExpr(expr ast.Expr, ctx *context) (matcher.Matcher, bool) {
 				return nil, false
 			}
 		}
-		return matcher.Choice(options...), true
+		ret := matcher.Choice(options...)
+		ctx.choices = append(ctx.choices, choice{ret, expr})
+		return ret, true
 	case *ast.UnaryExpr:
 		if x, ok := compileExpr(expr.X, ctx); ok {
 			switch expr.Op {
