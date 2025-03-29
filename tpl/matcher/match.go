@@ -103,6 +103,23 @@ type Matcher interface {
 
 // -----------------------------------------------------------------------------
 
+type gTrue struct{}
+
+func (p gTrue) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
+	return 0, nil, nil
+}
+
+func (p gTrue) IsList() bool {
+	return false
+}
+
+// True returns a matcher that always succeeds.
+func True() Matcher {
+	return gTrue{}
+}
+
+// -----------------------------------------------------------------------------
+
 type gToken struct {
 	tok token.Token
 }

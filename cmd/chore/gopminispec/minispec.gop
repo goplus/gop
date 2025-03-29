@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-package main
-
 import (
     "gop/doc/spec/mini"
     "os"
@@ -26,4 +24,4 @@ if len(os.Args) < 2 {
 	return
 }
 
-echo mini.parseFile(nil, os.Args[1], nil, 0)
+echo mini.parseFile(nil, os.Args[1], nil)
