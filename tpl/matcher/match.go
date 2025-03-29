@@ -180,7 +180,7 @@ func conflictWith(me []any, next [][]any, from int) int {
 // Matcher represents a matcher.
 type Matcher interface {
 	Match(src []*types.Token, ctx *Context) (n int, result any, err error)
-	First(in []any) []any // item can be token.Token or *MatchToken
+	First(in []any) (first []any, mayEmpty bool) // can be token.Token or *MatchToken
 	IsList() bool
 }
 
@@ -192,8 +192,8 @@ func (p gTrue) Match(src []*types.Token, ctx *Context) (n int, result any, err e
 	return 0, nil, nil
 }
 
-func (p gTrue) First(in []any) []any {
-	return in
+func (p gTrue) First(in []any) (first []any, mayEmpty bool) {
+	return in, true
 }
 
 func (p gTrue) IsList() bool {
@@ -222,8 +222,8 @@ func (p *gToken) Match(src []*types.Token, ctx *Context) (n int, result any, err
 	return 1, t, nil
 }
 
-func (p *gToken) First(in []any) []any {
-	return append(in, p.tok)
+func (p *gToken) First(in []any) (first []any, mayEmpty bool) {
+	return append(in, p.tok), false
 }
 
 func (p *gToken) IsList() bool {
@@ -250,8 +250,8 @@ func (p *gLiteral) Match(src []*types.Token, ctx *Context) (n int, result any, e
 	return 1, t, nil
 }
 
-func (p *gLiteral) First(in []any) []any {
-	return append(in, (*MatchToken)(p))
+func (p *gLiteral) First(in []any) (first []any, mayEmpty bool) {
+	return append(in, (*MatchToken)(p)), false
 }
 
 func (p *gLiteral) IsList() bool {
@@ -276,7 +276,7 @@ func (p *Choices) CheckConflicts(conflict func(firsts [][]any, i, at int)) {
 	n := len(options)
 	firsts := make([][]any, n)
 	for i, g := range options {
-		firsts[i] = g.First(nil)
+		firsts[i], _ = g.First(nil)
 	}
 	stops := make([]bool, n)
 	for i, me := range firsts {
@@ -314,11 +314,15 @@ func (p *Choices) Match(src []*types.Token, ctx *Context) (n int, result any, er
 	return nMax, nil, errMax
 }
 
-func (p *Choices) First(in []any) []any {
+func (p *Choices) First(in []any) (first []any, mayEmpty bool) {
 	for _, g := range p.options {
-		in = g.First(in)
+		var me bool
+		if in, me = g.First(in); me {
+			mayEmpty = true
+		}
 	}
-	return in
+	first = in
+	return
 }
 
 func (p *Choices) IsList() bool {
@@ -356,8 +360,14 @@ func (p *gSequence) Match(src []*types.Token, ctx *Context) (n int, result any, 
 	return
 }
 
-func (p *gSequence) First(in []any) []any {
-	return p.items[0].First(in)
+func (p *gSequence) First(in []any) (first []any, mayEmpty bool) {
+	for _, g := range p.items {
+		if in, mayEmpty = g.First(in); !mayEmpty {
+			break
+		}
+	}
+	first = in
+	return
 }
 
 func (p *gSequence) IsList() bool {
@@ -396,8 +406,10 @@ func (p *gRepeat0) Match(src []*types.Token, ctx *Context) (n int, result any, e
 	}
 }
 
-func (p *gRepeat0) First(in []any) []any {
-	return p.r.First(in)
+func (p *gRepeat0) First(in []any) (first []any, mayEmpty bool) {
+	first, _ = p.r.First(in)
+	mayEmpty = true
+	return
 }
 
 func (p *gRepeat0) IsList() bool {
@@ -440,7 +452,7 @@ func (p *gRepeat1) Match(src []*types.Token, ctx *Context) (n int, result any, e
 	}
 }
 
-func (p *gRepeat1) First(in []any) []any {
+func (p *gRepeat1) First(in []any) (first []any, mayEmpty bool) {
 	return p.r.First(in)
 }
 
@@ -467,8 +479,10 @@ func (p *gRepeat01) Match(src []*types.Token, ctx *Context) (n int, result any, 
 	return
 }
 
-func (p *gRepeat01) First(in []any) []any {
-	return p.r.First(in)
+func (p *gRepeat01) First(in []any) (first []any, mayEmpty bool) {
+	first, _ = p.r.First(in)
+	mayEmpty = true
+	return
 }
 
 func (p *gRepeat01) IsList() bool {
@@ -547,16 +561,16 @@ func (p *Var) Match(src []*types.Token, ctx *Context) (n int, result any, err er
 	return
 }
 
-func (p *Var) First(in []any) []any {
+func (p *Var) First(in []any) (first []any, mayEmpty bool) {
 	elem := p.Elem
 	if elem != nil {
 		p.Elem = nil // to stop recursion
-		in = elem.First(in)
+		first, mayEmpty = elem.First(in)
 		p.Elem = elem
 	} else {
 		panic(RecursiveError{p})
 	}
-	return in
+	return
 }
 
 func (p *Var) IsList() bool {
