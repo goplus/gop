@@ -19,16 +19,17 @@ package matcher
 import (
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/goplus/gop/tpl/token"
 	"github.com/goplus/gop/tpl/types"
 )
 
 var (
-	errMultiMismatch = errors.New("multiple mismatch")
-
 	// ErrVarAssigned error
 	ErrVarAssigned = errors.New("variable is already assigned")
+
+	errMultiMismatch = errors.New("multiple mismatch")
 )
 
 // -----------------------------------------------------------------------------
@@ -93,11 +94,85 @@ func (p *Context) NewErrorf(pos token.Pos, format string, args ...any) error {
 }
 
 // -----------------------------------------------------------------------------
+
+// MatchToken represents a matching literal.
+type MatchToken struct {
+	Tok token.Token
+	Lit string
+}
+
+func (p *MatchToken) String() string {
+	return p.Lit
+}
+
+func hasConflictToken(me token.Token, next []any) bool {
+	for _, n := range next {
+		switch n := n.(type) {
+		case *MatchToken:
+			if n.Tok == me {
+				return true
+			}
+		case token.Token:
+			if n == me {
+				return true
+			}
+		default:
+			panic("unreachable")
+		}
+	}
+	return false
+}
+
+func hasConflictMatchToken(me *MatchToken, next []any) bool {
+	for _, n := range next {
+		switch n := n.(type) {
+		case *MatchToken:
+			if n.Tok == me.Tok && n.Lit == me.Lit {
+				return true
+			}
+		case token.Token:
+		default:
+			panic("unreachable")
+		}
+	}
+	return false
+}
+
+func hasConflictMe(me any, next []any) bool {
+	switch me := me.(type) {
+	case token.Token:
+		return hasConflictToken(me, next)
+	case *MatchToken:
+		return hasConflictMatchToken(me, next)
+	}
+	panic("unreachable")
+}
+
+func hasConflict(me []any, next []any) bool {
+	for _, m := range me {
+		if hasConflictMe(m, next) {
+			return true
+		}
+	}
+	return false
+}
+
+func conflictWith(me []any, next [][]any) int {
+	for i, n := range next {
+		if hasConflict(me, n) {
+			return i
+		}
+	}
+	return -1
+}
+
+// -----------------------------------------------------------------------------
 // Matcher
 
 // Matcher represents a matcher.
 type Matcher interface {
 	Match(src []*types.Token, ctx *Context) (n int, result any, err error)
+	First(in []any) []any // item can be token.Token or *MatchToken
 	IsList() bool
 }
 
@@ -107,6 +182,10 @@ type gTrue struct{}
 
 func (p gTrue) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
 	return 0, nil, nil
+}
+
+func (p gTrue) First(in []any) []any {
+	return in
 }
 
 func (p gTrue) IsList() bool {
@@ -135,6 +214,10 @@ func (p *gToken) Match(src []*types.Token, ctx *Context) (n int, result any, err
 	return 1, t, nil
 }
 
+func (p *gToken) First(in []any) []any {
+	return append(in, p.tok)
+}
+
 func (p *gToken) IsList() bool {
 	return false
 }
@@ -146,20 +229,21 @@ func Token(tok token.Token) Matcher {
 
 // -----------------------------------------------------------------------------
 
-type gLiteral struct {
-	tok token.Token
-	lit string
-}
+type gLiteral MatchToken
 
 func (p *gLiteral) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
 	if len(src) == 0 {
-		return 0, nil, ctx.NewErrorf(ctx.FileEnd, "expect `%s`, but got EOF", p.lit)
+		return 0, nil, ctx.NewErrorf(ctx.FileEnd, "expect `%s`, but got EOF", p.Lit)
 	}
 	t := src[0]
-	if t.Tok != p.tok || t.Lit != p.lit {
-		return 0, nil, ctx.NewErrorf(t.Pos, "expect `%s`, but got `%s`", p.lit, t.Lit)
+	if t.Tok != p.Tok || t.Lit != p.Lit {
+		return 0, nil, ctx.NewErrorf(t.Pos, "expect `%s`, but got `%s`", p.Lit, t.Lit)
 	}
 	return 1, t, nil
+}
+
+func (p *gLiteral) First(in []any) []any {
+	return append(in, (*MatchToken)(p))
 }
 
 func (p *gLiteral) IsList() bool {
@@ -175,6 +259,30 @@ func Literal(tok token.Token, lit string) Matcher {
 
 type gChoice struct {
 	options []Matcher
+	stops   []bool
+}
+
+func (p *gChoice) needStops() (stops []bool) {
+	stops = p.stops
+	if stops == nil { // make stops
+		options := p.options
+		n := len(options)
+		firsts := make([][]any, n)
+		for i, g := range options {
+			firsts[i] = g.First(nil)
+		}
+		stops = make([]bool, n)
+		for i, me := range firsts {
+			at := conflictWith(me, firsts[i+1:])
+			if at >= 0 {
+				log.Println("conflict", me, "with:", firsts[at]) // TODO(xsw): conflict
+			} else {
+				stops[i] = true
+			}
+		}
+		p.stops = stops
+	}
+	return
 }
 
 func (p *gChoice) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
@@ -182,8 +290,9 @@ func (p *gChoice) Match(src []*types.Token, ctx *Context) (n int, result any, er
 	var errMax error
 	var multiErr = true
 
-	for _, g := range p.options {
-		if n, result, err = g.Match(src, ctx); err == nil {
+	stops := p.needStops()
+	for i, g := range p.options {
+		if n, result, err = g.Match(src, ctx); err == nil || (n > 0 && stops[i]) {
 			return
 		}
 		if n >= nMax {
@@ -200,13 +309,20 @@ func (p *gChoice) Match(src []*types.Token, ctx *Context) (n int, result any, er
 	return nMax, nil, errMax
 }
 
+func (p *gChoice) First(in []any) []any {
+	for _, g := range p.options {
+		in = g.First(in)
+	}
+	return in
+}
+
 func (p *gChoice) IsList() bool {
 	return false
 }
 
 // Choice: R1 | R2 | ... | Rn
 func Choice(options ...Matcher) Matcher {
-	return &gChoice{options}
+	return &gChoice{options, nil}
 }
 
 // -----------------------------------------------------------------------------
@@ -234,12 +350,19 @@ func (p *gSequence) Match(src []*types.Token, ctx *Context) (n int, result any, 
 	return
 }
 
+func (p *gSequence) First(in []any) []any {
+	return p.items[0].First(in)
+}
+
 func (p *gSequence) IsList() bool {
 	return true
 }
 
 // Sequence: R1 R2 ... Rn
 func Sequence(items ...Matcher) Matcher {
+	if len(items) == 0 {
+		return gTrue{}
+	}
 	return &gSequence{items}
 }
 
@@ -267,6 +390,10 @@ func (p *gRepeat0) Match(src []*types.Token, ctx *Context) (n int, result any, e
 		n += n1
 		src = src[n1:]
 	}
+}
+
+func (p *gRepeat0) First(in []any) []any {
+	return p.r.First(in)
 }
 
 func (p *gRepeat0) IsList() bool {
@@ -309,6 +436,10 @@ func (p *gRepeat1) Match(src []*types.Token, ctx *Context) (n int, result any, e
 	}
 }
 
+func (p *gRepeat1) First(in []any) []any {
+	return p.r.First(in)
+}
+
 func (p *gRepeat1) IsList() bool {
 	return true
 }
@@ -330,6 +461,10 @@ func (p *gRepeat01) Match(src []*types.Token, ctx *Context) (n int, result any, 
 		return 0, nil, nil
 	}
 	return
+}
+
+func (p *gRepeat01) First(in []any) []any {
+	return p.r.First(in)
 }
 
 func (p *gRepeat01) IsList() bool {
@@ -406,6 +541,16 @@ func (p *Var) Match(src []*types.Token, ctx *Context) (n int, result any, err er
 		err = ctx.NewErrorf(posErr, "expect `%s`, but got `%s`", p.Name, tokErr)
 	}
 	return
+}
+
+func (p *Var) First(in []any) []any {
+	elem := p.Elem
+	if elem != nil {
+		p.Elem = nil // to stop recursion
+		in = elem.First(in)
+		p.Elem = elem
+	}
+	return in
 }
 
 func (p *Var) IsList() bool {

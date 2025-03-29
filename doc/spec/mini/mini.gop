@@ -157,8 +157,8 @@ PrimaryExpr = Operand | PrimaryExpr (
 	CallOrConversion | SelectorOrTypeAssertion | IndexOrSlice | LiteralValue)
 
 Operand =
-	IDENT | INT | FLOAT | STRING | CHAR | IMAG |
-	CompositeLit | FunctionLit | "(" Expression ")"
+	INT | FLOAT | STRING | CHAR | IMAG |
+	CompositeLit | FunctionLit | "(" Expression ")" | IDENT
 
 CompositeLit = LiteralTypeLit LiteralValue
 
@@ -185,7 +185,7 @@ IndexOrSlice = "[" (":" ?Expression | Expression (":" ?Expression | ?",")) "]"
 
 // -----------------------------------------------------------------
 
-func ParseFile(fset *token.FileSet, filename string, src any) (f any, err error) {
+func ParseFile(fset *token.FileSet, filename string, src any) (any, error) {
 	return cl.Parse(filename, src, &tpl.Config{
 		Fset: fset,
 	})
