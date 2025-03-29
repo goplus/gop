@@ -7,6 +7,7 @@ coverage:
     - "format"
     - "demo"
     - "demo/unit-test"
+    - "doc/spec"
     - "cmd"
     - "cl/cltest"
     - "cl/outline"

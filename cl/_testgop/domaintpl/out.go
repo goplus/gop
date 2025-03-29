@@ -3,7 +3,7 @@ package main
 import "github.com/goplus/gop/tpl"
 
 func main() {
-	tpl.New(`
+	tpl.NewEx(`
 file = stmts => {
 	return self
 }
@@ -51,7 +51,7 @@ parenExpr = "(" expr ")"
 exprlist = expr % ","
 
 namelist = IDENT % ","
-`, "file", func(self interface{}) interface{} {
+`, "cl/_testgop/domaintpl/in.gop", 1, 4, "file", func(self interface{}) interface{} {
 		return self
 	}, "stmts", func(self []interface{}) interface{} {
 		return func() (_gop_ret []interface{}) {

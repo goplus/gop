@@ -21,6 +21,8 @@ import (
 	"errors"
 	"io"
 	"os"
+
+	"github.com/qiniu/x/byteutil"
 )
 
 // -----------------------------------------------------------------------------
@@ -32,7 +34,7 @@ var (
 func ReadSource(src any) ([]byte, error) {
 	switch s := src.(type) {
 	case string:
-		return []byte(s), nil
+		return byteutil.Bytes(s), nil
 	case []byte:
 		return s, nil
 	case *bytes.Buffer:
