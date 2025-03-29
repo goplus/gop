@@ -55,6 +55,15 @@ func isDyn(err error) bool {
 	return false
 }
 
+// RecursiveError represents a recursive error.
+type RecursiveError struct {
+	*Var
+}
+
+func (e RecursiveError) Error() string {
+	return "recursive variable " + e.Name
+}
+
 // -----------------------------------------------------------------------------
 
 // Context represents the context of a matching process.
@@ -544,6 +553,8 @@ func (p *Var) First(in []any) []any {
 		p.Elem = nil // to stop recursion
 		in = elem.First(in)
 		p.Elem = elem
+	} else {
+		panic(RecursiveError{p})
 	}
 	return in
 }
