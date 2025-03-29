@@ -90,7 +90,7 @@ func NewEx(src any, filename string, line, col int, params ...any) (ret Compiler
 		OnConflict: func(fset *token.FileSet, c *ast.Choice, firsts [][]any, i, at int) {
 			pos := fset.Position(c.Options[i].Pos())
 			relocatePos(&pos, filename, line, col)
-			fmt.Fprintf(os.Stderr, "%v: conflict between %v and %v\n", pos, firsts[i], firsts[at])
+			fmt.Fprintf(os.Stderr, "%v: [WARN] conflict between %v and %v\n", pos, firsts[i], firsts[at])
 		},
 	})
 	if err != nil {
