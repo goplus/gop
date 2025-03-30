@@ -168,17 +168,17 @@ mathExpr = UnaryExpr % ("*" | "/" | "%" | "<<" | ">>" | "&" | "&^") % ("+" | "-"
 UnaryExpr = PrimaryExpr | ("-" | "!" | "^" | "*" | "&" | "+") UnaryExpr
 
 PrimaryExpr = Operand *(
-	CallOrConversion | SelectorOrTypeAssertion | IndexOrSlice | LiteralValue)
+	CallOrConversion | SelectorOrTypeAssertion | IndexOrSlice | ErrWrap | LiteralValue)
 
 Operand =
 	INT ?UNIT | FLOAT ?UNIT | STRING | CHAR | CSTRING | PYSTRING | RAT | IMAG |
-	CompositeLit | FunctionLit | "(" Expression ")" | IdentOrDomainTextLit
+	CompositeLit | FunctionLit | "(" Expression ")" | DomainTextLit | IDENT
 
-IdentOrDomainTextLit = IDENT ?STRING => {
-	if text, ok := self[1].(*tpl.Token); ok {
-		if tag := self[0].(*tpl.Token); tag.End() != text.Pos || text.Lit[0] != domianTextQuote {
-			panic &tpl.Error{Pos: tag.Pos, Msg: domianTextExpect}
-		}
+DomainTextLit = IDENT STRING => {
+	tag := self[0].(*tpl.Token)
+	text := self[1].(*tpl.Token)
+	if tag.End() != text.Pos || text.Lit[0] != domianTextQuote {
+		panic &tpl.Error{Pos: tag.Pos, Msg: domianTextExpect}
 	}
 	return self
 }
@@ -204,6 +204,8 @@ CallOrConversion = "(" ?(Expression % ",") ?"..." ?"," ")"
 SelectorOrTypeAssertion = "." (IDENT | "(" Type ")")
 
 IndexOrSlice = "[" (":" ?Expression | Expression (":" ?Expression | ?",")) "]"
+
+ErrWrap = "!" | "?" ?(":" UnaryExpr)
 `!
 
 // -----------------------------------------------------------------

@@ -805,6 +805,9 @@ scanAgain:
 			t.Tok = s.switch3(token.ASSIGN, token.EQ, '>', token.DRARROW)
 		case '!':
 			t.Tok = s.switch2(token.NOT, token.NE)
+			if t.Tok == token.NOT {
+				insertSemi = true
+			}
 		case '&':
 			if s.ch == '^' {
 				s.next()
@@ -816,6 +819,7 @@ scanAgain:
 			t.Tok = s.switch3(token.OR, token.OR_ASSIGN, '|', token.LOR)
 		case '?':
 			t.Tok = token.QUESTION
+			insertSemi = true
 		case '$':
 			t.Tok = token.ENV
 		case '~':

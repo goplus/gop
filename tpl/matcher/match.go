@@ -19,6 +19,7 @@ package matcher
 import (
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/goplus/gop/tpl/token"
 	"github.com/goplus/gop/tpl/types"
@@ -30,6 +31,23 @@ var (
 
 	errMultiMismatch = errors.New("multiple mismatch")
 )
+
+// -----------------------------------------------------------------------------
+
+type dbgFlags int
+
+const (
+	DbgFlagMatchVar dbgFlags = 1 << iota
+	DbgFlagAll               = DbgFlagMatchVar
+)
+
+var (
+	enableMatchVar = true
+)
+
+func SetDebug(flags dbgFlags) {
+	enableMatchVar = (flags & DbgFlagMatchVar) != 0
+}
 
 // -----------------------------------------------------------------------------
 
@@ -518,6 +536,9 @@ func (p *Var) Match(src []*types.Token, ctx *Context) (n int, result any, err er
 	g := p.Elem
 	if g == nil {
 		return 0, nil, ctx.NewErrorf(p.Pos, "variable `%s` not assigned", p.Name)
+	}
+	if enableMatchVar {
+		log.Println("==> Var.Match", p.Name, src[0])
 	}
 	n, result, err = g.Match(src, ctx)
 	if err == nil {
