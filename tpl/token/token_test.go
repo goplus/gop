@@ -27,7 +27,7 @@ func TestToken(t *testing.T) {
 	}
 	for i := Token(0); i < literal_end; i++ {
 		s := i.String()
-		if s == "RAT" || s == "UNIT" {
+		if s == "RAT" || s == "UNIT" || s == "CSTRING" || s == "PYSTRING" {
 			continue
 		}
 		if s != token.Token(i).String() {

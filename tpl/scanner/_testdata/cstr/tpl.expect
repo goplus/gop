@@ -1,14 +1,12 @@
 1 IDENT c
 2 . 
 3 IDENT printf
-10 IDENT c
-11 STRING "Hello"
+10 CSTRING "Hello"
 18 ; 
 
 19 IDENT std
 22 . 
 23 IDENT print
-29 IDENT py
-31 STRING "Hello"
+29 PYSTRING "Hello"
 38 ; 
 
