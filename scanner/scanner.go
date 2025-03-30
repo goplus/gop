@@ -937,7 +937,7 @@ scanAgain:
 			if s.ch == '>' { // ->
 				s.next()
 				tok = token.SRARROW
-			} else { // --, -=
+			} else { // -- -=
 				tok = s.switch3(token.SUB, token.SUB_ASSIGN, '-', token.DEC)
 				if tok == token.DEC {
 					insertSemi = true

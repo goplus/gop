@@ -745,8 +745,8 @@ scanAgain:
 					insertSemi = true
 				}
 			}
-		case '*':
-			t.Tok = s.switch2(token.MUL, token.MUL_ASSIGN)
+		case '*': // ** *=
+			t.Tok = s.switch3(token.MUL, token.MUL_ASSIGN, '*', token.POW)
 		case '/':
 			if s.ch == '/' || s.ch == '*' {
 				// comment
