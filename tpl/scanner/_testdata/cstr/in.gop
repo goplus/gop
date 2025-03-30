@@ -1,0 +1,2 @@
+c.printf c"Hello"
+std.print py"Hello"

@@ -179,6 +179,7 @@ var tokens = [...]string{
 	CSTRING:  "CSTRING",
 	PYSTRING: "PYSTRING",
 	RAT:      "RAT",
+	UNIT:     "UNIT",
 
 	ADD: "+",
 	SUB: "-",

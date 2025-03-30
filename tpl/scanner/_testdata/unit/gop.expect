@@ -1,0 +1,33 @@
+1 import import
+8 STRING "time"
+14 ; 
+
+16 IDENT echo
+21 STRING "Let's wait for a second"
+46 ; 
+
+47 IDENT time
+51 . 
+52 IDENT sleep
+58 INT 1
+59 UNIT s
+60 ; 
+
+61 IDENT time
+65 . 
+66 IDENT sleep
+72 FLOAT 1.
+74 UNIT s
+75 ; 
+
+76 IDENT time
+80 . 
+81 IDENT sleep
+87 FLOAT 1.2
+90 UNIT s
+91 ; 
+
+92 IDENT echo
+97 STRING "Hello, world"
+111 ; 
+
