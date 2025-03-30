@@ -537,7 +537,7 @@ func (p *Var) Match(src []*types.Token, ctx *Context) (n int, result any, err er
 	if g == nil {
 		return 0, nil, ctx.NewErrorf(p.Pos, "variable `%s` not assigned", p.Name)
 	}
-	if enableMatchVar {
+	if enableMatchVar && len(src) > 0 {
 		log.Println("==> Var.Match", p.Name, src[0])
 	}
 	n, result, err = g.Match(src, ctx)

@@ -26,7 +26,7 @@ if len(os.Args) < 2 {
 	return
 }
 
-matcher.SetDebug(matcher.DbgFlagAll)
+matcher.SetDebug(0) // (matcher.DbgFlagAll)
 
 f, err := mini.parseFile(nil, os.Args[1], nil)
 if err != nil {

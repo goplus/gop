@@ -64,9 +64,7 @@ Signature = Parameters ?Result
 
 Parameters = "(" ?(ParameterList ?",") ")"
 
-ParameterList = ParameterDecl % ","
-
-ParameterDecl = ?IdentifierList ?"..." Type
+ParameterList = IdentifierList ?(Type *("," IdentifierList Type) | *("," Type))
 
 Result = Parameters | NoParenType
 
