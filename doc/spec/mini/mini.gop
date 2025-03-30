@@ -166,11 +166,14 @@ mathExpr = UnaryExpr % ("*" | "/" | "%" | "<<" | ">>" | "&" | "&^") % ("+" | "-"
 UnaryExpr = PrimaryExpr | ("-" | "!" | "^" | "*" | "&" | "+") UnaryExpr
 
 PrimaryExpr = Operand *(
-	CallOrConversion | SelectorOrTypeAssertion | IndexOrSlice | ErrWrap | LiteralValue)
+	CallOrConversion | SelectorOrTypeAssertion | IndexOrSlice | ErrWrap)
 
 Operand =
 	INT ?UNIT | FLOAT ?UNIT | STRING | CHAR | CSTRING | PYSTRING | RAT | IMAG |
-	CompositeLit | FunctionLit | "(" Expression ")" | DomainTextLit | IDENT
+	"(" Expression ")" | LiteralValue | CompositeLit | FunctionLit | Env |
+	NamedCompositeLit | DomainTextLit | IDENT
+
+Env = "$" ("{" IDENT "}" | IDENT)
 
 DomainTextLit = IDENT STRING => {
 	tag := self[0].(*tpl.Token)
@@ -180,6 +183,17 @@ DomainTextLit = IDENT STRING => {
 	}
 	return self
 }
+
+NamedCompositeStart = IDENT "{" => {
+	typ := self[0].(*tpl.Token)
+	lbrace := self[1].(*tpl.Token)
+	if typ.End() != lbrace.Pos {
+		panic &tpl.Error{Pos: typ.Pos, Msg: "not composite literal"}
+	}
+	return self
+}
+
+NamedCompositeLit = NamedCompositeStart ElementList ?"," "}"
 
 CompositeLit = LiteralTypeLit LiteralValue
 
