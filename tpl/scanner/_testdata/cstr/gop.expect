@@ -1,0 +1,12 @@
+1 IDENT c
+2 . 
+3 IDENT printf
+10 CSTRING "Hello"
+18 ; 
+
+19 IDENT std
+22 . 
+23 IDENT print
+29 PYSTRING "Hello"
+38 ; 
+
