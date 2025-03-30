@@ -51,6 +51,7 @@ type Scanner struct {
 	rdOffset   int  // reading offset (position after current character)
 	lineOffset int  // current line offset
 	insertSemi bool // insert a semicolon before next newline
+	needUnit   bool
 
 	// public state - ok to modify
 	ErrorCount int // number of errors encountered
@@ -374,6 +375,11 @@ exponent:
 	if s.ch == 'i' {
 		tok = token.IMAG
 		s.next()
+	} else if s.ch == 'r' {
+		tok = token.RAT
+		s.next()
+	} else if isLetter(s.ch) {
+		s.needUnit = true
 	}
 
 exit:
@@ -634,6 +640,12 @@ scanAgain:
 
 	// determine token value
 	insertSemi := false
+	if s.needUnit { // number with unit
+		insertSemi = true
+		t.Tok, t.Lit = token.UNIT, s.scanIdentifier()
+		s.needUnit = false
+		goto done
+	}
 	switch ch := s.ch; {
 	case isLetter(ch):
 		t.Lit = s.scanIdentifier()
@@ -808,9 +820,10 @@ scanAgain:
 			t.Lit = string(ch)
 		}
 	}
+
+done:
 	if s.mode&NoInsertSemis == 0 {
 		s.insertSemi = insertSemi
 	}
-
 	return
 }
