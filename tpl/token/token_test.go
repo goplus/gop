@@ -51,7 +51,7 @@ func TestToken(t *testing.T) {
 		count++
 		return 0
 	})
-	if count != 28 {
+	if count != 29 {
 		t.Fatal("ForEach:", count)
 	}
 	NewFileSet()
