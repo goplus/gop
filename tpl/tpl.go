@@ -154,6 +154,9 @@ func retProcs(params []any) map[string]any {
 
 // -----------------------------------------------------------------------------
 
+// Error represents a matching error.
+type Error = matcher.Error
+
 // A Token is a lexical unit returned by Scan.
 type Token = types.Token
 

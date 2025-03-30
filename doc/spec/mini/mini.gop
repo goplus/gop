@@ -21,6 +21,11 @@ import (
 	"github.com/goplus/gop/tpl"
 )
 
+const (
+	domianTextQuote  = '`'
+	domianTextExpect = "expect domainTag`...`"
+)
+
 var _off = tpl.showConflict(false)
 
 var cl = tpl`
@@ -39,7 +44,7 @@ Declaration = ConstDecl | VarDecl | TypeDecl
 
 ConstDecl = "const" (ConstSpec | "(" *(ConstSpec ";") ")")
 
-ConstSpec = IdentifierList ?(?Type "=" ExpressionList)
+ConstSpec = IdentifierList ?Type ?("=" ExpressionList)
 
 IdentifierList = IDENT % ","
 
@@ -142,7 +147,7 @@ StructType = "struct" "{" *(FieldDecl ";") "}"
 
 FieldDecl = ("*" TypeName | FieldsOrNonPtrEmbeddedField) ?Tag
 
-FieldsOrNonPtrEmbeddedField = IDENT ("." IDENT | *("," IDENT) ?Type)
+FieldsOrNonPtrEmbeddedField = IDENT ("." IDENT | +("," IDENT) Type | ?Type)
 
 Tag = STRING
 
@@ -167,7 +172,16 @@ PrimaryExpr = Operand *(
 
 Operand =
 	INT | FLOAT | STRING | CHAR | IMAG |
-	CompositeLit | FunctionLit | "(" Expression ")" | IDENT
+	CompositeLit | FunctionLit | "(" Expression ")" | IdentOrDomainTextLit
+
+IdentOrDomainTextLit = IDENT ?STRING => {
+	if text, ok := self[1].(*tpl.Token); ok {
+		if tag := self[0].(*tpl.Token); tag.End() != text.Pos || text.Lit[0] != domianTextQuote {
+			panic &tpl.Error{Pos: tag.Pos, Msg: domianTextExpect}
+		}
+	}
+	return self
+}
 
 CompositeLit = LiteralTypeLit LiteralValue
 
