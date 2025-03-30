@@ -171,11 +171,11 @@ PrimaryExpr = Operand *(
 Operand =
 	INT ?UNIT | FLOAT ?UNIT | STRING | CHAR | CSTRING | PYSTRING | RAT | IMAG |
 	"(" Expression ")" | LiteralValue | CompositeLit | FunctionLit | Env |
-	NamedCompositeLit | DomainTextLit | IDENT
+	DomainTextLit | NamedCompositeLit | IDENT
 
 Env = "$" ("{" IDENT "}" | IDENT)
 
-DomainTextLit = IDENT STRING => {
+DomainTextLit = IDENT RAWSTRING => {
 	tag := self[0].(*tpl.Token)
 	text := self[1].(*tpl.Token)
 	if tag.End() != text.Pos || text.Lit[0] != domianTextQuote {
@@ -184,8 +184,12 @@ DomainTextLit = IDENT STRING => {
 	return self
 }
 
-NamedCompositeStart = IDENT "{" => {
-	typ := self[0].(*tpl.Token)
+NamedCompositeStart = TypeName "{" => {
+	tn := self[0].([]any)
+	typ := tn[0].(*tpl.Token)
+	if sel, ok := tn[1].([]any); ok {
+		typ = sel[1].(*tpl.Token)
+	}
 	lbrace := self[1].(*tpl.Token)
 	if typ.End() != lbrace.Pos {
 		panic &tpl.Error{Pos: typ.Pos, Msg: "not composite literal"}

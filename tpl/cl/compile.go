@@ -184,6 +184,8 @@ func compileExpr(expr ast.Expr, ctx *context) (matcher.Matcher, bool) {
 		}
 		if tok, ok := idents[name]; ok {
 			return matcher.Token(tok), true
+		} else if name == "RAWSTRING" {
+			return matcher.RawString(), true
 		}
 		ctx.addErrorf(expr.Pos(), "`%s` is undefined", name)
 	case *ast.BasicLit:
