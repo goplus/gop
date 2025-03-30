@@ -168,6 +168,8 @@ var (
 		"IMAG":    token.IMAG,
 		"CHAR":    token.CHAR,
 		"STRING":  token.STRING,
+		"RAT":     token.RAT,
+		"UNIT":    token.UNIT,
 	}
 )
 

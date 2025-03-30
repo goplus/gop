@@ -61,6 +61,8 @@ const (
 	IMAG   // 123.45i
 	CHAR   // 'a'
 	STRING // "abc"
+	RAT    // 3r, 3.4r
+	UNIT   // 1m, 2.3s, 3ms, 4us, 5ns, 6.5m, 7h, 8d, 9w, 10y
 	literal_end
 
 	ADD = '+'
@@ -149,6 +151,8 @@ var tokens = [...]string{
 	IMAG:   "IMAG",
 	CHAR:   "CHAR",
 	STRING: "STRING",
+	RAT:    "RAT",
+	UNIT:   "UNIT",
 
 	ADD: "+",
 	SUB: "-",
