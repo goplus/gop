@@ -225,6 +225,34 @@ func True() Matcher {
 
 // -----------------------------------------------------------------------------
 
+type gRawString struct{}
+
+func (p gRawString) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
+	if len(src) == 0 {
+		return 0, nil, ctx.NewErrorf(ctx.FileEnd, "expect `RAWSTRING`, but got EOF")
+	}
+	t := src[0]
+	if t.Tok != token.STRING || t.Lit[0] != '`' {
+		return 0, nil, ctx.NewErrorf(t.Pos, "expect `RAWSTRING`, but got `%s`", t.Lit)
+	}
+	return 1, t, nil
+}
+
+func (p gRawString) First(in []any) (first []any, mayEmpty bool) {
+	return append(in, token.STRING), false
+}
+
+func (p gRawString) IsList() bool {
+	return false
+}
+
+// RawString returns a matcher that matches a raw string literal.
+func RawString() Matcher {
+	return gRawString{}
+}
+
+// -----------------------------------------------------------------------------
+
 type gToken struct {
 	tok token.Token
 }
@@ -263,7 +291,7 @@ func (p *gLiteral) Match(src []*types.Token, ctx *Context) (n int, result any, e
 	}
 	t := src[0]
 	if t.Tok != p.Tok || t.Lit != p.Lit {
-		return 0, nil, ctx.NewErrorf(t.Pos, "expect `%s`, but got `%s`", p.Lit, t.Lit)
+		return 0, nil, ctx.NewErrorf(t.Pos, "expect `%s`, but got `%v`", p.Lit, t)
 	}
 	return 1, t, nil
 }
