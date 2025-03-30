@@ -1,0 +1,12 @@
+1 IDENT echo
+6 INT 1
+7 / 
+8 INT 3
+9 IDENT r
+10 ; 
+
+11 IDENT echo
+16 FLOAT 1.23
+20 IDENT r
+21 ; 
+
