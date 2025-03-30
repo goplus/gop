@@ -171,7 +171,7 @@ PrimaryExpr = Operand *(
 	CallOrConversion | SelectorOrTypeAssertion | IndexOrSlice | LiteralValue)
 
 Operand =
-	INT | FLOAT | STRING | CHAR | IMAG |
+	INT ?UNIT | FLOAT ?UNIT | STRING | CHAR | CSTRING | PYSTRING | RAT | IMAG |
 	CompositeLit | FunctionLit | "(" Expression ")" | IdentOrDomainTextLit
 
 IdentOrDomainTextLit = IDENT ?STRING => {
