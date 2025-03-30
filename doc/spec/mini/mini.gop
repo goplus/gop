@@ -39,7 +39,7 @@ Declaration = ConstDecl | VarDecl | TypeDecl
 
 ConstDecl = "const" (ConstSpec | "(" *(ConstSpec ";") ")")
 
-ConstSpec = IdentifierList ?(?Type "=" ExpressionList)
+ConstSpec = IdentifierList ?Type ?("=" ExpressionList)
 
 IdentifierList = IDENT % ","
 
@@ -142,7 +142,7 @@ StructType = "struct" "{" *(FieldDecl ";") "}"
 
 FieldDecl = ("*" TypeName | FieldsOrNonPtrEmbeddedField) ?Tag
 
-FieldsOrNonPtrEmbeddedField = IDENT ("." IDENT | *("," IDENT) ?Type)
+FieldsOrNonPtrEmbeddedField = IDENT ("." IDENT | +("," IDENT) Type | ?Type)
 
 Tag = STRING
 
