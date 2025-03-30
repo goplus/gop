@@ -160,16 +160,18 @@ func LogConflict(pos token.Position, firsts [][]any, i, at int) {
 
 var (
 	idents = map[string]token.Token{
-		"EOF":     token.EOF,
-		"COMMENT": token.COMMENT,
-		"IDENT":   token.IDENT,
-		"INT":     token.INT,
-		"FLOAT":   token.FLOAT,
-		"IMAG":    token.IMAG,
-		"CHAR":    token.CHAR,
-		"STRING":  token.STRING,
-		"RAT":     token.RAT,
-		"UNIT":    token.UNIT,
+		"EOF":      token.EOF,
+		"COMMENT":  token.COMMENT,
+		"IDENT":    token.IDENT,
+		"INT":      token.INT,
+		"FLOAT":    token.FLOAT,
+		"IMAG":     token.IMAG,
+		"CHAR":     token.CHAR,
+		"STRING":   token.STRING,
+		"CSTRING":  token.CSTRING,
+		"PYSTRING": token.PYSTRING,
+		"RAT":      token.RAT,
+		"UNIT":     token.UNIT,
 	}
 )
 
