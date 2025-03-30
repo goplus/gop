@@ -74,8 +74,9 @@ Block = "{" StatementList "}"
 StatementList = *(Statement ";")
 
 Statement =
-	Declaration | ReturnStmt | BreakStmt | ContinueStmt | GotoStmt | FallthroughStmt |
-	IfStmt | SwitchStmt | ForStmt | DeferStmt | Block | LabeledStmt | SimpleStmt
+	Declaration | ReturnStmt | BreakStmt | ContinueStmt | GotoStmt |
+	FallthroughStmt | IfStmt | SwitchStmt | ForStmt | DeferStmt | Block |
+	LabeledStmt | CommandStmt | SimpleStmt
 
 ReturnStmt = "return" ?ExpressionList
 
@@ -112,6 +113,8 @@ Assignment = ExpressionList (
 	"*=" | "/=" | "%=" | "<<=" | ">>=" | "&=" | "&^=") ExpressionList
 
 ExpressionStmt = Expression
+
+CommandStmt = IDENT ?("." IDENT) ExpressionList
 
 EmptyStmt = ""
 
