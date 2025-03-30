@@ -347,8 +347,10 @@ retry:
 			}
 			fmt.Print(prefix, "]\n")
 		}
+	case nil:
+		fmt.Fprint(w, prefix, "nil\n")
 	default:
-		panic("unexpected node")
+		panic("unexpected node: " + reflect.TypeOf(ret).String())
 	}
 }
 
