@@ -21,6 +21,11 @@ import (
 	"github.com/goplus/gop/tpl"
 )
 
+const (
+	domianTextQuote  = '`'
+	domianTextExpect = "expect domainTag`...`"
+)
+
 var _off = tpl.showConflict(false)
 
 var cl = tpl`
@@ -167,7 +172,17 @@ PrimaryExpr = Operand *(
 
 Operand =
 	INT | FLOAT | STRING | CHAR | IMAG |
-	CompositeLit | FunctionLit | "(" Expression ")" | IDENT
+	CompositeLit | FunctionLit | "(" Expression ")" | IdentOrDomainTextLit
+
+IdentOrDomainTextLit = IDENT ?STRING => {
+	if text, ok := self[1].(*tpl.Token); ok {
+		tag := self[0].(*tpl.Token)
+		if text.Lit[0] != domianTextQuote || tag.End() != text.Pos {
+			panic &tpl.Error{Pos: tag.Pos, Msg: domianTextExpect}
+		}
+	}
+	return self
+}
 
 CompositeLit = LiteralTypeLit LiteralValue
 

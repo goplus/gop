@@ -29,7 +29,7 @@ import (
 //
 // here overloadFunc represents
 //
-// `func(params) {...}`
+// `func(params) results {...}`
 // `funcName`
 // `(*T).methodName`
 type OverloadFuncDecl struct {
