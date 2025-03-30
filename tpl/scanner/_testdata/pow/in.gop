@@ -1,0 +1,2 @@
+echo 2**3
+echo `abc`[0]

@@ -148,7 +148,7 @@ const (
 	additional_literal_end = 97
 
 	ENV  = additional_end2 // ${name}
-	UNIT = additional_end3 // 1m, 2s, 3ms, 4us, 5ns, 6m, 7h, 8d, 9w, 10y
+	UNIT = additional_end3 // 1m, 2.3s, 3ms, 4us, 5ns, 6.5m, 7h, 8d, 9w, 10y
 
 	PYSTRING = additional_literal_beg // py"Hello"
 

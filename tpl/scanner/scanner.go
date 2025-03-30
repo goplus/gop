@@ -649,8 +649,20 @@ scanAgain:
 	switch ch := s.ch; {
 	case isLetter(ch):
 		t.Lit = s.scanIdentifier()
-		t.Tok = token.IDENT
-		insertSemi = true
+		if (t.Lit == "c" || t.Lit == "C") && s.ch == '"' { // c"..."
+			s.next()
+			insertSemi = true
+			t.Tok = token.CSTRING
+			t.Lit = s.scanString()
+		} else if t.Lit == "py" && s.ch == '"' { // py"..."
+			s.next()
+			insertSemi = true
+			t.Tok = token.PYSTRING
+			t.Lit = s.scanString()
+		} else {
+			insertSemi = true
+			t.Tok = token.IDENT
+		}
 	case '0' <= ch && ch <= '9':
 		insertSemi = true
 		t.Tok, t.Lit = s.scanNumber(false)
@@ -733,8 +745,8 @@ scanAgain:
 					insertSemi = true
 				}
 			}
-		case '*':
-			t.Tok = s.switch2(token.MUL, token.MUL_ASSIGN)
+		case '*': // ** *=
+			t.Tok = s.switch3(token.MUL, token.MUL_ASSIGN, '*', token.POW)
 		case '/':
 			if s.ch == '/' || s.ch == '*' {
 				// comment

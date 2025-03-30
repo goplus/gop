@@ -1,0 +1,13 @@
+1 IDENT echo
+6 INT 2
+7 ** 
+9 INT 3
+10 ; 
+
+11 IDENT echo
+16 STRING `abc`
+21 [ 
+22 INT 0
+23 ] 
+24 ; 
+

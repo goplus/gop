@@ -27,7 +27,7 @@ func TestToken(t *testing.T) {
 	}
 	for i := Token(0); i < literal_end; i++ {
 		s := i.String()
-		if s == "RAT" || s == "UNIT" {
+		if s == "RAT" || s == "UNIT" || s == "CSTRING" || s == "PYSTRING" {
 			continue
 		}
 		if s != token.Token(i).String() {
@@ -51,7 +51,7 @@ func TestToken(t *testing.T) {
 		count++
 		return 0
 	})
-	if count != 28 {
+	if count != 29 {
 		t.Fatal("ForEach:", count)
 	}
 	NewFileSet()
