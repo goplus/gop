@@ -55,16 +55,14 @@ const (
 	literal_beg
 	// Identifiers and basic type literals
 	// (these tokens stand for classes of literals)
-	IDENT    // main
-	INT      // 12345
-	FLOAT    // 123.45
-	IMAG     // 123.45i
-	CHAR     // 'a'
-	STRING   // "abc"
-	CSTRING  // c"Hello"
-	PYSTRING // py"Hello"
-	RAT      // 3r, 3.4r
-	UNIT     // 1m, 2.3s, 3ms, 4us, 5ns, 6.5m, 7h, 8d, 9w, 10y
+	IDENT  // main
+	INT    // 12345
+	FLOAT  // 123.45
+	IMAG   // 123.45i
+	CHAR   // 'a'
+	STRING // "abc"
+	RAT    // 3r, 3.4r
+	UNIT   // 1m, 2.3s, 3ms, 4us, 5ns, 6.5m, 7h, 8d, 9w, 10y
 	literal_end
 
 	ADD = '+'
@@ -148,16 +146,14 @@ var tokens = [...]string{
 	EOF:     "EOF",
 	COMMENT: "COMMENT",
 
-	IDENT:    "IDENT",
-	INT:      "INT",
-	FLOAT:    "FLOAT",
-	IMAG:     "IMAG",
-	CHAR:     "CHAR",
-	STRING:   "STRING",
-	CSTRING:  "CSTRING",
-	PYSTRING: "PYSTRING",
-	RAT:      "RAT",
-	UNIT:     "UNIT",
+	IDENT:  "IDENT",
+	INT:    "INT",
+	FLOAT:  "FLOAT",
+	IMAG:   "IMAG",
+	CHAR:   "CHAR",
+	STRING: "STRING",
+	RAT:    "RAT",
+	UNIT:   "UNIT",
 
 	ADD: "+",
 	SUB: "-",
