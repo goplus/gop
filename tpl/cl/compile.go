@@ -181,13 +181,19 @@ func compileExpr(expr ast.Expr, ctx *context) (matcher.Matcher, bool) {
 		name := expr.Name
 		if v, ok := ctx.rules[name]; ok {
 			return v, true
-		}
-		if tok, ok := idents[name]; ok {
+		} else if tok, ok := idents[name]; ok {
 			return matcher.Token(tok), true
-		} else if name == "RAWSTRING" {
-			return matcher.RawString(), true
 		}
-		ctx.addErrorf(expr.Pos(), "`%s` is undefined", name)
+		var quoteCh byte
+		switch name {
+		case "RAWSTRING":
+			quoteCh = '`'
+		case "QSTRING":
+			quoteCh = '"'
+		default:
+			ctx.addErrorf(expr.Pos(), "`%s` is undefined", name)
+		}
+		return matcher.String(quoteCh), true
 	case *ast.BasicLit:
 		lit := expr.Value
 		switch expr.Kind {
