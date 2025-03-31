@@ -55,7 +55,7 @@ type Scanner struct {
 	lineOffset int  // current line offset
 	nParen     int
 	insertSemi bool // insert a semicolon before next newline
-	needUnit   bool
+	unitVal    string
 
 	// public state - ok to modify
 	ErrorCount int // number of errors encountered
@@ -503,18 +503,19 @@ func (s *Scanner) scanNumber() (token.Token, string) {
 		s.error(s.offset, "hexadecimal mantissa requires a 'p' exponent")
 	}
 
-	// suffix 'i'
-	if s.ch == 'i' {
-		tok = token.IMAG
-		s.next()
-	} else if s.ch == 'r' {
-		tok = token.RAT
-		s.next()
-	} else if isLetter(s.ch) {
-		s.needUnit = true
+	if isLetter(s.ch) {
+		id := s.scanIdentifier()
+		switch id {
+		case "i":
+			tok = token.IMAG
+		case "r":
+			tok = token.RAT
+		default:
+			s.unitVal = id
+		}
 	}
 
-	lit := string(s.src[offs:s.offset])
+	lit := string(s.src[offs : s.offset-len(s.unitVal)])
 	if tok == token.INT && invalid >= 0 {
 		s.errorf(invalid, "invalid digit %q in %s", lit[invalid-offs], litname(prefix))
 	}
@@ -831,10 +832,11 @@ scanAgain:
 
 	// determine token value
 	insertSemi := false
-	if s.needUnit { // number with unit
+	if s.unitVal != "" { // number with unit
 		insertSemi = true
-		tok, lit = token.UNIT, s.scanIdentifier()
-		s.needUnit = false
+		pos -= token.Pos(len(s.unitVal))
+		tok, lit = token.UNIT, s.unitVal
+		s.unitVal = ""
 		goto done
 	}
 	switch ch := s.ch; {

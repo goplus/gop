@@ -1,7 +1,17 @@
 import "time"
 
-echo "Let's wait for a second"
-time.sleep 1s
-time.sleep 1.s
-time.sleep 1.2s
-echo "Hello, world"
+x := "Let's wait for a second"
+echo x
+
+wait 0x10s
+wait .1s
+wait 1.s
+wait 1.e7s
+wait 1.2s
+
+time.sleep 100im
+
+spend 10.0rmb
+spend 10.rmb
+
+echo "Hello, world"...

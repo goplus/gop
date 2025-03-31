@@ -51,7 +51,7 @@ type Scanner struct {
 	rdOffset   int  // reading offset (position after current character)
 	lineOffset int  // current line offset
 	insertSemi bool // insert a semicolon before next newline
-	needUnit   bool
+	unitVal    string
 
 	// public state - ok to modify
 	ErrorCount int // number of errors encountered
@@ -372,18 +372,20 @@ exponent:
 		s.scanMantissa(10)
 	}
 
-	if s.ch == 'i' {
-		tok = token.IMAG
-		s.next()
-	} else if s.ch == 'r' {
-		tok = token.RAT
-		s.next()
-	} else if isLetter(s.ch) {
-		s.needUnit = true
+	if isLetter(s.ch) {
+		id := s.scanIdentifier()
+		switch id {
+		case "i":
+			tok = token.IMAG
+		case "r":
+			tok = token.RAT
+		default:
+			s.unitVal = id
+		}
 	}
 
 exit:
-	return tok, string(s.src[offs:s.offset])
+	return tok, string(s.src[offs : s.offset-len(s.unitVal)])
 }
 
 // scanEscape parses an escape sequence where rune is the accepted
@@ -640,10 +642,11 @@ scanAgain:
 
 	// determine token value
 	insertSemi := false
-	if s.needUnit { // number with unit
+	if s.unitVal != "" { // number with unit
 		insertSemi = true
-		t.Tok, t.Lit = token.UNIT, s.scanIdentifier()
-		s.needUnit = false
+		t.Pos -= token.Pos(len(s.unitVal))
+		t.Tok, t.Lit = token.UNIT, s.unitVal
+		s.unitVal = ""
 		goto done
 	}
 	switch ch := s.ch; {
