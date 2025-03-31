@@ -226,30 +226,37 @@ func True() Matcher {
 
 // -----------------------------------------------------------------------------
 
-type gRawString struct{}
+type gString byte
 
-func (p gRawString) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
+func (p gString) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
 	if len(src) == 0 {
-		return 0, nil, ctx.NewErrorf(ctx.FileEnd, "expect `RAWSTRING`, but got EOF")
+		return 0, nil, ctx.NewErrorf(ctx.FileEnd, "expect `%s`, but got EOF", stringType(p))
 	}
 	t := src[0]
-	if t.Tok != token.STRING || t.Lit[0] != '`' {
-		return 0, nil, ctx.NewErrorf(t.Pos, "expect `RAWSTRING`, but got `%v`", t)
+	if t.Tok != token.STRING || t.Lit[0] != byte(p) {
+		return 0, nil, ctx.NewErrorf(t.Pos, "expect `%s`, but got `%v`", stringType(p), t)
 	}
 	return 1, t, nil
 }
 
-func (p gRawString) First(in []any) (first []any, mayEmpty bool) {
+func (p gString) First(in []any) (first []any, mayEmpty bool) {
 	return append(in, token.STRING), false
 }
 
-func (p gRawString) IsList() bool {
+func (p gString) IsList() bool {
 	return false
 }
 
-// RawString returns a matcher that matches a raw string literal.
-func RawString() Matcher {
-	return gRawString{}
+// String returns a matcher that matches a string literal.
+func String(quoteCh byte) Matcher {
+	return gString(quoteCh)
+}
+
+func stringType(quoteCh gString) string {
+	if quoteCh == '"' {
+		return "QSTRING"
+	}
+	return "RAWSTRING"
 }
 
 // -----------------------------------------------------------------------------

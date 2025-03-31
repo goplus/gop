@@ -160,18 +160,16 @@ func LogConflict(pos token.Position, firsts [][]any, i, at int) {
 
 var (
 	idents = map[string]token.Token{
-		"EOF":      token.EOF,
-		"COMMENT":  token.COMMENT,
-		"IDENT":    token.IDENT,
-		"INT":      token.INT,
-		"FLOAT":    token.FLOAT,
-		"IMAG":     token.IMAG,
-		"CHAR":     token.CHAR,
-		"STRING":   token.STRING,
-		"CSTRING":  token.CSTRING,
-		"PYSTRING": token.PYSTRING,
-		"RAT":      token.RAT,
-		"UNIT":     token.UNIT,
+		"EOF":     token.EOF,
+		"COMMENT": token.COMMENT,
+		"IDENT":   token.IDENT,
+		"INT":     token.INT,
+		"FLOAT":   token.FLOAT,
+		"IMAG":    token.IMAG,
+		"CHAR":    token.CHAR,
+		"STRING":  token.STRING,
+		"RAT":     token.RAT,
+		"UNIT":    token.UNIT,
 	}
 )
 
@@ -181,13 +179,19 @@ func compileExpr(expr ast.Expr, ctx *context) (matcher.Matcher, bool) {
 		name := expr.Name
 		if v, ok := ctx.rules[name]; ok {
 			return v, true
-		}
-		if tok, ok := idents[name]; ok {
+		} else if tok, ok := idents[name]; ok {
 			return matcher.Token(tok), true
-		} else if name == "RAWSTRING" {
-			return matcher.RawString(), true
 		}
-		ctx.addErrorf(expr.Pos(), "`%s` is undefined", name)
+		var quoteCh byte
+		switch name {
+		case "RAWSTRING":
+			quoteCh = '`'
+		case "QSTRING":
+			quoteCh = '"'
+		default:
+			ctx.addErrorf(expr.Pos(), "`%s` is undefined", name)
+		}
+		return matcher.String(quoteCh), true
 	case *ast.BasicLit:
 		lit := expr.Value
 		switch expr.Kind {

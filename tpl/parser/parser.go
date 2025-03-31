@@ -223,7 +223,7 @@ func (p *parser) lambdaExpr() (start, end token.Pos, ok bool) {
 	}
 }
 
-// parseExpr parses an expression: +term % '|'
+// parseExpr: termList % '|'
 func (p *parser) parseExpr() ast.Expr {
 	termList := p.parseTermList()
 	for p.tok != token.OR {
@@ -240,7 +240,7 @@ func (p *parser) parseExpr() ast.Expr {
 	return &ast.Choice{Options: options}
 }
 
-// parseTermList parses a list of terms: +term
+// parseTermList: +term
 func (p *parser) parseTermList() ast.Expr {
 	terms := make([]ast.Expr, 0, 1)
 	for {
@@ -261,7 +261,7 @@ func (p *parser) parseTermList() ast.Expr {
 	}
 }
 
-// parseTerm parses a term: term2 % '%'
+// parseTerm: term2 % '%'
 func (p *parser) parseTerm() (ast.Expr, bool) {
 	x, ok := p.parseTerm2()
 	if !ok {
@@ -286,7 +286,7 @@ func (p *parser) parseTerm() (ast.Expr, bool) {
 	return x, true
 }
 
-// parseTerm2 parses a term2: factor % "++"
+// parseTerm2: factor % "++"
 func (p *parser) parseTerm2() (ast.Expr, bool) {
 	x, ok := p.parseFactor()
 	if !ok {

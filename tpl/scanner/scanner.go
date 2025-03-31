@@ -649,23 +649,11 @@ scanAgain:
 	switch ch := s.ch; {
 	case isLetter(ch):
 		t.Lit = s.scanIdentifier()
-		if (t.Lit == "c" || t.Lit == "C") && s.ch == '"' { // c"..."
-			s.next()
-			insertSemi = true
-			t.Tok = token.CSTRING
-			t.Lit = s.scanString()
-		} else if t.Lit == "py" && s.ch == '"' { // py"..."
-			s.next()
-			insertSemi = true
-			t.Tok = token.PYSTRING
-			t.Lit = s.scanString()
-		} else {
-			insertSemi = true
-			t.Tok = token.IDENT
-		}
-	case '0' <= ch && ch <= '9':
+		t.Tok = token.IDENT
 		insertSemi = true
+	case '0' <= ch && ch <= '9':
 		t.Tok, t.Lit = s.scanNumber(false)
+		insertSemi = true
 	default:
 		s.next() // always make progress
 		switch ch {
