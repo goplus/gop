@@ -170,6 +170,12 @@ var (
 		"STRING":  token.STRING,
 		"RAT":     token.RAT,
 		"UNIT":    token.UNIT,
+		"LPAREN":  token.LPAREN,
+		"RPAREN":  token.RPAREN,
+		"LBRACK":  token.LBRACK,
+		"RBRACK":  token.RBRACK,
+		"LBRACE":  token.LBRACE,
+		"RBRACE":  token.RBRACE,
 	}
 )
 

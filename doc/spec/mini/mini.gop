@@ -135,8 +135,6 @@ PointerType = "*" Type
 
 ArrayType = "[" ?Expression "]" Type
 
-EllipsisArrayType = "[" ?("..." | Expression) "]" Type
-
 MapType = "map" "[" Type "]" Type
 
 FuncType = "func" Signature
@@ -169,9 +167,9 @@ PrimaryExpr = Operand *(
 	CallOrConversion | SelectorOrTypeAssertion | IndexOrSlice | ErrWrap)
 
 Operand =
-	INT ?UNIT | FLOAT ?UNIT | STRING | CHAR | RAT | IMAG |
-	"(" Expression ")" | LiteralValue | CompositeLit | FunctionLit | Env |
-	"c" ++ QSTRING | "py" ++ QSTRING | DomainTextLit | NamedCompositeLit | IDENT
+	INT ?UNIT | FLOAT ?UNIT | STRING | CHAR | RAT | IMAG | "(" Expression ")" |
+	LiteralValue | CompositeLit | FunctionLit | Env | "c" ++ QSTRING | "py" ++ QSTRING |
+	ListCompositeLit | DomainTextLit | NamedCompositeLit | IDENT
 
 Env = "$" ("{" IDENT "}" | IDENT)
 
@@ -179,9 +177,9 @@ DomainTextLit = IDENT ++ RAWSTRING
 
 NamedCompositeLit = TypeName ++ "{" ElementList ?"," "}"
 
-CompositeLit = LiteralTypeLit LiteralValue
+CompositeLit = (MapType | StructType) LiteralValue
 
-LiteralTypeLit = EllipsisArrayType | MapType | StructType
+ListCompositeLit = LBRACK ?("..." | Expression % ",") (RBRACK ++ Type LiteralValue | RBRACK)
 
 LiteralValue = "{" ElementList ?"," "}"
 
