@@ -48,11 +48,13 @@ ConstSpec = IdentifierList ?Type ?("=" ExpressionList)
 
 IdentifierList = IDENT % ","
 
+LambdaExprList = LambdaExpr % ","
+
 ExpressionList = Expression % ","
 
 VarDecl = "var" (VarSpec | "(" *(VarSpec ";") ")")
 
-VarSpec = IdentifierList ("=" ExpressionList | Type ?("=" ExpressionList))
+VarSpec = IdentifierList ("=" ExpressionList | Type ?("=" LambdaExprList))
 
 TypeDecl = "type" (TypeSpec | "(" *(TypeSpec ";") ")")
 
@@ -81,7 +83,7 @@ Statement =
 	FallthroughStmt | IfStmt | SwitchStmt | ForStmt | DeferStmt | Block |
 	LabeledStmt | CommandStmt | SimpleStmt
 
-ReturnStmt = "return" ?ExpressionList
+ReturnStmt = "return" ?LambdaExprList
 
 BreakStmt = "break" ?IDENT
 
@@ -113,11 +115,11 @@ IncDecStmt = Expression ("++" | "--")
 
 Assignment = ExpressionList (
 	"=" | "+=" | "-=" | "|=" | "^=" |
-	"*=" | "/=" | "%=" | "<<=" | ">>=" | "&=" | "&^=") ExpressionList
+	"*=" | "/=" | "%=" | "<<=" | ">>=" | "&=" | "&^=") LambdaExprList
 
 ExpressionStmt = Expression
 
-CommandStmt = IDENT ?("." IDENT) ExpressionList
+CommandStmt = IDENT ?("." IDENT) LambdaExprList
 
 EmptyStmt = ""
 
@@ -155,6 +157,10 @@ MethodElem = IDENT Signature
 
 // -----------------------------------------------------------------
 
+LambdaExpr = ("(" ?(IDENT % ",") ")" | ?IDENT) "=>" LambdaBody | Expression
+
+LambdaBody = Block | "(" LambdaExpr % "," ")" | LambdaExpr
+
 RangeExpr = rangeExprEnd | Expression ?rangeExprEnd
 
 rangeExprEnd = ":" Expression ?(":" ?Expression)
@@ -171,7 +177,7 @@ PrimaryExpr = Operand *(
 	CallOrConversion | SelectorOrTypeAssertion | IndexOrSlice | ErrWrap)
 
 Operand =
-	INT ?UNIT | FLOAT ?UNIT | STRING | CHAR | RAT | IMAG | "(" Expression ")" |
+	INT ?UNIT | FLOAT ?UNIT | STRING | CHAR | RAT | IMAG | "(" LambdaExpr ")" |
 	LiteralValue | CompositeLit | FunctionLit | Env | "c" ++ QSTRING | "py" ++ QSTRING |
 	ListCompositeLit | DomainTextLit | NamedCompositeLit | IDENT
 
@@ -183,7 +189,7 @@ NamedCompositeLit = TypeName ++ "{" ElementList ?"," "}"
 
 CompositeLit = (MapType | StructType) LiteralValue
 
-ListCompositeLit = LBRACK ?("..." | Expression % ",") (RBRACK ++ Type LiteralValue | RBRACK)
+ListCompositeLit = LBRACK ?("..." | LambdaExpr % ",") (RBRACK ++ Type LiteralValue | RBRACK)
 
 LiteralValue = "{" ElementList ?"," "}"
 
@@ -193,11 +199,11 @@ KeyedElement = ?(Key ":") Element
 
 Key = LiteralValue | Expression
 
-Element = LiteralValue | Expression
+Element = LiteralValue | LambdaExpr
 
 FunctionLit = "func" Signature Block
 
-CallOrConversion = "(" ?(Expression % ",") ?"..." ?"," ")"
+CallOrConversion = "(" ?(LambdaExpr % ",") ?"..." ?"," ")"
 
 SelectorOrTypeAssertion = "." (IDENT | "(" Type ")")
 
