@@ -99,7 +99,7 @@ SwitchGuard = ?(IDENT ":=") PrimaryExpr "." "(" "type" ")" | ?Expression
 
 CaseClause = ("case" ExpressionList | "default") ":" StatementList
 
-ForStmt = "for" ?Expression Block
+ForStmt = "for" (IDENT ?("," IDENT) "in" RangeExpr | ?RangeExpr) Block
 
 DeferStmt = "defer" Expression
 
@@ -154,6 +154,10 @@ InterfaceElem = MethodElem
 MethodElem = IDENT Signature
 
 // -----------------------------------------------------------------
+
+RangeExpr = rangeExprEnd | Expression ?rangeExprEnd
+
+rangeExprEnd = ":" Expression ?(":" ?Expression)
 
 Expression = cmpExpr % "&&" % "||"
 

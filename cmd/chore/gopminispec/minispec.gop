@@ -31,6 +31,7 @@ matcher.SetDebug(0) // (matcher.DbgFlagAll)
 f, err := mini.parseFile(nil, os.Args[1], nil)
 if err != nil {
     fprintln os.Stderr, err
+    os.exit 1
 } else {
     tpl.dump f
 }
