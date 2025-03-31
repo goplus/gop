@@ -175,29 +175,9 @@ Operand =
 
 Env = "$" ("{" IDENT "}" | IDENT)
 
-DomainTextLit = IDENT RAWSTRING => {
-	tag := self[0].(*tpl.Token)
-	text := self[1].(*tpl.Token)
-	if tag.End() != text.Pos || text.Lit[0] != domianTextQuote {
-		panic &tpl.Error{Pos: tag.Pos, Msg: domianTextExpect}
-	}
-	return self
-}
+DomainTextLit = IDENT ++ RAWSTRING
 
-NamedCompositeStart = TypeName "{" => {
-	tn := self[0].([]any)
-	typ := tn[0].(*tpl.Token)
-	if sel, ok := tn[1].([]any); ok {
-		typ = sel[1].(*tpl.Token)
-	}
-	lbrace := self[1].(*tpl.Token)
-	if typ.End() != lbrace.Pos {
-		panic &tpl.Error{Pos: typ.Pos, Msg: "not composite literal"}
-	}
-	return self
-}
-
-NamedCompositeLit = NamedCompositeStart ElementList ?"," "}"
+NamedCompositeLit = TypeName ++ "{" ElementList ?"," "}"
 
 CompositeLit = LiteralTypeLit LiteralValue
 

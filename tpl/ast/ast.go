@@ -166,11 +166,11 @@ func (p *UnaryExpr) exprNode()      {}
 
 // -----------------------------------------------------------------------------
 
-// BinaryExpr: R1 % R2
+// BinaryExpr: R1 % R2, R1 ++ R2
 type BinaryExpr struct {
 	X     Expr        // left operand
 	OpPos token.Pos   // operator position
-	Op    token.Token // operator: token.REM (list operator)
+	Op    token.Token // operator: token.REM (list operator), token.INC (adjoin operator)
 	Y     Expr        // right operand
 }
 
