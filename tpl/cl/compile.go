@@ -263,6 +263,8 @@ func compileExpr(expr ast.Expr, ctx *context) (matcher.Matcher, bool) {
 			switch expr.Op {
 			case token.REM: // %
 				return matcher.List(x, y), true
+			case token.INC: // ++
+				return matcher.Adjoin(x, y), true
 			default:
 				ctx.addErrorf(expr.Pos(), "invalid token %v", expr.Op)
 			}

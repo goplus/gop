@@ -29,6 +29,7 @@ var (
 	// ErrVarAssigned error
 	ErrVarAssigned = errors.New("variable is already assigned")
 
+	errAdjoinEmpty   = errors.New("adjoin empty")
 	errMultiMismatch = errors.New("multiple mismatch")
 )
 
@@ -233,7 +234,7 @@ func (p gRawString) Match(src []*types.Token, ctx *Context) (n int, result any, 
 	}
 	t := src[0]
 	if t.Tok != token.STRING || t.Lit[0] != '`' {
-		return 0, nil, ctx.NewErrorf(t.Pos, "expect `RAWSTRING`, but got `%s`", t.Lit)
+		return 0, nil, ctx.NewErrorf(t.Pos, "expect `RAWSTRING`, but got `%v`", t)
 	}
 	return 1, t, nil
 }
@@ -549,6 +550,52 @@ func List(a, b Matcher) Matcher {
 
 // -----------------------------------------------------------------------------
 
+type gAdjoin struct {
+	a, b Matcher
+}
+
+func (p *gAdjoin) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
+	n, ret0, err := p.a.Match(src, ctx)
+	if err != nil {
+		return
+	}
+	if n == 0 {
+		err = errAdjoinEmpty
+		return
+	}
+	n1, ret1, err := p.b.Match(src[n:], ctx)
+	if err != nil && !isDyn(err) {
+		return
+	}
+	if n1 == 0 {
+		err = errAdjoinEmpty
+		return
+	}
+	if src[n-1].End() != src[n].Pos {
+		err = ctx.NewError(src[n].Pos, "not adjoin")
+		return
+	}
+	n += n1
+	result = []any{ret0, ret1}
+	return
+}
+
+func (p *gAdjoin) First(in []any) (first []any, mayEmpty bool) {
+	first, _ = p.a.First(in)
+	return
+}
+
+func (p *gAdjoin) IsList() bool {
+	return true
+}
+
+// Adjoin: R1 ++ R2
+func Adjoin(a, b Matcher) Matcher {
+	return &gAdjoin{a, b}
+}
+
+// -----------------------------------------------------------------------------
+
 type RetProc = func(any) any
 type ListRetProc = func([]any) any
 
@@ -566,7 +613,7 @@ func (p *Var) Match(src []*types.Token, ctx *Context) (n int, result any, err er
 		return 0, nil, ctx.NewErrorf(p.Pos, "variable `%s` not assigned", p.Name)
 	}
 	if enableMatchVar && len(src) > 0 {
-		log.Println("==> Var.Match", p.Name, src[0])
+		log.Println("==> Match", p.Name, src[0])
 	}
 	n, result, err = g.Match(src, ctx)
 	if err == nil {
