@@ -13,7 +13,7 @@
 
 55 IDENT wait
 60 INT 0x10
-64 IDENT s
+64 UNIT s
 65 ; 
 
 66 IDENT wait

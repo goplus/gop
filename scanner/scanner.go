@@ -54,8 +54,8 @@ type Scanner struct {
 	rdOffset   int  // reading offset (position after current character)
 	lineOffset int  // current line offset
 	nParen     int
-	insertSemi bool // insert a semicolon before next newline
 	unitVal    string
+	insertSemi bool // insert a semicolon before next newline
 
 	// public state - ok to modify
 	ErrorCount int // number of errors encountered

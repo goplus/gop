@@ -1,0 +1,15 @@
+1 IDENT echo
+6 INT 1_002
+11 ; 
+
+12 IDENT echo
+17 INT 2
+18 + 
+19 IMAG 3i
+21 ; 
+
+22 IDENT echo
+27 FLOAT 2.
+29 UNIT string
+35 ; 
+

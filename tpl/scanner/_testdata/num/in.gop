@@ -1,0 +1,3 @@
+echo 1_002
+echo 2+3i
+echo 2.string
