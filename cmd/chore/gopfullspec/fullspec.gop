@@ -89,7 +89,7 @@ flag.parse
 
 pattern := flag.args
 if pattern.len == 0 {
-	echo "Usage: gopfullspec [-v] packages"
+	echo "Usage: gopfullspec [-ast] packages"
 	return
 }
 

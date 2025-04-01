@@ -84,7 +84,7 @@ flag.parse
 
 pattern := flag.args
 if pattern.len == 0 {
-	echo "Usage: gopminispec [-v] packages"
+	echo "Usage: gopminispec [-v -ast] packages"
 	return
 }
 
