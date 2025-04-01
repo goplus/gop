@@ -153,7 +153,7 @@ Tag = STRING
 
 InterfaceType = "interface" "{" *(InterfaceElem ";") "}"
 
-InterfaceElem = MethodElem
+InterfaceElem = MethodElem | TypeName
 
 MethodElem = IDENT Signature
 
@@ -187,15 +187,15 @@ Env = "$" ("{" IDENT "}" | IDENT)
 
 DomainTextLit = IDENT ++ RAWSTRING
 
-NamedCompositeLit = TypeName ++ "{" ElementList ?"," "}"
+NamedCompositeLit = TypeName ++ "{" ElementList "}"
 
 CompositeLit = (MapType | StructType) LiteralValue
 
 ListCompositeLit = LBRACK ?("..." | LambdaExpr % ",") (RBRACK ++ Type LiteralValue | RBRACK)
 
-LiteralValue = "{" ElementList ?"," "}"
+LiteralValue = "{" ElementList "}"
 
-ElementList = KeyedElement % ","
+ElementList = ?(KeyedElement % "," ?",")
 
 KeyedElement = ?(Key ":") Element
 
