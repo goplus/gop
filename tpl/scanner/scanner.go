@@ -799,6 +799,7 @@ scanAgain:
 			if s.ch == '.' && s.peek() == '.' {
 				s.next()
 				s.next() // consume last '.'
+				insertSemi = true
 				t.Tok = token.ELLIPSIS
 			} else {
 				t.Tok = token.PERIOD
