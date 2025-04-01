@@ -24,18 +24,22 @@ import (
 
 // -----------------------------------------------------------------------------
 
+// Proj is the interface for a project
 type Proj = interface {
 	projObj()
 }
 
+// FilesProj represents a project with files
 type FilesProj struct {
 	Files []string
 }
 
+// PkgPathProj represents a project with a package path
 type PkgPathProj struct {
 	Path string
 }
 
+// DirProj represents a project with a directory
 type DirProj struct {
 	Dir string
 }
@@ -46,6 +50,8 @@ func (p *DirProj) projObj()     {}
 
 // -----------------------------------------------------------------------------
 
+// ParseOne parses the first argument and returns a Proj object
+// If the first argument is a file, it continues to parse subsequent arguments.
 func ParseOne(args ...string) (proj Proj, next []string, err error) {
 	if len(args) == 0 {
 		return nil, nil, syscall.ENOENT
@@ -83,6 +89,7 @@ func isLocal(ns string) bool {
 
 // -----------------------------------------------------------------------------
 
+// ParseAll parses all arguments and returns a slice of Proj objects
 func ParseAll(args ...string) (projs []Proj, err error) {
 	var hasFiles, hasNotFiles bool
 	for {
@@ -104,6 +111,7 @@ func ParseAll(args ...string) (projs []Proj, err error) {
 }
 
 var (
+	// ErrMixedFilesProj is returned when a project contains both files and non-files
 	ErrMixedFilesProj = errors.New("mixed files project")
 )
 

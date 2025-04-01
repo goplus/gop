@@ -43,7 +43,7 @@ const (
 )
 
 var (
-	enableMatchVar = true
+	enableMatchVar bool
 )
 
 func SetDebug(flags dbgFlags) {

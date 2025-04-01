@@ -15,23 +15,109 @@
  */
 
 import (
-    "gop/doc/spec/mini"
-    "gop/tpl"
-    "gop/tpl/matcher"
-    "os"
+	"flag"
+	"gop/doc/spec/mini"
+	"gop/tpl"
+	"gop/tpl/matcher"
+	"gop/x/gopprojs"
+	"os"
+	"path/filepath"
 )
 
-if len(os.Args) < 2 {
-	echo "Usage: gopminispec <file>"
+func isGopFile(file string) bool {
+	if len(file) > 4 {
+		switch file[len(file)-4:] {
+		case ".gop", ".gox", ".gsh", ".spx", ".yap":
+			return true
+		}
+	}
+	return false
+}
+
+func parseFiles(files []string, dumpAST bool) (nErr int) {
+	for file in files {
+		fprintln os.Stderr, "\n==> Parsing ${file}"
+		f, err := mini.parseFile(nil, file, nil)
+		if err != nil {
+			fprintln os.Stderr, err
+			nErr++
+		} else if dumpAST {
+			tpl.dump f
+		}
+	}
 	return
 }
 
-matcher.SetDebug(0) // (matcher.DbgFlagAll)
+func parseDir(dir string, recursively, dumpAST bool) (nErr int) {
+	filepath.walkDir dir, (file, d, err) => {
+		if err != nil {
+			return err
+		} else if fname := d.name; d.isDir {
+			if recursively {
+				if fname.hasPrefix("_") {
+					return filepath.SkipDir
+				}
+			} else if file != dir {
+				return filepath.SkipDir
+			}
+		} else if !fname.hasPrefix("_") && isGopFile(fname) {
+			fprintln os.Stderr, "\n==> Parsing ${file}"
+			f, err := mini.parseFile(nil, file, nil)
+			if err != nil {
+				fprintln os.Stderr, err
+				nErr++
+			} else if dumpAST {
+				tpl.dump f
+			}
+		}
+		return nil
+	}
+	return
+}
 
-f, err := mini.parseFile(nil, os.Args[1], nil)
+var (
+	flagVerbose = flag.Bool("v", false, "print verbose information")
+	flagDumpAST = flag.Bool("ast", false, "dump AST")
+)
+
+flag.parse
+
+pattern := flag.args
+if pattern.len == 0 {
+	echo "Usage: gopminispec [-v] packages"
+	return
+}
+
+if *flagVerbose {
+	matcher.SetDebug(matcher.DbgFlagAll)
+}
+
+dumpAST := *flagDumpAST
+nErr := 0
+
+projs, err := gopprojs.parseAll(pattern...)
 if err != nil {
-    fprintln os.Stderr, err
-    os.exit 1
-} else {
-    tpl.dump f
+	fprintln os.Stderr, err
+	os.exit 1
+}
+
+for proj in projs {
+	switch v := proj.(type) {
+	case *gopprojs.DirProj:
+		dir := v.Dir
+		recursively := dir.hasSuffix("/...")
+		if recursively {
+			dir = dir[:len(dir)-4]
+		}
+		nErr += parseDir(dir, recursively, dumpAST)
+	case *gopprojs.FilesProj:
+		nErr += parseFiles(v.Files, dumpAST)
+	default:
+		panic "only support local files and directories"
+	}
+}
+fprintln os.Stderr
+
+if nErr > 0 {
+	os.exit 1
 }
