@@ -21,11 +21,6 @@ import (
 	"github.com/goplus/gop/tpl"
 )
 
-const (
-	domianTextQuote  = '`'
-	domianTextExpect = "expect domainTag`...`"
-)
-
 var _off = tpl.showConflict(false)
 
 var Spec = tpl`
