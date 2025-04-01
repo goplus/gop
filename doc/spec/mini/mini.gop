@@ -21,11 +21,6 @@ import (
 	"github.com/goplus/gop/tpl"
 )
 
-const (
-	domianTextQuote  = '`'
-	domianTextExpect = "expect domainTag`...`"
-)
-
 var _off = tpl.showConflict(false)
 
 var Spec = tpl`
@@ -109,7 +104,7 @@ LabeledStmt = IDENT ":" Statement
 
 SimpleStmt = SendStmt | ShortVarDecl | IncDecStmt | Assignment | ExpressionStmt | EmptyStmt
 
-SendStmt = IDENT ?("." IDENT) "<-" LambdaExprList
+SendStmt = IDENT ?("." IDENT) "<-" LambdaExprList ?"..."
 
 ShortVarDecl = IdentifierList ":=" ExpressionList
 
@@ -121,7 +116,7 @@ Assignment = ExpressionList (
 
 ExpressionStmt = Expression
 
-CommandStmt = IDENT ?("." IDENT) SPACE LambdaExprList
+CommandStmt = IDENT ?("." IDENT) SPACE LambdaExprList ?"..."
 
 EmptyStmt = ""
 

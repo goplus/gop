@@ -46,8 +46,10 @@ func sortedKeys(m any) []string {
 var (
 	tyNode      = reflect.TypeOf((*ast.Node)(nil)).Elem()
 	tyString    = reflect.TypeOf("")
+	tyBytes     = reflect.TypeOf([]byte(nil))
 	tyToken     = reflect.TypeOf(token.Token(0))
 	tyObjectPtr = reflect.TypeOf((*ast.Object)(nil))
+	tyScopePtr  = reflect.TypeOf((*ast.Scope)(nil))
 	tplToken    = reflect.TypeOf(tpltoken.Token(0))
 )
 
@@ -65,7 +67,7 @@ func FprintNode(w io.Writer, lead string, v any, prefix, indent string) {
 		}
 	case reflect.Ptr:
 		t := val.Type()
-		if val.IsNil() || t == tyObjectPtr {
+		if val.IsNil() || t == tyObjectPtr || t == tyScopePtr {
 			return
 		}
 		if t.Implements(tyNode) {
@@ -82,6 +84,7 @@ func FprintNode(w io.Writer, lead string, v any, prefix, indent string) {
 				switch sf.Type {
 				case tyString, tyToken, tplToken:
 					fmt.Fprintf(w, "%s%v: %v\n", prefix, sf.Name, sfv)
+				case tyBytes: // skip
 				default:
 					FprintNode(w, fmt.Sprintf("%s%v:\n", prefix, sf.Name), sfv, prefix+indent, indent)
 				}

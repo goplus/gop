@@ -16,13 +16,17 @@
 
 import (
 	"flag"
-	"gop/doc/spec/mini"
-	"gop/tpl"
-	"gop/tpl/matcher"
+	"gop/parser"
+	"gop/parser/parsertest"
+	"gop/token"
 	"gop/x/gopprojs"
 	"os"
 	"path/filepath"
 )
+
+func dump(f any) {
+	parsertest.FprintNode os.Stdout, "", f, "", "  "
+}
 
 func isGopFile(file string) bool {
 	if len(file) > 4 {
@@ -35,20 +39,22 @@ func isGopFile(file string) bool {
 }
 
 func parseFiles(files []string, dumpAST bool) (nErr int) {
+	fset := token.newFileSet
 	for file in files {
 		fprintln os.Stderr, "\n==> Parsing ${file}"
-		f, err := mini.parseFile(nil, file, nil)
+		f, err := parser.parseFile(fset, file, nil, parser.ParseComments)
 		if err != nil {
 			fprintln os.Stderr, err
 			nErr++
 		} else if dumpAST {
-			tpl.dump f
+			dump f
 		}
 	}
 	return
 }
 
 func parseDir(dir string, recursively, dumpAST bool) (nErr int) {
+	fset := token.newFileSet
 	filepath.walkDir dir, (file, d, err) => {
 		if err != nil {
 			return err
@@ -62,12 +68,12 @@ func parseDir(dir string, recursively, dumpAST bool) (nErr int) {
 			}
 		} else if !fname.hasPrefix("_") && isGopFile(fname) {
 			fprintln os.Stderr, "\n==> Parsing ${file}"
-			f, err := mini.parseFile(nil, file, nil)
+			f, err := parser.parseFile(fset, file, nil, parser.ParseComments)
 			if err != nil {
 				fprintln os.Stderr, err
 				nErr++
 			} else if dumpAST {
-				tpl.dump f
+				dump f
 			}
 		}
 		return nil
@@ -76,7 +82,6 @@ func parseDir(dir string, recursively, dumpAST bool) (nErr int) {
 }
 
 var (
-	flagVerbose = flag.Bool("v", false, "print verbose information")
 	flagDumpAST = flag.Bool("ast", false, "dump AST")
 )
 
@@ -84,12 +89,8 @@ flag.parse
 
 pattern := flag.args
 if pattern.len == 0 {
-	echo "Usage: gopminispec [-v -ast] packages"
+	echo "Usage: gopfullspec [-ast] packages"
 	return
-}
-
-if *flagVerbose {
-	matcher.setDebug matcher.DbgFlagAll
 }
 
 dumpAST := *flagDumpAST

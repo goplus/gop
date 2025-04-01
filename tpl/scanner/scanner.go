@@ -50,6 +50,7 @@ type Scanner struct {
 	offset     int  // character offset
 	rdOffset   int  // reading offset (position after current character)
 	lineOffset int  // current line offset
+	nParen     int
 	unitVal    string
 	insertSemi bool // insert a semicolon before next newline
 
@@ -712,6 +713,11 @@ func (s *Scanner) switch4(tok0, tok1 token.Token, ch2 rune, tok2, tok3 token.Tok
 	return tok0
 }
 
+func (s *Scanner) tokSEMICOLON() token.Token {
+	s.nParen = 0
+	return token.SEMICOLON
+}
+
 // Scan scans the next token and returns the token position, the token,
 // and its literal string if applicable. The source end is indicated by
 // token.EOF.
@@ -769,7 +775,7 @@ scanAgain:
 		case -1:
 			if s.insertSemi {
 				s.insertSemi = false // EOF consumed
-				t.Tok, t.Lit = token.SEMICOLON, "\n"
+				t.Tok, t.Lit = s.tokSEMICOLON(), "\n"
 				return
 			}
 			t.Tok = token.EOF
@@ -778,7 +784,7 @@ scanAgain:
 			// set in the first place and exited early
 			// from s.skipWhitespace()
 			s.insertSemi = false // newline consumed
-			t.Tok, t.Lit = token.SEMICOLON, "\n"
+			t.Tok, t.Lit = s.tokSEMICOLON(), "\n"
 			return
 		case '"':
 			insertSemi = true
@@ -799,6 +805,9 @@ scanAgain:
 			if s.ch == '.' && s.peek() == '.' {
 				s.next()
 				s.next() // consume last '.'
+				if s.nParen == 0 {
+					insertSemi = true
+				}
 				t.Tok = token.ELLIPSIS
 			} else {
 				t.Tok = token.PERIOD
@@ -806,11 +815,13 @@ scanAgain:
 		case ',':
 			t.Tok = token.COMMA
 		case ';':
-			t.Tok = token.SEMICOLON
+			t.Tok = s.tokSEMICOLON()
 			t.Lit = ";"
 		case '(':
+			s.nParen++
 			t.Tok = token.LPAREN
 		case ')':
+			s.nParen--
 			insertSemi = true
 			t.Tok = token.RPAREN
 		case '[':
@@ -849,7 +860,7 @@ scanAgain:
 					s.offset = s.file.Offset(t.Pos)
 					s.rdOffset = s.offset + 1
 					s.insertSemi = false // newline consumed
-					t.Tok, t.Lit = token.SEMICOLON, "\n"
+					t.Tok, t.Lit = s.tokSEMICOLON(), "\n"
 					return
 				}
 				comment := s.scanComment()
@@ -869,7 +880,7 @@ scanAgain:
 				s.offset = s.file.Offset(t.Pos)
 				s.rdOffset = s.offset + 1
 				s.insertSemi = false
-				t.Tok, t.Lit = token.SEMICOLON, "\n"
+				t.Tok, t.Lit = s.tokSEMICOLON(), "\n"
 				return
 			}
 			comment := s.scanSharpComment()
