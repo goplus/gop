@@ -1,9 +1,0 @@
-doc = +rule
-
-rule = IDENT '=' expr ';'
-
-expr = +term % '|'
-
-term = factor % '%'
-
-factor = IDENT | CHAR | STRING | ('*' | '+' | '?') factor | '(' expr ')'
