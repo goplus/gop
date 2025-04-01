@@ -28,7 +28,7 @@ const (
 
 var _off = tpl.showConflict(false)
 
-var cl = tpl`
+var Spec = tpl`
 
 SourceFile = ?PackageClause *(ImportDecl ";") *(TopLevelDecl ";") ?MainStmts
 
@@ -217,7 +217,7 @@ ErrWrap = "!" | "?" ?(":" UnaryExpr)
 // -----------------------------------------------------------------
 
 func ParseFile(fset *token.FileSet, filename string, src any) (any, error) {
-	return cl.Parse(filename, src, &tpl.Config{
+	return Spec.Parse(filename, src, &tpl.Config{
 		Fset: fset,
 	})
 }
