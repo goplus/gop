@@ -54,7 +54,7 @@ func parseDir(dir string, recursively, dumpAST bool) (nErr int) {
 			return err
 		} else if fname := d.name; d.isDir {
 			if recursively {
-				if fname.hasPrefix("_") {
+				if fname.hasPrefix("_") || fname == "fullspec" {
 					return filepath.SkipDir
 				}
 			} else if file != dir {
