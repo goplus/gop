@@ -89,7 +89,7 @@ if pattern.len == 0 {
 }
 
 if *flagVerbose {
-	matcher.SetDebug(matcher.DbgFlagAll)
+	matcher.setDebug matcher.DbgFlagAll
 }
 
 dumpAST := *flagDumpAST
