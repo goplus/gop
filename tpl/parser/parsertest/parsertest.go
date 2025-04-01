@@ -29,6 +29,35 @@ import (
 	"github.com/goplus/gop/tpl/token"
 )
 
+// -----------------------------------------------------------------------------
+
+func Diff(t *testing.T, outfile string, dst, src []byte) bool {
+	line := 1
+	offs := 0 // line offset
+	for i := 0; i < len(dst) && i < len(src); i++ {
+		d := dst[i]
+		s := src[i]
+		if d != s {
+			os.WriteFile(outfile, dst, 0644)
+			t.Errorf("dst:%d: %s\n", line, dst[offs:])
+			t.Errorf("src:%d: %s\n", line, src[offs:])
+			return true
+		}
+		if s == '\n' {
+			line++
+			offs = i + 1
+		}
+	}
+	if len(dst) != len(src) {
+		os.WriteFile(outfile, dst, 0644)
+		t.Errorf("len(dst) = %d, len(src) = %d\ndst = %q\nsrc = %q", len(dst), len(src), dst, src)
+		return true
+	}
+	return false
+}
+
+// -----------------------------------------------------------------------------
+
 var (
 	tyNode   = reflect.TypeOf((*ast.Node)(nil)).Elem()
 	tyString = reflect.TypeOf("")
@@ -89,12 +118,12 @@ func Fprint(w io.Writer, f *ast.File) {
 }
 
 // Expect asserts a tpl AST equals output or not.
-func Expect(t *testing.T, f *ast.File, expected string) {
+func Expect(t *testing.T, outfile string, f *ast.File, expected []byte) {
 	b := bytes.NewBuffer(nil)
 	Fprint(b, f)
-	output := b.String()
-	if expected != output {
-		fmt.Fprint(os.Stderr, output)
+	if Diff(t, outfile, b.Bytes(), []byte(expected)) {
 		t.Fatal("tpl.Parser: unexpect result")
 	}
 }
+
+// -----------------------------------------------------------------------------

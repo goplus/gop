@@ -253,7 +253,7 @@ func (p *Compiler) Match(filename string, src any, conf *Config) (ms MatchState,
 		}
 		toks = append(toks, &t)
 	}
-	ms.Ctx = matcher.NewContext(fset, token.Pos(f.Base()+len(b)), len(toks))
+	ms.Ctx = matcher.NewContext(fset, token.Pos(f.Base()+len(b)), toks)
 	ms.N, result, err = p.Doc.Match(toks, ms.Ctx)
 	ms.Ctx.SetLastError(len(toks)-ms.N, err)
 	if err != nil {

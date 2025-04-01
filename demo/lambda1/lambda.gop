@@ -6,4 +6,3 @@ echo f(1.0, x => 2 * x)
 echo f(5.0, (x) => {
     return 2 * x
 })
-

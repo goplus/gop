@@ -52,11 +52,8 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 		}
 		t.Fatal("ParseFile failed:", err, reflect.TypeOf(err))
 	}
-	b, err := os.ReadFile(pkgDir + "/out.expect")
-	if err != nil {
-		t.Fatal("Parsing", pkgDir, "-", err)
-	}
-	parsertest.Expect(t, f, string(b))
+	b, _ := os.ReadFile(pkgDir + "/out.expect")
+	parsertest.Expect(t, pkgDir+"/result.txt", f, b)
 }
 
 func testFromDir(t *testing.T, sel, relDir string) {

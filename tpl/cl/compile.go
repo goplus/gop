@@ -194,6 +194,8 @@ func compileExpr(expr ast.Expr, ctx *context) (matcher.Matcher, bool) {
 			quoteCh = '`'
 		case "QSTRING":
 			quoteCh = '"'
+		case "SPACE":
+			return matcher.WhiteSpace(), true
 		default:
 			ctx.addErrorf(expr.Pos(), "`%s` is undefined", name)
 		}
