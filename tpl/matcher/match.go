@@ -29,6 +29,7 @@ var (
 	// ErrVarAssigned error
 	ErrVarAssigned = errors.New("variable is already assigned")
 
+	errNoWhitespace  = errors.New("no whitespace")
 	errAdjoinEmpty   = errors.New("adjoin empty")
 	errMultiMismatch = errors.New("multiple mismatch")
 )
@@ -89,17 +90,19 @@ func (e RecursiveError) Error() string {
 type Context struct {
 	Fset    *token.FileSet
 	FileEnd token.Pos
+	toks    []*types.Token
 
-	LastErr error
 	Left    int
+	LastErr error
 }
 
 // NewContext creates a new matching context.
-func NewContext(fset *token.FileSet, fileEnd token.Pos, n int) *Context {
+func NewContext(fset *token.FileSet, fileEnd token.Pos, toks []*types.Token) *Context {
 	return &Context{
 		Fset:    fset,
 		FileEnd: fileEnd,
-		Left:    n,
+		toks:    toks,
+		Left:    len(toks),
 	}
 }
 
@@ -222,6 +225,33 @@ func (p gTrue) IsList() bool {
 // True returns a matcher that always succeeds.
 func True() Matcher {
 	return gTrue{}
+}
+
+// -----------------------------------------------------------------------------
+
+type gWS struct{}
+
+func (p gWS) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
+	if toks := ctx.toks; len(toks) > len(src) {
+		last := len(toks) - len(src) - 1
+		if toks[last].End() != src[0].Pos {
+			return 0, nil, nil
+		}
+	}
+	return 0, nil, errNoWhitespace
+}
+
+func (p gWS) First(in []any) (first []any, mayEmpty bool) {
+	return in, true
+}
+
+func (p gWS) IsList() bool {
+	return false
+}
+
+// WhiteSpace returns a matcher that matches whitespace.
+func WhiteSpace() Matcher {
+	return gWS{}
 }
 
 // -----------------------------------------------------------------------------

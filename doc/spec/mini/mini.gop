@@ -97,7 +97,7 @@ IfStmt = "if" ?(SimpleStmt ";") Expression Block ?("else" (IfStmt | Block))
 
 SwitchStmt = "switch" ?(SimpleStmt ";") SwitchGuard "{" *CaseClause "}"
 
-SwitchGuard = ?(IDENT ":=") PrimaryExpr "." "(" "type" ")" | ?Expression
+SwitchGuard = ?(IDENT ":=") PrimaryExpr | ?Expression
 
 CaseClause = ("case" ExpressionList | "default") ":" StatementList
 
@@ -107,7 +107,9 @@ DeferStmt = "defer" Expression
 
 LabeledStmt = IDENT ":" Statement
 
-SimpleStmt = ShortVarDecl | IncDecStmt | Assignment | ExpressionStmt | EmptyStmt
+SimpleStmt = SendStmt | ShortVarDecl | IncDecStmt | Assignment | ExpressionStmt | EmptyStmt
+
+SendStmt = IDENT ?("." IDENT) "<-" LambdaExprList
 
 ShortVarDecl = IdentifierList ":=" ExpressionList
 
@@ -119,7 +121,7 @@ Assignment = ExpressionList (
 
 ExpressionStmt = Expression
 
-CommandStmt = IDENT ?("." IDENT) LambdaExprList
+CommandStmt = IDENT ?("." IDENT) SPACE LambdaExprList
 
 EmptyStmt = ""
 
