@@ -69,6 +69,6 @@ func calc(expr string) string {
 }
 
 print "> "
-for line <- os.Stdin {
+for line in os.Stdin {
 	print "${calc(line)}\n> "
 }

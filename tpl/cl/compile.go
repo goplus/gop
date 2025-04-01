@@ -18,6 +18,7 @@ package cl
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/goplus/gop/tpl/ast"
@@ -37,10 +38,16 @@ type Result struct {
 	Rules map[string]*matcher.Var
 }
 
+type choice struct {
+	m *matcher.Choices
+	c *ast.Choice
+}
+
 type context struct {
-	rules map[string]*matcher.Var
-	errs  errors.List
-	fset  *token.FileSet
+	rules   map[string]*matcher.Var
+	choices []choice
+	errs    errors.List
+	fset    *token.FileSet
 }
 
 func (p *context) newErrorf(pos token.Pos, format string, args ...any) error {
@@ -60,8 +67,18 @@ func New(fset *token.FileSet, files ...*ast.File) (ret Result, err error) {
 	return NewEx(nil, fset, files...)
 }
 
+// Config configures the behavior of the compiler.
+type Config struct {
+	RetProcs   map[string]any
+	OnConflict func(fset *token.FileSet, c *ast.Choice, firsts [][]any, i, at int)
+}
+
 // NewEx compiles a set of rules from the given files.
-func NewEx(retProcs map[string]any, fset *token.FileSet, files ...*ast.File) (ret Result, err error) {
+func NewEx(conf *Config, fset *token.FileSet, files ...*ast.File) (ret Result, err error) {
+	if conf == nil {
+		conf = &Config{}
+	}
+	retProcs := conf.RetProcs
 	rules := make(map[string]*matcher.Var)
 	ctx := &context{rules: rules, fset: fset}
 	for _, f := range files {
@@ -107,7 +124,38 @@ func NewEx(retProcs map[string]any, fset *token.FileSet, files ...*ast.File) (re
 		err = ErrNoDocFound
 		return
 	}
-	return Result{doc, rules}, ctx.errs.ToError()
+	defer func() {
+		if e := recover(); e != nil {
+			switch e := e.(type) {
+			case matcher.RecursiveError:
+				ctx.addError(e.Pos, e.Error())
+			default:
+				panic(e)
+			}
+		}
+		err = ctx.errs.ToError()
+	}()
+	onConflict := conf.OnConflict
+	if onConflict == nil {
+		onConflict = onConflictDefault
+	}
+	for _, item := range ctx.choices {
+		item.m.CheckConflicts(func(firsts [][]any, i, at int) {
+			onConflict(fset, item.c, firsts, i, at)
+		})
+	}
+	ret = Result{doc, rules}
+	return
+}
+
+func onConflictDefault(fset *token.FileSet, c *ast.Choice, firsts [][]any, i, at int) {
+	pos := fset.Position(c.Options[i].Pos())
+	LogConflict(pos, firsts, i, at)
+}
+
+// LogConflict logs a conflict between two choices.
+func LogConflict(pos token.Position, firsts [][]any, i, at int) {
+	fmt.Fprintf(os.Stderr, "%v: [WARN] conflict between %v and %v\n", pos, firsts[i], firsts[at])
 }
 
 var (
@@ -120,6 +168,14 @@ var (
 		"IMAG":    token.IMAG,
 		"CHAR":    token.CHAR,
 		"STRING":  token.STRING,
+		"RAT":     token.RAT,
+		"UNIT":    token.UNIT,
+		"LPAREN":  token.LPAREN,
+		"RPAREN":  token.RPAREN,
+		"LBRACK":  token.LBRACK,
+		"RBRACK":  token.RBRACK,
+		"LBRACE":  token.LBRACE,
+		"RBRACE":  token.RBRACE,
 	}
 )
 
@@ -129,11 +185,21 @@ func compileExpr(expr ast.Expr, ctx *context) (matcher.Matcher, bool) {
 		name := expr.Name
 		if v, ok := ctx.rules[name]; ok {
 			return v, true
-		}
-		if tok, ok := idents[name]; ok {
+		} else if tok, ok := idents[name]; ok {
 			return matcher.Token(tok), true
 		}
-		ctx.addErrorf(expr.Pos(), "`%s` is undefined", name)
+		var quoteCh byte
+		switch name {
+		case "RAWSTRING":
+			quoteCh = '`'
+		case "QSTRING":
+			quoteCh = '"'
+		case "SPACE":
+			return matcher.WhiteSpace(), true
+		default:
+			ctx.addErrorf(expr.Pos(), "`%s` is undefined", name)
+		}
+		return matcher.String(quoteCh), true
 	case *ast.BasicLit:
 		lit := expr.Value
 		switch expr.Kind {
@@ -150,9 +216,12 @@ func compileExpr(expr ast.Expr, ctx *context) (matcher.Matcher, bool) {
 			return tokenExpr(token.Token(v), expr, ctx)
 		case token.STRING:
 			v, e := strconv.Unquote(lit)
-			if e != nil || len(v) == 0 {
+			if e != nil {
 				ctx.addError(expr.Pos(), "invalid literal "+lit)
 				break
+			}
+			if v == "" {
+				return matcher.True(), true
 			}
 			if c := v[0]; c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_' {
 				return matcher.Literal(token.IDENT, v), true
@@ -183,7 +252,9 @@ func compileExpr(expr ast.Expr, ctx *context) (matcher.Matcher, bool) {
 				return nil, false
 			}
 		}
-		return matcher.Choice(options...), true
+		ret := matcher.Choice(options...)
+		ctx.choices = append(ctx.choices, choice{ret, expr})
+		return ret, true
 	case *ast.UnaryExpr:
 		if x, ok := compileExpr(expr.X, ctx); ok {
 			switch expr.Op {
@@ -204,6 +275,8 @@ func compileExpr(expr ast.Expr, ctx *context) (matcher.Matcher, bool) {
 			switch expr.Op {
 			case token.REM: // %
 				return matcher.List(x, y), true
+			case token.INC: // ++
+				return matcher.Adjoin(x, y), true
 			default:
 				ctx.addErrorf(expr.Pos(), "invalid token %v", expr.Op)
 			}

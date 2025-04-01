@@ -1754,7 +1754,7 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTup
 	switch p.tok {
 	case token.IDENT:
 		ident := p.parseIdent()
-		if p.tok == token.STRING && p.pos == ident.End() && strings.HasPrefix(p.lit, "`") {
+		if p.tok == token.STRING && p.pos == ident.End() && p.lit[0] == '`' {
 			// domain text: tpl`...`
 			var pos, lit = p.pos, p.lit
 			var extra any

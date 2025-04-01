@@ -1,0 +1,27 @@
+ast.Rule:
+  Name:
+    ast.Ident:
+      Name: doc
+  Expr:
+    ast.Choice:
+      Options:
+        ast.BinaryExpr:
+          X:
+            ast.Ident:
+              Name: IDENT
+          Op: ++
+          Y:
+            ast.Ident:
+              Name: RAWSTRING
+        ast.Sequence:
+          Items:
+            ast.Ident:
+              Name: IDENT
+            ast.Ident:
+              Name: SPACE
+            ast.BasicLit:
+              Kind: STRING
+              Value: "{"
+            ast.BasicLit:
+              Kind: STRING
+              Value: "}"

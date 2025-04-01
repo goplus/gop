@@ -8,7 +8,7 @@ verb = "attack" | "love" | "eat" | "hate"
 `!
 
 print "> "
-for line <- os.Stdin {
+for line in os.Stdin {
 	e, err := cl.parseExpr(line, nil)
 	if err != nil {
 		print "${err}\n> "

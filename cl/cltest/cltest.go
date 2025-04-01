@@ -18,12 +18,18 @@ package cltest
 
 import (
 	"bytes"
+	"fmt"
+	"go/ast"
+	"go/build"
+	"go/types"
 	"io/fs"
 	"log"
 	"os"
 	"path"
 	"strings"
 	"testing"
+
+	goparser "go/parser"
 
 	"github.com/goplus/gogen"
 	"github.com/goplus/gop/cl"
@@ -33,14 +39,16 @@ import (
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/gop/tool"
+	"github.com/goplus/mod"
 	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modfile"
 )
 
 var (
-	Gop  *env.Gop
-	Conf *cl.Config
+	GopRoot string
+	Gop     *env.Gop
+	Conf    *cl.Config
 )
 
 func init() {
@@ -49,6 +57,7 @@ func init() {
 	cl.SetDebug(cl.DbgFlagAll | cl.FlagNoMarkAutogen)
 	fset := token.NewFileSet()
 	imp := tool.NewImporter(nil, Gop, fset)
+	GopRoot, _, _ = mod.FindGoMod("")
 	Conf = &cl.Config{
 		Fset:          fset,
 		Importer:      imp,
@@ -201,8 +210,39 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 			confCopy.Importer = tool.NewImporter(mod, Gop, conf.Fset)
 			conf = &confCopy
 		}
+	} else {
+		confCopy := *Conf
+		confCopy.RelativeBase = GopRoot
+		conf = &confCopy
 	}
 	DoFS(t, conf, fsx.Local, pkgDir, filter, "main", expected)
+}
+
+func Go1Point() int {
+	for i := len(build.Default.ReleaseTags) - 1; i >= 0; i-- {
+		var version int
+		if _, err := fmt.Sscanf(build.Default.ReleaseTags[i], "go1.%d", &version); err != nil {
+			continue
+		}
+		return version
+	}
+	panic("bad release tags")
+}
+
+func EnableTypesalias() bool {
+	ver := Go1Point()
+	if ver < 22 {
+		return false
+	} else if ver > 22 {
+		_, ok := types.Universe.Lookup("any").Type().(*types.Interface)
+		return !ok
+	} else {
+		fset := token.NewFileSet()
+		f, _ := goparser.ParseFile(fset, "a.go", "package p; type A = int", goparser.SkipObjectResolution)
+		pkg, _ := new(types.Config).Check("p", fset, []*ast.File{f}, nil)
+		_, ok := pkg.Scope().Lookup("A").Type().(*types.Basic)
+		return !ok
+	}
 }
 
 // -----------------------------------------------------------------------------

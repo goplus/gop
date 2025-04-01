@@ -42,7 +42,7 @@ func calc(e ast.Expr) float64 {
 }
 
 print "> "
-for line <- os.Stdin {
+for line in os.Stdin {
 	e, err := parser.parseExpr(line)
 	if err != nil {
 		print "error: ${err}\n> "

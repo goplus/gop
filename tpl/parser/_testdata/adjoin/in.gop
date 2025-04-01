@@ -1,0 +1,1 @@
+doc = IDENT ++ RAWSTRING | IDENT SPACE "{" "}"

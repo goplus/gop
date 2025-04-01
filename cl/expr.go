@@ -1111,11 +1111,14 @@ func compileDomainTextLit(ctx *blockCtx, v *ast.DomainTextLit) {
 		*/
 	}
 
-	cb.Val(imp.Ref("New")).
-		Val(&goast.BasicLit{Kind: gotoken.STRING, Value: v.Value}, v)
-
 	n := 1
 	if path == tplPkgPath {
+		pos := ctx.fset.Position(v.ValuePos)
+		filename := relFile(ctx.relBaseDir, pos.Filename)
+		cb.Val(imp.Ref("NewEx")).
+			Val(&goast.BasicLit{Kind: gotoken.STRING, Value: v.Value}, v).
+			Val(filename).Val(pos.Line).Val(pos.Column)
+		n += 3
 		if f, ok := v.Extra.(*tpl.File); ok {
 			decls := f.Decls
 			for _, decl := range decls {
@@ -1129,6 +1132,9 @@ func compileDomainTextLit(ctx *blockCtx, v *ast.DomainTextLit) {
 				}
 			}
 		}
+	} else {
+		cb.Val(imp.Ref("New")).
+			Val(&goast.BasicLit{Kind: gotoken.STRING, Value: v.Value}, v)
 	}
 	cb.CallWith(n, 0, v)
 }

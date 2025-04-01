@@ -223,7 +223,7 @@ func (p *parser) lambdaExpr() (start, end token.Pos, ok bool) {
 	}
 }
 
-// parseExpr parses an expression: +term % '|'
+// parseExpr: termList % '|'
 func (p *parser) parseExpr() ast.Expr {
 	termList := p.parseTermList()
 	for p.tok != token.OR {
@@ -240,7 +240,7 @@ func (p *parser) parseExpr() ast.Expr {
 	return &ast.Choice{Options: options}
 }
 
-// parseTermList parses a list of terms: +term
+// parseTermList: +term
 func (p *parser) parseTermList() ast.Expr {
 	terms := make([]ast.Expr, 0, 1)
 	for {
@@ -261,14 +261,39 @@ func (p *parser) parseTermList() ast.Expr {
 	}
 }
 
-// parseTerm parses a term: factor % '%'
+// parseTerm: term2 % '%'
 func (p *parser) parseTerm() (ast.Expr, bool) {
-	x, ok := p.parseFactor()
+	x, ok := p.parseTerm2()
 	if !ok {
 		return nil, false
 	}
 
 	for p.tok == token.REM {
+		opPos := p.pos
+		p.next()
+		y, ok := p.parseTerm2()
+		if !ok {
+			p.error(p.pos, "expected factor")
+			return x, false
+		}
+		x = &ast.BinaryExpr{
+			X:     x,
+			OpPos: opPos,
+			Op:    token.REM,
+			Y:     y,
+		}
+	}
+	return x, true
+}
+
+// parseTerm2: factor % "++"
+func (p *parser) parseTerm2() (ast.Expr, bool) {
+	x, ok := p.parseFactor()
+	if !ok {
+		return nil, false
+	}
+
+	for p.tok == token.INC {
 		opPos := p.pos
 		p.next()
 		y, ok := p.parseFactor()
@@ -279,7 +304,7 @@ func (p *parser) parseTerm() (ast.Expr, bool) {
 		x = &ast.BinaryExpr{
 			X:     x,
 			OpPos: opPos,
-			Op:    token.REM,
+			Op:    token.INC,
 			Y:     y,
 		}
 	}

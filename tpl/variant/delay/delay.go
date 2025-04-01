@@ -100,12 +100,19 @@ func Call(needList bool, name string, arglist any) any {
 	}
 }
 
+// CallObject delays to call a function object.
+func CallObject(needList bool, fn any, arglist any) any {
+	return func() any {
+		return variant.CallObject(needList, fn, arglist)
+	}
+}
+
 // -----------------------------------------------------------------------------
 
 // ValueOf delays to get a value.
-func ValueOf(name string, get func(name string) (any, bool)) any {
+func ValueOf(name string, getval func(name string) (any, bool)) any {
 	return func() any {
-		v, ok := get(name)
+		v, ok := getval(name)
 		if !ok {
 			panic(name + " is undefined")
 		}
@@ -114,9 +121,9 @@ func ValueOf(name string, get func(name string) (any, bool)) any {
 }
 
 // SetValue delays to set a value.
-func SetValue(name string, expr any, set func(name string, val any)) any {
+func SetValue(name string, setval func(name string, val any), expr any) any {
 	return func() any {
-		set(name, Eval(expr))
+		setval(name, Eval(expr))
 		return nil
 	}
 }

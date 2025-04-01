@@ -38,7 +38,7 @@ func setValue(name string, v any) {
 		panic "variable ${name} is undefined"
 	}
 	if reflect.typeOf(oldv) != reflect.typeOf(v) {
-		panic("assignment of ${name}: type mismatch")
+		panic "assignment of ${name}: type mismatch"
 	}
 	vars[name] = v
 }
@@ -97,14 +97,7 @@ constStmt = "CONSTANT" IDENT "<-" expr => {
 
 assignStmt = IDENT "<-" expr => {
 	t := self[0].(*tpl.Token)
-	return delay.setValue(t.Lit, self[2], setValue)
-}
-
-outputStmt = "OUTPUT" (expr % ",") => {
-	exprlist := self[1].([]any)
-	return delay.listOp(exprlist, vals => {
-		echo vals...
-	})
+	return delay.setValue(t.Lit, setValue, self[2])
 }
 
 inputStmt = "INPUT" IDENT => {
@@ -113,6 +106,13 @@ inputStmt = "INPUT" IDENT => {
 		v := reflect.new(type(oldv))
 		fmt.scanln(v.Interface())!
 		return v.elem.Interface()
+	})
+}
+
+outputStmt = "OUTPUT" (expr % ",") => {
+	exprlist := self[1].([]any)
+	return delay.listOp(exprlist, vals => {
+		echo vals...
 	})
 }
 
@@ -146,8 +146,8 @@ boolean = "BOOLEAN" => {
 	return false
 }
 
-expr = cmpExpr % (and | or) => {
-	return tpl.binaryOp(false, self, (op, x, y) => {
+expr = cmpExpr % and % or => {
+	return tpl.binaryOp(true, self, (op, x, y) => {
 		return delay.logicOp(op.Tok, x, y)
 	})
 }

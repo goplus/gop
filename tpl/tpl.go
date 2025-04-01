@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 
 	"github.com/goplus/gop/parser/iox"
 	"github.com/goplus/gop/tpl/ast"
@@ -29,7 +30,55 @@ import (
 	"github.com/goplus/gop/tpl/scanner"
 	"github.com/goplus/gop/tpl/token"
 	"github.com/goplus/gop/tpl/types"
+	"github.com/qiniu/x/errors"
 )
+
+// -----------------------------------------------------------------------------
+
+var showConflict = true
+
+// ShowConflict sets the flag to show or hide conflicts.
+func ShowConflict(f bool) int {
+	showConflict = f
+	return 0
+}
+
+func onConflictHidden(fset *token.FileSet, c *ast.Choice, firsts [][]any, i, at int) {
+}
+
+// -----------------------------------------------------------------------------
+
+func relocatePos(ePos *token.Position, filename string, line, col int) {
+	ePos.Filename = filename
+	if ePos.Line == line {
+		ePos.Column += col - 1
+	} else {
+		ePos.Line += line - 1
+	}
+}
+
+// Relocate relocates the error positions.
+func Relocate(err error, filename string, line, col int) error {
+	switch e := err.(type) {
+	case *matcher.Error:
+		pos := e.Fset.Position(e.Pos)
+		relocatePos(&pos, filename, line, col)
+		return &scanner.Error{Pos: pos, Msg: e.Msg}
+	case errors.List:
+		for i, ie := range e {
+			e[i] = Relocate(ie, filename, line, col)
+		}
+	case scanner.ErrorList:
+		for _, ie := range e {
+			relocatePos(&ie.Pos, filename, line, col)
+		}
+	case *scanner.Error:
+		relocatePos(&e.Pos, filename, line, col)
+	default:
+		panic("todo: " + reflect.TypeOf(err).String())
+	}
+	return err
+}
 
 // -----------------------------------------------------------------------------
 
@@ -41,13 +90,42 @@ type Compiler struct {
 // New creates a new TPL compiler.
 // params: ruleName1, retProc1, ..., ruleNameN, retProcN
 func New(src any, params ...any) (ret Compiler, err error) {
-	return FromFile(nil, "", src, params...)
+	conf := &cl.Config{
+		RetProcs: retProcs(params),
+	}
+	if !showConflict {
+		conf.OnConflict = onConflictHidden
+	}
+	return FromFile(nil, "", src, conf)
+}
+
+// NewEx creates a new TPL compiler.
+// params: ruleName1, retProc1, ..., ruleNameN, retProcN
+func NewEx(src any, filename string, line, col int, params ...any) (ret Compiler, err error) {
+	conf := &cl.Config{
+		RetProcs: retProcs(params),
+	}
+	if showConflict {
+		conf.OnConflict = func(fset *token.FileSet, c *ast.Choice, firsts [][]any, i, at int) {
+			if showConflict {
+				pos := fset.Position(c.Options[i].Pos())
+				relocatePos(&pos, filename, line, col)
+				cl.LogConflict(pos, firsts, i, at)
+			}
+		}
+	} else {
+		conf.OnConflict = onConflictHidden
+	}
+	ret, err = FromFile(nil, "", src, conf)
+	if err != nil {
+		err = Relocate(err, filename, line, col)
+	}
+	return
 }
 
 // FromFile creates a new TPL compiler from a file.
 // fset can be nil.
-// params: ruleName1, retProc1, ..., ruleNameN, retProcN
-func FromFile(fset *token.FileSet, filename string, src any, params ...any) (ret Compiler, err error) {
+func FromFile(fset *token.FileSet, filename string, src any, conf *cl.Config) (ret Compiler, err error) {
 	if fset == nil {
 		fset = token.NewFileSet()
 	}
@@ -55,7 +133,7 @@ func FromFile(fset *token.FileSet, filename string, src any, params ...any) (ret
 	if err != nil {
 		return
 	}
-	ret.Result, err = cl.NewEx(retProcs(params), fset, f)
+	ret.Result, err = cl.NewEx(conf, fset, f)
 	return
 }
 
@@ -75,6 +153,9 @@ func retProcs(params []any) map[string]any {
 }
 
 // -----------------------------------------------------------------------------
+
+// Error represents a matching error.
+type Error = matcher.Error
 
 // A Token is a lexical unit returned by Scan.
 type Token = types.Token
@@ -138,7 +219,7 @@ func (p *MatchState) Next() *Token {
 	if n > 0 {
 		return p.Toks[len(p.Toks)-n]
 	}
-	return &Token{Tok: token.EOF}
+	return &Token{Tok: token.EOF, Pos: p.Ctx.FileEnd}
 }
 
 // Match matches a source file.
@@ -172,7 +253,7 @@ func (p *Compiler) Match(filename string, src any, conf *Config) (ms MatchState,
 		}
 		toks = append(toks, &t)
 	}
-	ms.Ctx = matcher.NewContext(fset, token.Pos(f.Base()+len(b)), len(toks))
+	ms.Ctx = matcher.NewContext(fset, token.Pos(f.Base()+len(b)), toks)
 	ms.N, result, err = p.Doc.Match(toks, ms.Ctx)
 	ms.Ctx.SetLastError(len(toks)-ms.N, err)
 	if err != nil {
@@ -269,8 +350,10 @@ retry:
 			}
 			fmt.Print(prefix, "]\n")
 		}
+	case nil:
+		fmt.Fprint(w, prefix, "nil\n")
 	default:
-		panic("unexpected node")
+		panic("unexpected node: " + reflect.TypeOf(ret).String())
 	}
 }
 
