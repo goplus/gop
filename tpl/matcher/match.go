@@ -203,7 +203,6 @@ func conflictWith(me []any, next [][]any, from int) int {
 type Matcher interface {
 	Match(src []*types.Token, ctx *Context) (n int, result any, err error)
 	First(in []any) (first []any, mayEmpty bool) // can be token.Token or *MatchToken
-	IsList() bool
 }
 
 // -----------------------------------------------------------------------------
@@ -218,10 +217,6 @@ func (p gTrue) First(in []any) (first []any, mayEmpty bool) {
 	return in, true
 }
 
-func (p gTrue) IsList() bool {
-	return false
-}
-
 // True returns a matcher that always succeeds.
 func True() Matcher {
 	return gTrue{}
@@ -232,10 +227,13 @@ func True() Matcher {
 type gWS struct{}
 
 func (p gWS) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
-	if toks := ctx.toks; len(toks) > len(src) {
-		last := len(toks) - len(src) - 1
-		if toks[last].End() != src[0].Pos {
-			return 0, nil, nil
+	if left := len(src); left > 0 {
+		toks := ctx.toks
+		if n := len(toks); n > left {
+			last := n - left - 1
+			if toks[last].End() != src[0].Pos {
+				return 0, nil, nil
+			}
 		}
 	}
 	return 0, nil, errNoWhitespace
@@ -243,10 +241,6 @@ func (p gWS) Match(src []*types.Token, ctx *Context) (n int, result any, err err
 
 func (p gWS) First(in []any) (first []any, mayEmpty bool) {
 	return in, true
-}
-
-func (p gWS) IsList() bool {
-	return false
 }
 
 // WhiteSpace returns a matcher that matches whitespace.
@@ -271,10 +265,6 @@ func (p gString) Match(src []*types.Token, ctx *Context) (n int, result any, err
 
 func (p gString) First(in []any) (first []any, mayEmpty bool) {
 	return append(in, token.STRING), false
-}
-
-func (p gString) IsList() bool {
-	return false
 }
 
 // String returns a matcher that matches a string literal.
@@ -310,10 +300,6 @@ func (p *gToken) First(in []any) (first []any, mayEmpty bool) {
 	return append(in, p.tok), false
 }
 
-func (p *gToken) IsList() bool {
-	return false
-}
-
 // Token: ADD, SUB, IDENT, INT, FLOAT, CHAR, STRING, etc.
 func Token(tok token.Token) Matcher {
 	return &gToken{tok}
@@ -336,10 +322,6 @@ func (p *gLiteral) Match(src []*types.Token, ctx *Context) (n int, result any, e
 
 func (p *gLiteral) First(in []any) (first []any, mayEmpty bool) {
 	return append(in, (*MatchToken)(p)), false
-}
-
-func (p *gLiteral) IsList() bool {
-	return false
 }
 
 // Literal: "abc", 'a', 123, 1.23, etc.
@@ -409,10 +391,6 @@ func (p *Choices) First(in []any) (first []any, mayEmpty bool) {
 	return
 }
 
-func (p *Choices) IsList() bool {
-	return false
-}
-
 // Choice: R1 | R2 | ... | Rn
 // Should be used with CheckConflicts.
 func Choice(options ...Matcher) *Choices {
@@ -454,10 +432,6 @@ func (p *gSequence) First(in []any) (first []any, mayEmpty bool) {
 	return
 }
 
-func (p *gSequence) IsList() bool {
-	return true
-}
-
 // Sequence: R1 R2 ... Rn
 // Should length of items > 0
 func Sequence(items ...Matcher) Matcher {
@@ -494,10 +468,6 @@ func (p *gRepeat0) First(in []any) (first []any, mayEmpty bool) {
 	first, _ = p.r.First(in)
 	mayEmpty = true
 	return
-}
-
-func (p *gRepeat0) IsList() bool {
-	return true
 }
 
 // Repeat0: *R
@@ -540,10 +510,6 @@ func (p *gRepeat1) First(in []any) (first []any, mayEmpty bool) {
 	return p.r.First(in)
 }
 
-func (p *gRepeat1) IsList() bool {
-	return true
-}
-
 // Repeat1: +R
 func Repeat1(r Matcher) Matcher {
 	return &gRepeat1{r}
@@ -567,10 +533,6 @@ func (p *gRepeat01) First(in []any) (first []any, mayEmpty bool) {
 	first, _ = p.r.First(in)
 	mayEmpty = true
 	return
-}
-
-func (p *gRepeat01) IsList() bool {
-	return false
 }
 
 // Repeat01: ?R
@@ -622,10 +584,6 @@ func (p *gAdjoin) First(in []any) (first []any, mayEmpty bool) {
 	return
 }
 
-func (p *gAdjoin) IsList() bool {
-	return true
-}
-
 // Adjoin: R1 ++ R2
 func Adjoin(a, b Matcher) Matcher {
 	return &gAdjoin{a, b}
@@ -675,8 +633,8 @@ func (p *Var) Match(src []*types.Token, ctx *Context) (n int, result any, err er
 					}
 				}
 			}()
-			if g.IsList() {
-				result = retProc.(ListRetProc)(result.([]any))
+			if listRetPorc, ok := retProc.(ListRetProc); ok {
+				result = listRetPorc(result.([]any))
 			} else {
 				result = retProc.(RetProc)(result)
 			}
@@ -704,10 +662,6 @@ func (p *Var) First(in []any) (first []any, mayEmpty bool) {
 		panic(RecursiveError{p})
 	}
 	return
-}
-
-func (p *Var) IsList() bool {
-	return false
 }
 
 // Assign assigns a value to this variable.
