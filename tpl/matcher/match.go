@@ -232,10 +232,13 @@ func True() Matcher {
 type gWS struct{}
 
 func (p gWS) Match(src []*types.Token, ctx *Context) (n int, result any, err error) {
-	if toks := ctx.toks; len(toks) > len(src) {
-		last := len(toks) - len(src) - 1
-		if toks[last].End() != src[0].Pos {
-			return 0, nil, nil
+	if left := len(src); left > 0 {
+		toks := ctx.toks
+		if n := len(toks); n > left {
+			last := n - left - 1
+			if toks[last].End() != src[0].Pos {
+				return 0, nil, nil
+			}
 		}
 	}
 	return 0, nil, errNoWhitespace
