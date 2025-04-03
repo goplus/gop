@@ -86,6 +86,7 @@ func (p *Importer) CacheFile() string {
 
 	fname := ""
 	h := sha256.New()
+	io.WriteString(h, runtime.Version())
 	if root := p.mod.Root(); root != "" {
 		io.WriteString(h, root)
 		fname = filepath.Base(root)
