@@ -353,14 +353,7 @@ func buildGoplusTools(useGoProxy bool) {
 
 	switch goVersion() {
 	case "1.24":
-		os.Chdir(gopBinPath)
-		work := filepath.Join(gopBinPath, "go.work")
-		err := os.WriteFile(work, []byte(workfile), 0644)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		defer os.Remove(work)
-		defer os.Remove(filepath.Join(gopBinPath, "go.work.sum"))
+		work := filepath.Join(commandsDir, "_make", "1.24", "go.work")
 		commandExecuteEnv = append(commandExecuteEnv,
 			"GOWORK="+work)
 	}
