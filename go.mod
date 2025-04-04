@@ -3,7 +3,7 @@ module github.com/goplus/gop
 go 1.18
 
 require (
-	github.com/fsnotify/fsnotify v1.8.0
+	github.com/fsnotify/fsnotify v1.9.0
 	github.com/goplus/gogen v1.16.9
 	github.com/goplus/llgo v0.10.1
 	github.com/goplus/mod v0.13.17
