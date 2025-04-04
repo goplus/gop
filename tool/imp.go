@@ -168,6 +168,9 @@ func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 			}
 			return p.impFrom.ImportFrom(pkgPath, ret.ModDir, 0)
 		case gopmod.PkgtModule, gopmod.PkgtLocal:
+			if pkgPath == p.mod.Path() {
+				break
+			}
 			if err = p.genGoExtern(ret.Dir, false); err != nil {
 				return
 			}
