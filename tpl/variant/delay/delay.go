@@ -42,10 +42,20 @@ func EvalOp(expr any, fn func(v any)) any {
 	}
 }
 
-// ListOp delays to convert the matching result of (R % ",") to a flat list.
-func ListOp(in []any, fn func(flat []any)) any {
+// List delays to convert the matching result of (R % ",") to a flat list.
+// R % "," means R *("," R)
+func List(in []any, fn func(flat []any)) any {
 	return func() any {
 		fn(variant.List(in))
+		return nil
+	}
+}
+
+// ListOp delays to convert the matching result of (R % ",") to a flat list.
+// R % "," means R *("," R)
+func ListOp[T any](in []any, op func(v any) T, fn func(flat []T)) any {
+	return func() any {
+		fn(variant.ListOp(in, op))
 		return nil
 	}
 }
@@ -54,11 +64,7 @@ func ListOp(in []any, fn func(flat []any)) any {
 // R % "," means R *("," R)
 func RangeOp(in []any, fn func(v any)) any {
 	return func() any {
-		next := in[1].([]any)
-		fn(Eval(in[0]))
-		for _, v := range next {
-			fn(Eval(v.([]any)[1]))
-		}
+		variant.RangeOp(in, fn)
 		return nil
 	}
 }
