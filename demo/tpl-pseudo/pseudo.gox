@@ -111,7 +111,7 @@ inputStmt = "INPUT" IDENT => {
 
 outputStmt = "OUTPUT" (expr % ",") => {
 	exprlist := self[1].([]any)
-	return delay.listOp(exprlist, vals => {
+	return delay.list(exprlist, vals => {
 		echo vals...
 	})
 }
