@@ -45,6 +45,28 @@ func List(in []any) []any {
 	return ret
 }
 
+// ListOp converts the matching result of (R % ",") to a flat list.
+// R % "," means R *("," R)
+func ListOp[T any](in []any, fn func(v any) T) []T {
+	next := in[1].([]any)
+	ret := make([]T, len(next)+1)
+	ret[0] = fn(Eval(in[0]))
+	for i, v := range next {
+		ret[i+1] = fn(Eval(v.([]any)[1]))
+	}
+	return ret
+}
+
+// RangeOp travels the matching result of (R % ",") and call fn(result of R).
+// R % "," means R *("," R)
+func RangeOp(in []any, fn func(v any)) {
+	next := in[1].([]any)
+	fn(Eval(in[0]))
+	for _, v := range next {
+		fn(Eval(v.([]any)[1]))
+	}
+}
+
 // Float converts a value to float64.
 func Float(v any) float64 {
 	switch v := Eval(v).(type) {
