@@ -22,6 +22,7 @@ import (
 	gotoken "go/token"
 	"go/types"
 	"log"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -29,15 +30,24 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/mod/modfile"
+	"github.com/qiniu/x/stringutil"
 )
 
 // -----------------------------------------------------------------------------
 
 type gmxClass struct {
-	tname   string // class type
+	tname_  string // class type
 	clsfile string
 	ext     string
 	proj    *gmxProject
+}
+
+func (p *gmxClass) getName(ctx *pkgCtx) string {
+	tname := p.tname_
+	if tname == "main" {
+		tname = p.proj.getGameClass(ctx)
+	}
+	return tname
 }
 
 type spxObj struct {
@@ -46,7 +56,7 @@ type spxObj struct {
 }
 
 type gmxProject struct {
-	gameClass  string    // <gmtype>.gmx
+	gameClass_ string    // <gmtype>.gmx
 	game       gogen.Ref // Game (project base class)
 	spfeats    spriteFeat
 	sprite     map[string]spxObj // .spx => Sprite
@@ -57,6 +67,7 @@ type gmxProject struct {
 	pkgPaths   []string
 	autoimps   map[string]pkgImp // auto-import statement in gop.mod
 	classclone *types.Signature  // prototype of Classclone
+	gt         *Project
 	hasScheds  bool
 	gameIsPtr  bool
 	isTest     bool
@@ -99,6 +110,22 @@ func spriteFeatures(game gogen.Ref) (feats spriteFeat, classclone *types.Signatu
 		}
 	}
 	return
+}
+
+func (p *gmxProject) getGameClass(ctx *pkgCtx) string {
+	tname := p.gameClass_
+	if tname != "" && tname != "main" {
+		return tname
+	}
+	gt := p.gt
+	tname = gt.Class
+	if p.gameIsPtr {
+		tname = tname[1:]
+	}
+	if len(ctx.projs) > 1 && !p.hasMain_ {
+		tname = stringutil.Capitalize(path.Base(gt.PkgPaths[0])) + tname
+	}
+	return tname
 }
 
 func (p *gmxProject) hasMain() bool {
@@ -179,7 +206,7 @@ func loadClass(ctx *pkgCtx, pkg *gogen.Package, file string, f *ast.File, conf *
 	p, ok := ctx.projs[gt.Ext]
 	if !ok {
 		pkgPaths := gt.PkgPaths
-		p = &gmxProject{pkgPaths: pkgPaths, isTest: isGoxTestFile(ext)}
+		p = &gmxProject{pkgPaths: pkgPaths, isTest: isGoxTestFile(ext), gt: gt}
 		ctx.projs[gt.Ext] = p
 
 		p.pkgImps = make([]gogen.PkgRef, len(pkgPaths))
@@ -216,13 +243,10 @@ func loadClass(ctx *pkgCtx, pkg *gogen.Package, file string, f *ast.File, conf *
 		}
 	}
 	if f.IsProj {
-		if tname == "main" {
-			tname = gt.Class
+		if p.gameClass_ != "" {
+			log.Panicln("multiple project files found:", tname, p.gameClass_)
 		}
-		if p.gameClass != "" {
-			log.Panicln("multiple project files found:", tname, p.gameClass)
-		}
-		p.gameClass = tname
+		p.gameClass_ = tname
 		p.hasMain_ = f.HasShadowEntry()
 	} else {
 		p.sptypes = append(p.sptypes, tname)
@@ -334,7 +358,7 @@ func gmxCheckProjs(pkg *gogen.Package, ctx *pkgCtx) (*gmxProject, bool) {
 				projNoMain = v
 			}
 		}
-		if v.game != nil { // just to make testcase happy
+		if v.game != nil {
 			gmxProjMain(pkg, ctx, v)
 		}
 	}
@@ -346,13 +370,8 @@ func gmxCheckProjs(pkg *gogen.Package, ctx *pkgCtx) (*gmxProject, bool) {
 
 func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {
 	base := proj.game
-	classType := proj.gameClass
-	if classType == "" {
-		classType = base.Name()
-		proj.gameClass = classType
-	}
-
-	ld := getTypeLoader(parent, parent.syms, token.NoPos, proj.gameClass)
+	classType := proj.getGameClass(parent)
+	ld := getTypeLoader(parent, parent.syms, token.NoPos, classType)
 	if ld.typ == nil {
 		ld.typ = func() {
 			if debugLoad {

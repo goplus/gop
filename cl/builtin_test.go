@@ -46,6 +46,24 @@ func TestLoadExpr(t *testing.T) {
 	}
 }
 
+func TestGetGameClass(t *testing.T) {
+	proj := &gmxProject{
+		gameIsPtr:  true,
+		hasMain_:   false,
+		gameClass_: "",
+		gt: &modfile.Project{
+			Class:    "*App",
+			PkgPaths: []string{"foo/bar"},
+		},
+	}
+	ctx := &pkgCtx{
+		projs: map[string]*gmxProject{".gmx": proj, ".spx": proj},
+	}
+	if v := proj.getGameClass(ctx); v != "BarApp" {
+		t.Fatal("getGameClass:", v)
+	}
+}
+
 func TestSimplifyPkgPath(t *testing.T) {
 	if simplifyPkgPath("c/lua") != "github.com/goplus/llgo/c/lua" {
 		t.Fatal("simplifyPkgPath: c/lua")
@@ -492,17 +510,6 @@ func TestGmxProject(t *testing.T) {
 		t.Fatal("TestGmxProject failed: hasScheds?")
 	}
 
-	/* _, err := NewPackage("", &ast.Package{Files: map[string]*ast.File{
-		"main.t2gmx": {
-			IsProj: true,
-		},
-	}}, &Config{
-		LookupClass: lookupClassErr,
-	})
-	if e := err.Error(); e != `github.com/goplus/gop/cl/internal/libc.Game not found` {
-		t.Fatal("newGmx:", e)
-	} */
-
 	func() {
 		defer func() {
 			if e := recover(); e != "TODO: class not found" {
@@ -515,7 +522,7 @@ func TestGmxProject(t *testing.T) {
 	}()
 	func() {
 		defer func() {
-			if e := recover(); e != "multiple project files found: Game Game\n" {
+			if e := recover(); e != "multiple project files found: main main\n" {
 				t.Fatal("TestGmxProject failed:", e)
 			}
 		}()
