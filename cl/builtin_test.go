@@ -492,17 +492,6 @@ func TestGmxProject(t *testing.T) {
 		t.Fatal("TestGmxProject failed: hasScheds?")
 	}
 
-	/* _, err := NewPackage("", &ast.Package{Files: map[string]*ast.File{
-		"main.t2gmx": {
-			IsProj: true,
-		},
-	}}, &Config{
-		LookupClass: lookupClassErr,
-	})
-	if e := err.Error(); e != `github.com/goplus/gop/cl/internal/libc.Game not found` {
-		t.Fatal("newGmx:", e)
-	} */
-
 	func() {
 		defer func() {
 			if e := recover(); e != "TODO: class not found" {
@@ -515,7 +504,7 @@ func TestGmxProject(t *testing.T) {
 	}()
 	func() {
 		defer func() {
-			if e := recover(); e != "multiple project files found: Game Game\n" {
+			if e := recover(); e != "multiple project files found: main main\n" {
 				t.Fatal("TestGmxProject failed:", e)
 			}
 		}()

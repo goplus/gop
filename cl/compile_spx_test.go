@@ -1166,7 +1166,6 @@ import (
 
 type caseFoo struct {
 	test.Case
-	*App
 }
 type App struct {
 	test.App

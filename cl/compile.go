@@ -617,7 +617,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 	if genMain { // make classfile main func if need
 		if proj != nil {
 			if !multi { // only one project file
-				mainClass = proj.gameClass
+				mainClass = proj.getGameClass(ctx)
 			}
 		} else if ctx.goxMain == 1 {
 			mainClass = ctx.goxMainClass // main func in normal gox file
@@ -723,7 +723,7 @@ func genGoFile(file string, goxTestFile bool) string {
 func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, conf *Config) {
 	var proj *gmxProject
 	var c *gmxClass
-	var classType string
+	var classType, gameClass string
 	var testType string
 	var baseTypeName string
 	var baseType types.Type
@@ -744,17 +744,18 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 			}
 		} else {
 			c = parent.classes[f]
-			classType = c.tname
 			proj, ctx.proj = c.proj, c.proj
+			classType, gameClass = c.getName(parent), proj.getGameClass(parent)
 			ctx.autoimps = proj.autoimps
 			goxTestFile = proj.isTest
 			if goxTestFile { // test classfile
-				testType = c.tname
+				testType = classType
 				if !f.IsProj {
 					classType = casePrefix + testNameSuffix(testType)
 				}
 			}
 			if f.IsProj {
+				classType = gameClass
 				o := proj.game
 				ctx.baseClass = o
 				baseTypeName, baseType = o.Name(), o.Type()
@@ -810,8 +811,8 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 					tags = append(tags, "")
 					chk.chkRedecl(ctx, baseTypeName, pos)
 				}
-				if spxClass {
-					if gameClass := proj.gameClass; gameClass != "" {
+				if spxClass && !goxTestFile {
+					if gameClass != "" {
 						if spxProj == "" { // if spxProj is empty, use gameClass
 							spxProj = gameClass
 						}
