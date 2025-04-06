@@ -496,6 +496,9 @@ type Game struct {
 func (this *Game) MainEntry() {
 	this.Run()
 }
+func (this *Game) Classprojname() string {
+	return "foo"
+}
 func (this *Game) Main() {
 	spx3.Gopt_Game_Main(this, new(Kai))
 }
@@ -542,6 +545,9 @@ func (this *Game) MainEntry() {
 	a.Run()
 	b := new(spx3.Sprite)
 	fmt.Println(b.Name())
+}
+func (this *Game) Classprojname() string {
+	return "foo"
 }
 func (this *Game) Main() {
 	spx3.Gopt_Game_Main(this, new(Kai))
