@@ -485,7 +485,7 @@ func projNameOf(file string) string {
 		dir, _ = os.Getwd()
 	}
 	dname := filepath.Base(dir)
-	if len(dname) <= 1 && (dname == "/" || dname == ".") {
+	if len(dname) <= 1 && (dname == string(os.PathSeparator) || dname == ".") {
 		dname = "root"
 	}
 	return dname
