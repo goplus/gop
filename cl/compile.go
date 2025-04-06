@@ -568,9 +568,8 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 	}
 
 	for _, f := range sfiles {
-		fpath := f.path
 		fileLine := !conf.NoFileLine
-		fileScope := types.NewScope(p.Types.Scope(), f.Pos(), f.End(), fpath)
+		fileScope := types.NewScope(p.Types.Scope(), f.Pos(), f.End(), f.path)
 		ctx := &blockCtx{
 			pkg: p, pkgCtx: ctx, cb: p.CB(), relBaseDir: relBaseDir, fileScope: fileScope,
 			fileLine: fileLine, isClass: f.IsClass, rec: rec, imports: make(map[string]pkgImp), isGopFile: true,
@@ -578,7 +577,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 		if rec := ctx.rec; rec != nil {
 			rec.Scope(f.File, fileScope)
 		}
-		preloadGopFile(p, ctx, fpath, f.File, conf)
+		preloadGopFile(p, ctx, f.path, f.File, conf)
 	}
 
 	proj, multi := gmxCheckProjs(p, ctx)
@@ -728,8 +727,8 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 	var testType string
 	var baseTypeName string
 	var baseType types.Type
-	var feats classFeat
 	var spxProj string
+	var spfeats spriteFeat
 	var spxClass bool
 	var goxTestFile bool
 	var parent = ctx.pkgCtx
@@ -762,14 +761,13 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 				if proj.gameIsPtr {
 					baseType = types.NewPointer(baseType)
 				}
-				feats = proj.gmfeats
 			} else {
 				sp := proj.sprite[c.ext]
 				o := sp.obj
 				ctx.baseClass = o
 				baseTypeName, baseType, spxProj = o.Name(), o.Type(), sp.proj
 				spxClass = true
-				feats = proj.spfeats
+				spfeats = proj.spfeats
 			}
 		}
 	}
@@ -883,16 +881,9 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 	}
 
 	preloadFile(p, ctx, f, goFile, !conf.Outline)
-	if feats != 0 {
+	if spfeats != 0 {
 		ld := getTypeLoader(parent, parent.syms, token.NoPos, classType)
-		if (feats & gameClassprojname) != 0 { // Classprojname() string
-			ld.methods = append(ld.methods, func() {
-				old, _ := p.SetCurFile(goFile, true)
-				defer p.RestoreCurFile(old)
-				doInitType(ld)
-				genClassprojname(ctx, projNameOf(file))
-			})
-		} else if (feats & spriteClassfname) != 0 { // Classfname() string
+		if (spfeats & spriteClassfname) != 0 { // Classfname() string
 			ld.methods = append(ld.methods, func() {
 				old, _ := p.SetCurFile(goFile, true)
 				defer p.RestoreCurFile(old)
@@ -900,7 +891,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 				genClassfname(ctx, c)
 			})
 		}
-		if (feats & spriteClassclone) != 0 { // Classclone() clonetype
+		if (spfeats & spriteClassclone) != 0 { // Classclone() clonetype
 			ld.methods = append(ld.methods, func() {
 				old, _ := p.SetCurFile(goFile, true)
 				defer p.RestoreCurFile(old)
