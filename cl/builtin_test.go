@@ -46,6 +46,24 @@ func TestLoadExpr(t *testing.T) {
 	}
 }
 
+func TestGetGameClass(t *testing.T) {
+	proj := &gmxProject{
+		gameIsPtr:  true,
+		hasMain_:   false,
+		gameClass_: "",
+		gt: &modfile.Project{
+			Class:    "*App",
+			PkgPaths: []string{"foo/bar"},
+		},
+	}
+	ctx := &pkgCtx{
+		projs: map[string]*gmxProject{".gmx": proj, ".spx": proj},
+	}
+	if v := proj.getGameClass(ctx); v != "BarApp" {
+		t.Fatal("getGameClass:", v)
+	}
+}
+
 func TestSimplifyPkgPath(t *testing.T) {
 	if simplifyPkgPath("c/lua") != "github.com/goplus/llgo/c/lua" {
 		t.Fatal("simplifyPkgPath: c/lua")
