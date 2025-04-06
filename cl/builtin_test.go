@@ -39,15 +39,6 @@ func getGoxConf() *gogen.Config {
 	return &gogen.Config{Fset: fset, Importer: imp}
 }
 
-func TestProjNameOf(t *testing.T) {
-	if projNameOf("./a.gop") != "cl" {
-		t.Fatal("projNameOf: ./a.gop")
-	}
-	if projNameOf("/a.gop") != "root" {
-		t.Fatal("projNameOf: /a.gop")
-	}
-}
-
 func TestLoadExpr(t *testing.T) {
 	var ni nodeInterp
 	if v := ni.LoadExpr(&ast.Ident{Name: "x"}); v != "" {

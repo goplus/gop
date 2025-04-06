@@ -22,7 +22,6 @@ import (
 	gotoken "go/token"
 	"go/types"
 	"log"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -49,8 +48,7 @@ type spxObj struct {
 type gmxProject struct {
 	gameClass  string    // <gmtype>.gmx
 	game       gogen.Ref // Game (project base class)
-	gmfeats    classFeat
-	spfeats    classFeat
+	spfeats    spriteFeat
 	sprite     map[string]spxObj // .spx => Sprite
 	sptypes    []string          // <sptype>.spx
 	scheds     []string
@@ -65,15 +63,14 @@ type gmxProject struct {
 	hasMain_   bool
 }
 
-type classFeat uint
+type spriteFeat uint
 
 const (
-	spriteClassfname classFeat = 1 << iota
+	spriteClassfname spriteFeat = 1 << iota
 	spriteClassclone
-	gameClassprojname
 )
 
-func classFeatures(game gogen.Ref) (gmfeats, spfeats classFeat, classclone *types.Signature) {
+func spriteFeatures(game gogen.Ref) (feats spriteFeat, classclone *types.Signature) {
 	if mainFn := findMethod(game, "Main"); mainFn != nil {
 		sig := mainFn.Type().(*types.Signature)
 		if t, ok := gogen.CheckSigFuncEx(sig); ok {
@@ -81,8 +78,8 @@ func classFeatures(game gogen.Ref) (gmfeats, spfeats classFeat, classclone *type
 				sig = t.Func.Type().(*types.Signature)
 			}
 		}
-		in := sig.Params()
 		if sig.Variadic() {
+			in := sig.Params()
 			last := in.At(in.Len() - 1)
 			elt := last.Type().(*types.Slice).Elem()
 			if tn, ok := elt.(*types.Named); ok {
@@ -92,24 +89,10 @@ func classFeatures(game gogen.Ref) (gmfeats, spfeats classFeat, classclone *type
 				for i, n := 0, intf.NumMethods(); i < n; i++ {
 					switch m := intf.Method(i); m.Name() {
 					case "Classfname":
-						spfeats |= spriteClassfname
+						feats |= spriteClassfname
 					case "Classclone":
 						classclone = m.Type().(*types.Signature)
-						spfeats |= spriteClassclone
-					}
-				}
-			}
-		}
-		if in.Len() > 0 {
-			first := in.At(0).Type()
-			if tn, ok := first.(*types.Named); ok {
-				first = tn.Underlying()
-			}
-			if intf, ok := first.(*types.Interface); ok {
-				for i, n := 0, intf.NumMethods(); i < n; i++ {
-					switch m := intf.Method(i); m.Name() {
-					case "Classprojname":
-						gmfeats |= gameClassprojname
+						feats |= spriteClassclone
 					}
 				}
 			}
@@ -221,7 +204,7 @@ func loadClass(ctx *pkgCtx, pkg *gogen.Package, file string, f *ast.File, conf *
 		spx := p.pkgImps[0]
 		if gt.Class != "" {
 			p.game, p.gameIsPtr = spxRef(spx, gt.Class)
-			p.gmfeats, p.spfeats, p.classclone = classFeatures(p.game)
+			p.spfeats, p.classclone = spriteFeatures(p.game)
 		}
 		p.sprite = make(map[string]spxObj)
 		for _, v := range gt.Works {
@@ -477,27 +460,6 @@ func makeMainSig(recv *types.Var, f *types.Func) *types.Signature {
 		params[i] = types.NewParam(token.NoPos, pkg, string(paramName), in.At(i).Type())
 	}
 	return types.NewSignatureType(recv, nil, nil, types.NewTuple(params...), nil, false)
-}
-
-func projNameOf(file string) string {
-	dir := filepath.Dir(file)
-	if dir == "." {
-		dir, _ = os.Getwd()
-	}
-	dname := filepath.Base(dir)
-	if len(dname) <= 1 && (dname == string(os.PathSeparator) || dname == ".") {
-		dname = "root"
-	}
-	return dname
-}
-
-func genClassprojname(ctx *blockCtx, projname string) {
-	pkg := ctx.pkg
-	recv := toRecv(ctx, ctx.classRecv)
-	ret := types.NewTuple(pkg.NewParam(token.NoPos, "", types.Typ[types.String]))
-	pkg.NewFunc(recv, "Classprojname", nil, ret, false).BodyStart(pkg).
-		Val(projname).Return(1).
-		End()
 }
 
 func genClassfname(ctx *blockCtx, c *gmxClass) {

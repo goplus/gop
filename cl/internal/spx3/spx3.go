@@ -27,6 +27,8 @@ func New() *Game {
 	return nil
 }
 
+func (p *Game) initGame() {}
+
 func (p *Game) Run() {}
 
 type Sprite struct {
@@ -38,15 +40,11 @@ func (p *Sprite) Name() string {
 
 func (p *Sprite) Main(name string) {}
 
-type iGameProto interface {
-	Classprojname() string
-}
-
 type Handler interface {
 	Main(name string)
 	Classfname() string
 	Classclone() Handler
 }
 
-func Gopt_Game_Main(game iGameProto, workers ...Handler) {
+func Gopt_Game_Main(game interface{ initGame() }, workers ...Handler) {
 }
