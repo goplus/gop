@@ -1,4 +1,4 @@
-Domain Text Literal: Enhancing Programming Language Expressivity
+Domain Text Literal
 =====
 
 The journey of **Domain Text Literals** in Go+ began with a proposal in early 2024 when a community member suggested adding JSX syntax support to Go+:
