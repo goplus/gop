@@ -49,7 +49,7 @@ STRING = QSTRING | RAWSTRING
 
 Since TPL rules automatically filter whitespace and comments, the sequence `R1 R2` doesn't express that R1 and R2 are adjacent. This is where the adjacency operator `++` comes in.
 
-For example, Go+ [domain text literal](domian-text-lit.md) is defined as `IDENT ++ RAWSTRING`, making these valid:
+For example, Go+ [domain text literal](../doc/domian-text-lit.md) is defined as `IDENT ++ RAWSTRING`, making these valid:
 
 ```go
 tpl`expr = INT % ","`
@@ -98,7 +98,7 @@ Each rule has its built-in matching result:
 
 The default matching result is called "self" in TPL. You can rewrite this result using a Go+ closure `=> { ... }`.
 
-This feature is crucial as it allows seamless integration between TPL and Go+. In Go+, you reference TPL through [domain text literal](domian-text-lit.md), and within TPL, you can call Go+ code through result rewriting.
+This feature is crucial as it allows seamless integration between TPL and Go+. In Go+, you reference TPL through [domain text literal](../doc/domian-text-lit.md), and within TPL, you can call Go+ code through result rewriting.
 
 ## Practical Examples
 
