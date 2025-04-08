@@ -67,6 +67,7 @@ const (
 	clCommandWithoutArgs // this expr is a command without args (eg. ls)
 	clCommandIdent       // this expr is a command and an ident (eg. mkdir "abc")
 	clIdentInStringLitEx // this expr is an ident in a string extended literal (eg. ${PATH})
+	clInCallExpr
 )
 
 const (
@@ -287,6 +288,9 @@ func identOrSelectorFlags(inFlags []int) (flags int, cmdNoArgs bool) {
 		return clIdentCanAutoCall, false
 	}
 	flags = inFlags[0]
+	if flags&clInCallExpr != 0 {
+		return
+	}
 	if cmdNoArgs = (flags & clCommandWithoutArgs) != 0; cmdNoArgs {
 		flags &^= clCommandWithoutArgs
 	} else {
@@ -357,9 +361,9 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 	case *ast.RangeExpr:
 		compileRangeExpr(ctx, v)
 	case *ast.IndexExpr:
-		compileIndexExpr(ctx, v, twoValue(inFlags))
+		compileIndexExpr(ctx, v, inFlags...)
 	case *ast.IndexListExpr:
-		compileIndexListExpr(ctx, v, twoValue(inFlags))
+		compileIndexListExpr(ctx, v, inFlags...)
 	case *ast.SliceExpr:
 		compileSliceExpr(ctx, v)
 	case *ast.StarExpr:
@@ -442,19 +446,19 @@ func compileTypeAssertExpr(ctx *blockCtx, v *ast.TypeAssertExpr, twoValue bool) 
 	ctx.cb.TypeAssert(typ, twoValue, v)
 }
 
-func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr, twoValue bool) { // x[i]
-	compileExpr(ctx, v.X)
+func compileIndexExpr(ctx *blockCtx, v *ast.IndexExpr, inFlags ...int) { // x[i]
+	compileExpr(ctx, v.X, inFlags...)
 	compileExpr(ctx, v.Index)
-	ctx.cb.Index(1, twoValue, v)
+	ctx.cb.Index(1, twoValue(inFlags), v)
 }
 
-func compileIndexListExpr(ctx *blockCtx, v *ast.IndexListExpr, twoValue bool) { // fn[t1,t2]
-	compileExpr(ctx, v.X)
+func compileIndexListExpr(ctx *blockCtx, v *ast.IndexListExpr, inFlags ...int) { // fn[t1,t2]
+	compileExpr(ctx, v.X, inFlags...)
 	n := len(v.Indices)
 	for i := 0; i < n; i++ {
 		compileExpr(ctx, v.Indices[i])
 	}
-	ctx.cb.Index(n, twoValue, v)
+	ctx.cb.Index(n, twoValue(inFlags), v)
 }
 
 func compileSliceExpr(ctx *blockCtx, v *ast.SliceExpr) { // x[i:j:k]
@@ -682,7 +686,7 @@ func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
 		}
 		compileErrWrapExpr(ctx, fn, 0)
 	default:
-		compileExpr(ctx, fn)
+		compileExpr(ctx, fn, clInCallExpr)
 	}
 	var err error
 	var stk = ctx.cb.InternalStack()
