@@ -62,3 +62,12 @@ func OnKey__7(a []string, b []Mesher, fn func(key string)) {
 
 func OnKey__8(x int, y int) {
 }
+
+func Test__0() {
+}
+
+func Test__1[N any](n N) {
+}
+
+func Test__2[N1, N2 any](n1 N1, n2 N2) {
+}
