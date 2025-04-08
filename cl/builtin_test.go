@@ -58,6 +58,7 @@ func TestGetGameClass(t *testing.T) {
 	}
 	ctx := &pkgCtx{
 		projs: map[string]*gmxProject{".gmx": proj, ".spx": proj},
+		nproj: 2,
 	}
 	if v := proj.getGameClass(ctx); v != "BarApp" {
 		t.Fatal("getGameClass:", v)

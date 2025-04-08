@@ -332,6 +332,7 @@ func doInitMethods(ld *typeLoader) {
 
 type pkgCtx struct {
 	*nodeInterp
+	nproj    int                    // number of non-test projects
 	projs    map[string]*gmxProject // .gmx => project
 	classes  map[*ast.File]*gmxClass
 	overpos  map[string]token.Pos // overload => pos
