@@ -478,7 +478,7 @@ func makeMainSig(recv *types.Var, f *types.Func) *types.Signature {
 		paramName[len(paramNameTempl)-1] = byte('0' + i)
 		params[i] = types.NewParam(token.NoPos, pkg, string(paramName), in.At(i).Type())
 	}
-	return types.NewSignatureType(recv, nil, nil, types.NewTuple(params...), nil, false)
+	return types.NewSignatureType(recv, nil, nil, types.NewTuple(params...), sig.Results(), false)
 }
 
 func genClassfname(ctx *blockCtx, c *gmxClass) {
