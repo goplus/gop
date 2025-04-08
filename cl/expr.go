@@ -102,7 +102,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg gogen.PkgRef,
 	}
 
 	if ctx.isClass { // in a Go+ class file
-		if recv = classRecv(cb); recv != nil {
+		if recv = ctx.recv; recv != nil {
 			cb.Val(recv)
 			chkFlag := flags
 			if chkFlag&clIdentSelectorExpr != 0 { // TODO: remove this condition
@@ -215,8 +215,8 @@ func compileMatrixLit(ctx *blockCtx, v *ast.MatrixLit) {
 func compileEnvExpr(ctx *blockCtx, v *ast.EnvExpr) {
 	cb := ctx.cb
 	if ctx.isClass { // in a Go+ class file
-		if recv := classRecv(cb); recv != nil {
-			if gopMember(cb, recv, "Gop_Env", v) == nil {
+		if ctx.recv != nil {
+			if gopMember(cb, ctx.recv, "Gop_Env", v) == nil {
 				name := v.Name
 				cb.Val(name.Name, name).CallWith(1, 0, v)
 				return
@@ -225,14 +225,6 @@ func compileEnvExpr(ctx *blockCtx, v *ast.EnvExpr) {
 	}
 	invalidVal(cb)
 	ctx.handleErrorf(v.Pos(), "operator $%v undefined", v.Name)
-}
-
-func classRecv(cb *gogen.CodeBuilder) *types.Var {
-	if fn := cb.Func(); fn != nil {
-		sig := fn.Ancestor().Type().(*types.Signature)
-		return sig.Recv()
-	}
-	return nil
 }
 
 func gopMember(cb *gogen.CodeBuilder, recv *types.Var, op string, src ...ast.Node) error {
@@ -327,7 +319,7 @@ func compileExpr(ctx *blockCtx, expr ast.Expr, inFlags ...int) {
 				if err == nil {
 					return
 				}
-				if !(ctx.isClass && tryGopExec(cb, v)) {
+				if !(ctx.isClass && tryGopExec(ctx, v)) {
 					panic(err)
 				}
 			}
@@ -734,18 +726,18 @@ func builtinOrGopExec(ctx *blockCtx, ifn *ast.Ident, v *ast.CallExpr, flags goge
 		return fnCall(ctx, v, flags, 0)
 	default:
 		// for support Gop_Exec, see TestSpxGopExec
-		if v.IsCommand() && ctx.isClass && tryGopExec(cb, ifn) {
+		if v.IsCommand() && ctx.isClass && tryGopExec(ctx, ifn) {
 			return fnCall(ctx, v, flags, 1)
 		}
 	}
 	return syscall.ENOENT
 }
 
-func tryGopExec(cb *gogen.CodeBuilder, ifn *ast.Ident) bool {
-	if recv := classRecv(cb); recv != nil {
-		cb.InternalStack().PopN(1)
-		if gopMember(cb, recv, "Gop_Exec", ifn) == nil {
-			cb.Val(ifn.Name, ifn)
+func tryGopExec(ctx *blockCtx, ifn *ast.Ident) bool {
+	if ctx.recv != nil {
+		ctx.cb.InternalStack().PopN(1)
+		if gopMember(ctx.cb, ctx.recv, "Gop_Exec", ifn) == nil {
+			ctx.cb.Val(ifn.Name, ifn)
 			return true
 		}
 	}

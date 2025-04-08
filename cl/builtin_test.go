@@ -151,7 +151,8 @@ func TestCompileStmt(t *testing.T) {
 
 func TestTryGopExec(t *testing.T) {
 	pkg := gogen.NewPackage("", "foo", goxConf)
-	if tryGopExec(pkg.CB(), nil) {
+	ctx := &blockCtx{cb: pkg.CB()}
+	if tryGopExec(ctx, nil) {
 		t.Fatal("tryGopExec")
 	}
 }

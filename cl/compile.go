@@ -379,6 +379,7 @@ type blockCtx struct {
 	fileLine  bool
 	isClass   bool
 	isGopFile bool // is Go+ file or not
+	recv      *types.Var
 }
 
 func (p *blockCtx) cstr() gogen.Ref {
@@ -1369,6 +1370,7 @@ func loadFunc(ctx *blockCtx, recv *types.Var, name string, d *ast.FuncDecl, genB
 	if genBody {
 		if body := d.Body; body != nil {
 			if recv != nil {
+				ctx.recv = recv
 				file := pkg.CurFile()
 				ctx.inits = append(ctx.inits, func() { // interface issue: #795
 					old := pkg.RestoreCurFile(file)
