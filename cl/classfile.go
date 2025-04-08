@@ -122,7 +122,7 @@ func (p *gmxProject) getGameClass(ctx *pkgCtx) string {
 	if p.gameIsPtr {
 		tname = tname[1:]
 	}
-	if len(ctx.projs) > 1 && !p.hasMain_ {
+	if ctx.nproj > 1 && !p.hasMain_ {
 		tname = stringutil.Capitalize(path.Base(gt.PkgPaths[0])) + tname
 	}
 	return tname
@@ -248,6 +248,9 @@ func loadClass(ctx *pkgCtx, pkg *gogen.Package, file string, f *ast.File, conf *
 		}
 		p.gameClass_ = tname
 		p.hasMain_ = f.HasShadowEntry()
+		if !p.isTest {
+			ctx.nproj++
+		}
 	} else {
 		p.sptypes = append(p.sptypes, tname)
 	}
