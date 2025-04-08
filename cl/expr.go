@@ -964,12 +964,18 @@ func compileLambdaExpr2(ctx *blockCtx, v *ast.LambdaExpr2, sig *types.Signature)
 	if len(v.Lhs) > 0 {
 		defNames(ctx, v.Lhs, cb.Scope())
 	}
+	nerr := len(ctx.errs)
 	compileStmts(ctx, v.Body.List)
 	if rec := ctx.recorder(); rec != nil {
 		rec.Scope(v, ctx.cb.Scope())
 	}
 	cb.End(v)
 	ctx.cb.SetComments(comments, once)
+	if len(ctx.errs) > nerr {
+		errs := ctx.errs[nerr:]
+		ctx.errs = ctx.errs[:nerr]
+		return errs.ToError()
+	}
 	return nil
 }
 
@@ -1130,7 +1136,9 @@ func compileDomainTextLit(ctx *blockCtx, v *ast.DomainTextLit) {
 					if expr, ok := r.RetProc.(*ast.LambdaExpr2); ok {
 						cb.Val(r.Name.Name)
 						sig := sigRetFunc(ctx.pkg, r.IsList())
-						compileLambdaExpr2(ctx, lambdaRetFunc(expr), sig)
+						if err := compileLambdaExpr2(ctx, lambdaRetFunc(expr), sig); err != nil {
+							ctx.handleErr(err)
+						}
 						n += 2
 					}
 				}

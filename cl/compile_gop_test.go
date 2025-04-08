@@ -1742,3 +1742,59 @@ func main() {
 }
 `)
 }
+
+func TestOverloadLamda(t *testing.T) {
+	gopClTest(t, `
+func onStart = (
+	func(onStart func()) {
+		onStart()
+	}
+	func(onStart func() int) {
+		echo onStart()
+	}
+	func(onStart func() error) {
+		echo onStart()
+	}
+)
+
+onStart => {
+	echo "ok1"
+}
+
+onStart => {
+	echo "ok2"
+	return nil
+}
+
+onStart => {
+	echo "ok3"
+	return 100
+}
+`, `package main
+
+import "fmt"
+
+func onStart__0(onStart func()) {
+	onStart()
+}
+func onStart__1(onStart func() int) {
+	fmt.Println(onStart())
+}
+func onStart__2(onStart func() error) {
+	fmt.Println(onStart())
+}
+func main() {
+	onStart__0(func() {
+		fmt.Println("ok1")
+	})
+	onStart__2(func() error {
+		fmt.Println("ok2")
+		return nil
+	})
+	onStart__1(func() int {
+		fmt.Println("ok3")
+		return 100
+	})
+}
+`)
+}
