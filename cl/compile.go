@@ -423,7 +423,12 @@ func (p *pkgCtx) handleErrorf(pos token.Pos, format string, args ...any) {
 }
 
 func (p *pkgCtx) handleErr(err error) {
-	p.errs = append(p.errs, err)
+	switch e := err.(type) {
+	case errors.List:
+		p.errs = append(p.errs, e...)
+	default:
+		p.errs = append(p.errs, err)
+	}
 }
 
 func (p *pkgCtx) loadNamed(at *gogen.Package, t *types.Named) {

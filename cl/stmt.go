@@ -120,14 +120,12 @@ func compileStmts(ctx *blockCtx, body []ast.Stmt) {
 }
 
 func compileStmt(ctx *blockCtx, stmt ast.Stmt) {
-	if enableRecover {
-		defer func() {
-			if e := recover(); e != nil {
-				ctx.handleRecover(e, stmt)
-				ctx.cb.ResetStmt()
-			}
-		}()
-	}
+	defer func() {
+		if e := recover(); e != nil {
+			ctx.handleRecover(e, stmt)
+			ctx.cb.ResetStmt()
+		}
+	}()
 	commentStmt(ctx, stmt)
 	switch v := stmt.(type) {
 	case *ast.ExprStmt:
