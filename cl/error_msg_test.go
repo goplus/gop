@@ -1117,3 +1117,11 @@ var a = struct{v int}{(x => x)}
 var a = struct{v int}{v: (x => x)}
 `)
 }
+
+func TestErrTplLamda(t *testing.T) {
+	codeErrorTest(t, `bar.gop:1:18: undefined: c
+bar.gop:1:27: undefined: d
+bar.gop:1:36: not enough arguments to return
+	have ()
+	want (interface{})`, "tpl`a = INT => { c = 100; d = 200; return; }`")
+}
