@@ -1,0 +1,6 @@
+func onInit() {
+	for {
+	}
+}
+
+initGameApp
