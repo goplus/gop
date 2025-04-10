@@ -22,6 +22,10 @@ import (
 	"github.com/goplus/gop/cl/cltest"
 )
 
+func TestTestspx(t *testing.T) {
+	cltest.SpxFromDir(t, "", "./_testspx")
+}
+
 func TestTestgop(t *testing.T) {
 	cltest.FromDir(t, "", "./_testgop")
 }

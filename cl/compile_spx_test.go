@@ -97,57 +97,6 @@ println "hi"
 }
 
 func TestSpxBasic(t *testing.T) {
-	gopSpxTestEx(t, `
-func onInit() {
-	for {
-	}
-}
-
-initGameApp
-`, `
-func onMsg(msg string) {
-	for {
-		say "Hi"
-	}
-}
-`, `package main
-
-import "github.com/goplus/gop/cl/internal/spx"
-
-type Game struct {
-	*spx.MyGame
-}
-type Kai struct {
-	spx.Sprite
-	*Game
-}
-
-func (this *Game) onInit() {
-	for {
-		spx.SchedNow()
-	}
-}
-func (this *Game) MainEntry() {
-	this.InitGameApp()
-}
-func (this *Game) Main() {
-	spx.Gopt_MyGame_Main(this)
-}
-func (this *Kai) onMsg(msg string) {
-	for {
-		spx.Sched()
-		this.Say("Hi")
-	}
-}
-func (this *Kai) Main() {
-}
-func main() {
-	new(Game).Main()
-}
-`, "Game.tgmx", "Kai.tspx")
-}
-
-func TestSpxBasic2(t *testing.T) {
 	gopSpxTest(t, `
 import (
 	"fmt"

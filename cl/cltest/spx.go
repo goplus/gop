@@ -18,7 +18,11 @@ package cltest
 
 import (
 	"bytes"
+	"io/fs"
+	"log"
 	"os"
+	"path"
+	"strings"
 	"testing"
 
 	"github.com/goplus/gop/cl"
@@ -27,6 +31,7 @@ import (
 	"github.com/goplus/gop/parser/fsx/memfs"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/mod/modfile"
+	"github.com/qiniu/x/test"
 )
 
 func spxParserConf() parser.Config {
@@ -64,7 +69,7 @@ func SpxWithConf(t *testing.T, name string, conf *cl.Config, gmx, spxcode, expec
 	})
 }
 
-func SpxTest(t *testing.T, fs fsx.FileSystem, dir string, parseConf parser.Config, clConf *cl.Config, expected, resultFile string) {
+func SpxTest(t *testing.T, fs fsx.FileSystem, dir string, parseConf parser.Config, clConf *cl.Config, exp any, resultFile string) {
 	cl.SetDisableRecover(true)
 	defer cl.SetDisableRecover(false)
 
@@ -83,9 +88,13 @@ func SpxTest(t *testing.T, fs fsx.FileSystem, dir string, parseConf parser.Confi
 	if err != nil {
 		t.Fatal("gogen.WriteTo failed:", err)
 	}
-	result := b.String()
-	if result != expected {
-		t.Fatalf("\nResult:\n%s\nExpected:\n%s\n", result, expected)
+	if expected, ok := exp.(string); ok {
+		result := b.String()
+		if result != expected {
+			t.Fatalf("\nResult:\n%s\nExpected:\n%s\n", result, expected)
+		}
+	} else if test.Diff(t, dir+"/result.txt", b.Bytes(), exp.([]byte)) {
+		t.Fatal(dir, ": unexpect result")
 	}
 }
 
@@ -110,7 +119,6 @@ func SpxErrorEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string) {
 	}
 }
 
-/*
 func SpxFromDir(t *testing.T, sel, relDir string) {
 	dir, err := os.Getwd()
 	if err != nil {
@@ -141,6 +149,6 @@ func testSpxFrom(t *testing.T, pkgDir, sel string) {
 	parseConf.Filter = func(fi fs.FileInfo) bool {
 		return !strings.HasSuffix(fi.Name(), ".go")
 	}
-	SpxTest(t, fsx.Local, pkgDir, parseConf, Conf)
+	expect, _ := os.ReadFile(pkgDir + "/out.go")
+	SpxTest(t, fsx.Local, pkgDir, parseConf, Conf, expect, "")
 }
-*/

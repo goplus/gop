@@ -1,0 +1,5 @@
+func onMsg(msg string) {
+	for {
+		say "Hi"
+	}
+}
