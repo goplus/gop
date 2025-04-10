@@ -728,7 +728,6 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 	var testType string
 	var baseTypeName string
 	var baseType types.Type
-	var spxProj string
 	var spfeats spriteFeat
 	var spxClass bool
 	var goxTestFile bool
@@ -767,7 +766,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 				sp := proj.sprite[c.ext]
 				o := sp.obj
 				ctx.baseClass = o
-				baseTypeName, baseType, spxProj = o.Name(), o.Type(), sp.proj
+				baseTypeName, baseType = o.Name(), o.Type()
 				spxClass = true
 				spfeats = proj.spfeats
 			}
@@ -814,10 +813,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 				}
 				if spxClass && !goxTestFile {
 					if gameClass != "" {
-						if spxProj == "" { // if spxProj is empty, use gameClass
-							spxProj = gameClass
-						}
-						typ := toType(ctx, &ast.StarExpr{X: &ast.Ident{Name: spxProj}})
+						typ := toType(ctx, &ast.StarExpr{X: &ast.Ident{Name: gameClass}})
 						name := getTypeName(typ)
 						if !chk.chkRedecl(ctx, name, pos) {
 							fld := types.NewField(pos, pkg, name, typ, true)
