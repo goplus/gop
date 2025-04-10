@@ -51,8 +51,8 @@ func (p *gmxClass) getName(ctx *pkgCtx) string {
 }
 
 type spxObj struct {
-	obj  gogen.Ref
-	proj string
+	obj   gogen.Ref
+	proto string
 }
 
 type gmxProject struct {
@@ -236,7 +236,7 @@ func loadClass(ctx *pkgCtx, pkg *gogen.Package, file string, f *ast.File, conf *
 		p.sprite = make(map[string]spxObj)
 		for _, v := range gt.Works {
 			obj, _ := spxRef(spx, v.Class)
-			p.sprite[v.Ext] = spxObj{obj, v.Project}
+			p.sprite[v.Ext] = spxObj{obj, v.Proto}
 		}
 		if x := getStringConst(spx, "Gop_sched"); x != "" {
 			p.scheds, p.hasScheds = strings.SplitN(x, ",", 2), true
