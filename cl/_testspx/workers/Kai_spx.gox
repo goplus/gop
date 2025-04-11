@@ -1,0 +1,1 @@
+echo jwt.token("Hi")

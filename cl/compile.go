@@ -728,8 +728,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 	var testType string
 	var baseTypeName string
 	var baseType types.Type
-	var spfeats spriteFeat
-	var spxClass bool
+	var sp *spxObj
 	var goxTestFile bool
 	var parent = ctx.pkgCtx
 	if f.IsClass {
@@ -763,12 +762,10 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 					baseType = types.NewPointer(baseType)
 				}
 			} else {
-				sp := proj.sprite[c.ext]
+				sp = proj.spriteOf(c.ext)
 				o := sp.obj
 				ctx.baseClass = o
 				baseTypeName, baseType = o.Name(), o.Type()
-				spxClass = true
-				spfeats = proj.spfeats
 			}
 		}
 	}
@@ -811,7 +808,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 					tags = append(tags, "")
 					chk.chkRedecl(ctx, baseTypeName, pos)
 				}
-				if spxClass && !goxTestFile {
+				if sp != nil && !goxTestFile {
 					if gameClass != "" {
 						typ := toType(ctx, &ast.StarExpr{X: &ast.Ident{Name: gameClass}})
 						name := getTypeName(typ)
@@ -879,7 +876,8 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 	}
 
 	preloadFile(p, ctx, f, goFile, !conf.Outline)
-	if spfeats != 0 {
+	if sp != nil && sp.feats != 0 {
+		spfeats := sp.feats
 		ld := getTypeLoader(parent, parent.syms, token.NoPos, classType)
 		if (spfeats & spriteClassfname) != 0 { // Classfname() string
 			ld.methods = append(ld.methods, func() {
@@ -894,7 +892,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 				old, _ := p.SetCurFile(goFile, true)
 				defer p.RestoreCurFile(old)
 				doInitType(ld)
-				genClassclone(ctx, proj.classclone)
+				genClassclone(ctx, sp.clone)
 			})
 		}
 	}

@@ -513,7 +513,7 @@ func TestGmxProject(t *testing.T) {
 
 	func() {
 		defer func() {
-			if e := recover(); e != "TODO: class not found" {
+			if e := recover(); e != "class not found: .abcx" {
 				t.Fatal("TestGmxProject failed:", e)
 			}
 		}()
@@ -523,7 +523,7 @@ func TestGmxProject(t *testing.T) {
 	}()
 	func() {
 		defer func() {
-			if e := recover(); e != "multiple project files found: main main\n" {
+			if e := recover(); e != "multiple project files found: main, main" {
 				t.Fatal("TestGmxProject failed:", e)
 			}
 		}()

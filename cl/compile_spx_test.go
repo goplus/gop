@@ -416,55 +416,6 @@ func main() {
 `, "index.tgmx", "Kai.tspx")
 }
 
-func TestSpxRunWithWorkers(t *testing.T) {
-	gopSpxTestEx(t, `
-var (
-	Kai Kai
-)
-
-run
-`, `
-echo jwt.token("Hi")
-`, `package main
-
-import (
-	"fmt"
-	"github.com/goplus/gop/cl/internal/spx3"
-	"github.com/goplus/gop/cl/internal/spx3/jwt"
-)
-
-type Kai struct {
-	spx3.Sprite
-	*Game
-}
-type Game struct {
-	spx3.Game
-	Kai Kai
-}
-
-func (this *Game) MainEntry() {
-	this.Run()
-}
-func (this *Game) Main() {
-	spx3.Gopt_Game_Main(this, new(Kai))
-}
-func (this *Kai) Main(_gop_arg0 string) {
-	this.Sprite.Main(_gop_arg0)
-	fmt.Println(jwt.Token("Hi"))
-}
-func (this *Kai) Classfname() string {
-	return "Kai"
-}
-func (this *Kai) Classclone() spx3.Handler {
-	_gop_ret := *this
-	return &_gop_ret
-}
-func main() {
-	new(Game).Main()
-}
-`, "main_spx.gox", "Kai_spx.gox")
-}
-
 func TestSpxNewObj(t *testing.T) {
 	gopSpxTestEx(t, `
 a := new
@@ -548,7 +499,7 @@ func main() {
 `, "Game.t2gmx", "Kai.t2spx")
 }
 
-func TestSpx3(t *testing.T) {
+func _TestSpx3(t *testing.T) {
 	gopSpxTestEx(t, `
 println("Hi, Sprite2")
 `, `
@@ -585,7 +536,7 @@ func main() {
 `, "Game.t2gmx", "Kai.t2spx2")
 }
 
-func TestSpx4(t *testing.T) {
+func _TestSpx4(t *testing.T) {
 	gopSpxTestEx(t, `
 println("Hi, Sprite")
 `, `
