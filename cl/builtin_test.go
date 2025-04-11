@@ -46,6 +46,13 @@ func TestLoadExpr(t *testing.T) {
 	}
 }
 
+func TestSpriteOf(t *testing.T) {
+	proj := &gmxProject{}
+	if proj.spriteOf("a") != nil {
+		t.Fatal("spriteOf: not nil?")
+	}
+}
+
 func TestGetGameClass(t *testing.T) {
 	proj := &gmxProject{
 		gameIsPtr:  true,

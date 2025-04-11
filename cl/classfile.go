@@ -122,7 +122,6 @@ func spriteFeatures(game gogen.Ref, sprites []*spxObj) {
 			}
 		}
 	}
-	return
 }
 
 func (p *gmxProject) getGameClass(ctx *pkgCtx) string {
