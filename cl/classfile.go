@@ -477,8 +477,8 @@ func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {
 						cb.Val(new).Val(spto).Call(1)
 					}
 				} else {
+					new := pkg.Builtin().Ref("new")
 					for i := 1; i < narg; i++ {
-						new := pkg.Builtin().Ref("new")
 						tslice := sigParams.At(i).Type()
 						tn := tslice.(*types.Slice).Elem().(*types.Named)
 						sp := spriteByProto(sprites, tn.Obj().Name())
