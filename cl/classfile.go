@@ -122,15 +122,8 @@ func spriteFeatures(game gogen.Ref, sprites []*spxObj) {
 				sig = t.Func.Type().(*types.Signature)
 			}
 		}
-		if n := len(sprites); n > 1 { // multiple work classes
-			in := sig.Params()
-			for i, narg := 1, in.Len(); i < narg; i++ { // TODO(xsw): error handling
-				tslice := in.At(i).Type().(*types.Slice)
-				tn := tslice.Elem().(*types.Named)
-				sp := spriteByProto(sprites, tn.Obj().Name())
-				spriteFeature(tn.Underlying(), sp)
-			}
-		} else if n == 1 && sig.Variadic() { // single work class
+		if n := len(sprites); n == 1 && sig.Variadic() {
+			// single work class
 			in := sig.Params()
 			last := in.At(in.Len() - 1)
 			elt := last.Type().(*types.Slice).Elem()
@@ -138,6 +131,15 @@ func spriteFeatures(game gogen.Ref, sprites []*spxObj) {
 				elt = tn.Underlying()
 			}
 			spriteFeature(elt, sprites[0])
+		} else {
+			// multiple work classes
+			in := sig.Params()
+			for i, narg := 1, in.Len(); i < narg; i++ { // TODO(xsw): error handling
+				tslice := in.At(i).Type().(*types.Slice)
+				tn := tslice.Elem().(*types.Named)
+				sp := spriteByProto(sprites, tn.Obj().Name())
+				spriteFeature(tn.Underlying(), sp)
+			}
 		}
 	}
 }
