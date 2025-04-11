@@ -59,6 +59,15 @@ type spxObj struct {
 	types []string         // <type>.spx
 }
 
+func spriteByProto(sprites []*spxObj, proto string) *spxObj {
+	for _, sp := range sprites {
+		if sp.proto == proto {
+			return sp
+		}
+	}
+	return nil
+}
+
 type gmxProject struct {
 	gameClass_ string    // <gmtype>.gmx
 	game       gogen.Ref // Game (project base class)
@@ -76,9 +85,9 @@ type gmxProject struct {
 }
 
 func (p *gmxProject) spriteOf(ext string) *spxObj {
-	for _, v := range p.sprites {
-		if v.ext == ext {
-			return v
+	for _, sp := range p.sprites {
+		if sp.ext == ext {
+			return sp
 		}
 	}
 	return nil
@@ -91,6 +100,20 @@ const (
 	spriteClassclone
 )
 
+func spriteFeature(elt types.Type, sp *spxObj) {
+	if intf, ok := elt.(*types.Interface); ok {
+		for i, n := 0, intf.NumMethods(); i < n; i++ {
+			switch m := intf.Method(i); m.Name() {
+			case "Classfname":
+				sp.feats |= spriteClassfname
+			case "Classclone":
+				sp.clone = m.Type().(*types.Signature)
+				sp.feats |= spriteClassclone
+			}
+		}
+	}
+}
+
 func spriteFeatures(game gogen.Ref, sprites []*spxObj) {
 	if mainFn := findMethod(game, "Main"); mainFn != nil {
 		sig := mainFn.Type().(*types.Signature)
@@ -100,7 +123,13 @@ func spriteFeatures(game gogen.Ref, sprites []*spxObj) {
 			}
 		}
 		if n := len(sprites); n > 1 { // multiple work classes
-			panic("TODO(xsw):")
+			in := sig.Params()
+			for i, narg := 1, in.Len(); i < narg; i++ { // TODO(xsw): error handling
+				tslice := in.At(i).Type().(*types.Slice)
+				tn := tslice.Elem().(*types.Named)
+				sp := spriteByProto(sprites, tn.Obj().Name())
+				spriteFeature(tn.Underlying(), sp)
+			}
 		} else if n == 1 && sig.Variadic() { // single work class
 			in := sig.Params()
 			last := in.At(in.Len() - 1)
@@ -108,18 +137,7 @@ func spriteFeatures(game gogen.Ref, sprites []*spxObj) {
 			if tn, ok := elt.(*types.Named); ok {
 				elt = tn.Underlying()
 			}
-			if intf, ok := elt.(*types.Interface); ok {
-				spr := sprites[0]
-				for i, n := 0, intf.NumMethods(); i < n; i++ {
-					switch m := intf.Method(i); m.Name() {
-					case "Classfname":
-						spr.feats |= spriteClassfname
-					case "Classclone":
-						spr.clone = m.Type().(*types.Signature)
-						spr.feats |= spriteClassclone
-					}
-				}
-			}
+			spriteFeature(elt, sprites[0])
 		}
 	}
 }
@@ -446,19 +464,30 @@ func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {
 			} else {
 				cb.Val(recv).MemberRef(base.Name()).UnaryOp(gotoken.AND)
 			}
+
 			narg := sigParams.Len()
 			if narg > 1 {
 				sprites := proj.sprites
 				if len(sprites) == 1 && sprites[0].proto == "" {
-					spr := sprites[0]
-					narg = 1 + len(spr.types)
+					sp := sprites[0]
+					narg = 1 + len(sp.types)
 					new := pkg.Builtin().Ref("new")
-					for _, spt := range spr.types {
-						sp := pkg.Ref(spt)
-						cb.Val(new).Val(sp).Call(1)
+					for _, spt := range sp.types {
+						spto := pkg.Ref(spt)
+						cb.Val(new).Val(spto).Call(1)
 					}
 				} else {
-					panic("TODO(xsw): prototype")
+					new := pkg.Builtin().Ref("new")
+					for i := 1; i < narg; i++ {
+						tslice := sigParams.At(i).Type()
+						tn := tslice.(*types.Slice).Elem().(*types.Named)
+						sp := spriteByProto(sprites, tn.Obj().Name())
+						for _, spt := range sp.types {
+							spto := pkg.Ref(spt)
+							cb.Val(new).Val(spto).Call(1)
+						}
+						cb.SliceLitEx(tslice, len(sp.types), false)
+					}
 				}
 			}
 
