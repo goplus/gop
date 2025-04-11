@@ -52,26 +52,36 @@ func (p *gmxClass) getName(ctx *pkgCtx) string {
 
 type spxObj struct {
 	obj   gogen.Ref
+	ext   string
 	proto string
+	feats spriteFeat
+	clone *types.Signature // prototype of Classclone
+	types []string         // <type>.spx
 }
 
 type gmxProject struct {
 	gameClass_ string    // <gmtype>.gmx
 	game       gogen.Ref // Game (project base class)
-	spfeats    spriteFeat
-	sprite     map[string]spxObj // .spx => Sprite
-	sptypes    []string          // <sptype>.spx
+	sprites    []*spxObj // .spx => Sprite
 	scheds     []string
 	schedStmts []goast.Stmt // nil or len(scheds) == 2 (delayload)
 	pkgImps    []gogen.PkgRef
 	pkgPaths   []string
 	autoimps   map[string]pkgImp // auto-import statement in gop.mod
-	classclone *types.Signature  // prototype of Classclone
 	gt         *Project
 	hasScheds  bool
 	gameIsPtr  bool
 	isTest     bool
 	hasMain_   bool
+}
+
+func (p *gmxProject) spriteOf(ext string) *spxObj {
+	for _, v := range p.sprites {
+		if v.ext == ext {
+			return v
+		}
+	}
+	return nil
 }
 
 type spriteFeat uint
@@ -81,7 +91,7 @@ const (
 	spriteClassclone
 )
 
-func spriteFeatures(game gogen.Ref) (feats spriteFeat, classclone *types.Signature) {
+func spriteFeatures(game gogen.Ref, sprites []*spxObj) {
 	if mainFn := findMethod(game, "Main"); mainFn != nil {
 		sig := mainFn.Type().(*types.Signature)
 		if t, ok := gogen.CheckSigFuncEx(sig); ok {
@@ -89,7 +99,9 @@ func spriteFeatures(game gogen.Ref) (feats spriteFeat, classclone *types.Signatu
 				sig = t.Func.Type().(*types.Signature)
 			}
 		}
-		if sig.Variadic() {
+		if n := len(sprites); n > 1 { // multiple work classes
+			panic("TODO(xsw):")
+		} else if n == 1 && sig.Variadic() { // single work class
 			in := sig.Params()
 			last := in.At(in.Len() - 1)
 			elt := last.Type().(*types.Slice).Elem()
@@ -97,19 +109,19 @@ func spriteFeatures(game gogen.Ref) (feats spriteFeat, classclone *types.Signatu
 				elt = tn.Underlying()
 			}
 			if intf, ok := elt.(*types.Interface); ok {
+				spr := sprites[0]
 				for i, n := 0, intf.NumMethods(); i < n; i++ {
 					switch m := intf.Method(i); m.Name() {
 					case "Classfname":
-						feats |= spriteClassfname
+						spr.feats |= spriteClassfname
 					case "Classclone":
-						classclone = m.Type().(*types.Signature)
-						feats |= spriteClassclone
+						spr.clone = m.Type().(*types.Signature)
+						spr.feats |= spriteClassclone
 					}
 				}
 			}
 		}
 	}
-	return
 }
 
 func (p *gmxProject) getGameClass(ctx *pkgCtx) string {
@@ -201,7 +213,7 @@ func loadClass(ctx *pkgCtx, pkg *gogen.Package, file string, f *ast.File, conf *
 	tname, clsfile, ext := ClassNameAndExt(file)
 	gt, ok := conf.LookupClass(ext)
 	if !ok {
-		panic("TODO: class not found")
+		panic("class not found: " + ext)
 	}
 	p, ok := ctx.projs[gt.Ext]
 	if !ok {
@@ -229,14 +241,19 @@ func loadClass(ctx *pkgCtx, pkg *gogen.Package, file string, f *ast.File, conf *
 		}
 
 		spx := p.pkgImps[0]
+		nWork := len(gt.Works)
+		sprites := make([]*spxObj, nWork)
+		for i, v := range gt.Works {
+			obj, _ := spxRef(spx, v.Class)
+			sprites[i] = &spxObj{obj: obj, ext: v.Ext, proto: v.Proto}
+			if nWork > 1 && v.Proto == "" {
+				panic("should have prototype if there are multiple work classes")
+			}
+		}
+		p.sprites = sprites
 		if gt.Class != "" {
 			p.game, p.gameIsPtr = spxRef(spx, gt.Class)
-			p.spfeats, p.classclone = spriteFeatures(p.game)
-		}
-		p.sprite = make(map[string]spxObj)
-		for _, v := range gt.Works {
-			obj, _ := spxRef(spx, v.Class)
-			p.sprite[v.Ext] = spxObj{obj, v.Proto}
+			spriteFeatures(p.game, sprites)
 		}
 		if x := getStringConst(spx, "Gop_sched"); x != "" {
 			p.scheds, p.hasScheds = strings.SplitN(x, ",", 2), true
@@ -244,7 +261,7 @@ func loadClass(ctx *pkgCtx, pkg *gogen.Package, file string, f *ast.File, conf *
 	}
 	if f.IsProj {
 		if p.gameClass_ != "" {
-			log.Panicln("multiple project files found:", tname, p.gameClass_)
+			panic("multiple project files found: " + tname + ", " + p.gameClass_)
 		}
 		p.gameClass_ = tname
 		p.hasMain_ = f.HasShadowEntry()
@@ -252,7 +269,8 @@ func loadClass(ctx *pkgCtx, pkg *gogen.Package, file string, f *ast.File, conf *
 			ctx.nproj++
 		}
 	} else {
-		p.sptypes = append(p.sptypes, tname)
+		sp := p.spriteOf(ext)
+		sp.types = append(sp.types, tname)
 	}
 	ctx.classes[f] = &gmxClass{tname, clsfile, ext, p}
 	if debugLoad {
@@ -430,11 +448,17 @@ func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {
 			}
 			narg := sigParams.Len()
 			if narg > 1 {
-				narg = 1 + len(proj.sptypes)
-				new := pkg.Builtin().Ref("new")
-				for _, spt := range proj.sptypes {
-					sp := pkg.Ref(spt)
-					cb.Val(new).Val(sp).Call(1)
+				sprites := proj.sprites
+				if len(sprites) == 1 && sprites[0].proto == "" {
+					spr := sprites[0]
+					narg = 1 + len(spr.types)
+					new := pkg.Builtin().Ref("new")
+					for _, spt := range spr.types {
+						sp := pkg.Ref(spt)
+						cb.Val(new).Val(sp).Call(1)
+					}
+				} else {
+					panic("TODO(xsw): prototype")
 				}
 			}
 
