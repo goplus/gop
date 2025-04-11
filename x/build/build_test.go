@@ -407,11 +407,11 @@ type MyGame struct {
 	spx.MyGame
 }
 
-func (this *Cat) Main() {
-	fmt.Println("hi")
-}
 func (this *MyGame) Main() {
 	spx.Gopt_MyGame_Main(this)
+}
+func (this *Cat) Main() {
+	fmt.Println("hi")
 }
 func main() {
 	new(MyGame).Main()
