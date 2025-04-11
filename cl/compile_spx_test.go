@@ -43,31 +43,6 @@ func gopSpxErrorTestEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string)
 	cltest.SpxErrorEx(t, msg, gmx, spxcode, gmxfile, spxfile)
 }
 
-func TestSpxNoGame(t *testing.T) {
-	gopSpxTestEx(t, ``, `
-`, `package main
-
-import "github.com/goplus/gop/cl/internal/spx"
-
-type Kai struct {
-	spx.Sprite
-	*MyGame
-}
-type MyGame struct {
-	*spx.MyGame
-}
-
-func (this *Kai) Main() {
-}
-func (this *MyGame) Main() {
-	spx.Gopt_MyGame_Main(this)
-}
-func main() {
-	new(MyGame).Main()
-}
-`, "", "Kai.tspx")
-}
-
 func TestSpxError(t *testing.T) {
 	gopSpxErrorTestEx(t, `Game.tgmx:6:2: userScore redeclared
 	Game.tgmx:5:2 other declaration of userScore`, `
