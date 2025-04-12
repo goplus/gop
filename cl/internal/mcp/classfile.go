@@ -45,6 +45,12 @@ func (p *Prompt) Main(*Tool) string {
 	return ""
 }
 
+type Resource struct {
+}
+
+func (p *Resource) Main() {
+}
+
 type ToolProto interface {
 	Main(name string) int
 }
@@ -53,5 +59,9 @@ type PromptProto interface {
 	Main(*Tool) string
 }
 
-func Gopt_Game_Main(game interface{ initGame() }, tools []ToolProto, prompts []PromptProto) {
+type ResourceProto interface {
+	Main()
+}
+
+func Gopt_Game_Main(game interface{ initGame() }, resources []ResourceProto, tools []ToolProto, prompts []PromptProto) {
 }

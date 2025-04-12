@@ -484,11 +484,15 @@ func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {
 						tslice := sigParams.At(i).Type()
 						tn := tslice.(*types.Slice).Elem().(*types.Named)
 						sp := spriteByProto(sprites, tn.Obj().Name())
-						for _, spt := range sp.types {
-							spto := pkg.Ref(spt)
-							cb.Val(new).Val(spto).Call(1)
+						if n := len(sp.types); n > 0 {
+							for _, spt := range sp.types {
+								spto := pkg.Ref(spt)
+								cb.Val(new).Val(spto).Call(1)
+							}
+							cb.SliceLitEx(tslice, n, false)
+						} else {
+							cb.Val(nil)
 						}
-						cb.SliceLitEx(tslice, len(sp.types), false)
 					}
 				}
 			}
