@@ -1726,35 +1726,34 @@ func onCloned() {
 	say("Hi")
 }
 `, `== types ==
-000:  0: 0 | *MyGame             *ast.StarExpr                  | type    : *main.MyGame | type
-001:  0: 0 | Kai                 *ast.Ident                     | type    : main.Kai | type
-002:  0: 0 | MyGame              *ast.Ident                     | type    : main.MyGame | type
-003:  3: 4 | int                 *ast.Ident                     | type    : int | type
-004:  6:11 | struct {
+000:  0: 0 | Kai                 *ast.Ident                     | type    : main.Kai | type
+001:  0: 0 | MyGame              *ast.Ident                     | type    : main.MyGame | type
+002:  3: 4 | int                 *ast.Ident                     | type    : int | type
+003:  6:11 | struct {
 	x int
 	y int
 } *ast.StructType                | type    : struct{x int; y int} | type
-005:  7: 4 | int                 *ast.Ident                     | type    : int | type
-006:  8: 4 | int                 *ast.Ident                     | type    : int | type
-007: 12: 2 | a                   *ast.Ident                     | var     : int | variable
-008: 12: 6 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
-009: 13: 2 | clone               *ast.Ident                     | value   : func(sprite any) | value
-010: 14: 2 | clone               *ast.Ident                     | value   : func(sprite any, data any) | value
-011: 14: 2 | clone info{1, 2}    *ast.CallExpr                  | void    : () | no value
-012: 14: 8 | info                *ast.Ident                     | type    : main.info | type
-013: 14: 8 | info{1, 2}          *ast.CompositeLit              | value   : main.info | value
-014: 14:13 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
-015: 14:15 | 2                   *ast.BasicLit                  | value   : untyped int = 2 | constant
-016: 15: 2 | clone               *ast.Ident                     | value   : func(sprite any, data any) | value
-017: 15: 2 | clone &info{1, 2}   *ast.CallExpr                  | void    : () | no value
-018: 15: 8 | &info{1, 2}         *ast.UnaryExpr                 | value   : *main.info | value
-019: 15: 9 | info                *ast.Ident                     | type    : main.info | type
-020: 15: 9 | info{1, 2}          *ast.CompositeLit              | value   : main.info | value
-021: 15:14 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
-022: 15:16 | 2                   *ast.BasicLit                  | value   : untyped int = 2 | constant
-023: 19: 2 | say                 *ast.Ident                     | value   : func(msg string, secs ...float64) | value
-024: 19: 2 | say("Hi")           *ast.CallExpr                  | void    : () | no value
-025: 19: 6 | "Hi"                *ast.BasicLit                  | value   : untyped string = "Hi" | constant
+004:  7: 4 | int                 *ast.Ident                     | type    : int | type
+005:  8: 4 | int                 *ast.Ident                     | type    : int | type
+006: 12: 2 | a                   *ast.Ident                     | var     : int | variable
+007: 12: 6 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
+008: 13: 2 | clone               *ast.Ident                     | value   : func(sprite any) | value
+009: 14: 2 | clone               *ast.Ident                     | value   : func(sprite any, data any) | value
+010: 14: 2 | clone info{1, 2}    *ast.CallExpr                  | void    : () | no value
+011: 14: 8 | info                *ast.Ident                     | type    : main.info | type
+012: 14: 8 | info{1, 2}          *ast.CompositeLit              | value   : main.info | value
+013: 14:13 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
+014: 14:15 | 2                   *ast.BasicLit                  | value   : untyped int = 2 | constant
+015: 15: 2 | clone               *ast.Ident                     | value   : func(sprite any, data any) | value
+016: 15: 2 | clone &info{1, 2}   *ast.CallExpr                  | void    : () | no value
+017: 15: 8 | &info{1, 2}         *ast.UnaryExpr                 | value   : *main.info | value
+018: 15: 9 | info                *ast.Ident                     | type    : main.info | type
+019: 15: 9 | info{1, 2}          *ast.CompositeLit              | value   : main.info | value
+020: 15:14 | 1                   *ast.BasicLit                  | value   : untyped int = 1 | constant
+021: 15:16 | 2                   *ast.BasicLit                  | value   : untyped int = 2 | constant
+022: 19: 2 | say                 *ast.Ident                     | value   : func(msg string, secs ...float64) | value
+023: 19: 2 | say("Hi")           *ast.CallExpr                  | void    : () | no value
+024: 19: 6 | "Hi"                *ast.BasicLit                  | value   : untyped string = "Hi" | constant
 == defs ==
 000:  0: 0 | Main                | func (*main.Kai).Main()
 001:  0: 0 | this                | var this *main.Kai

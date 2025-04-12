@@ -18,14 +18,20 @@ package cltest
 
 import (
 	"bytes"
+	"io/fs"
+	"log"
 	"os"
+	"path"
+	"strings"
 	"testing"
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/parser"
+	"github.com/goplus/gop/parser/fsx"
 	"github.com/goplus/gop/parser/fsx/memfs"
 	"github.com/goplus/gop/scanner"
 	"github.com/goplus/mod/modfile"
+	"github.com/qiniu/x/test"
 )
 
 func spxParserConf() parser.Config {
@@ -55,33 +61,41 @@ func SpxEx2(t *testing.T, gmx, spxcode, expected, gmxfile, spxfile, resultFile s
 
 func SpxWithConf(t *testing.T, name string, conf *cl.Config, gmx, spxcode, expected, gmxfile, spxfile, resultFile string) {
 	t.Run(name, func(t *testing.T) {
-		cl.SetDisableRecover(true)
-		defer cl.SetDisableRecover(false)
-
 		fs := memfs.TwoFiles("/foo", spxfile, spxcode, gmxfile, gmx)
 		if gmxfile == "" {
 			fs = memfs.SingleFile("/foo", spxfile, spxcode)
 		}
-		pkgs, err := parser.ParseFSDir(Conf.Fset, fs, "/foo", spxParserConf())
-		if err != nil {
-			scanner.PrintError(os.Stderr, err)
-			t.Fatal("ParseFSDir:", err)
-		}
-		bar := pkgs["main"]
-		pkg, err := cl.NewPackage("", bar, conf)
-		if err != nil {
-			t.Fatal("NewPackage:", err)
-		}
-		var b bytes.Buffer
-		err = pkg.WriteTo(&b, resultFile)
-		if err != nil {
-			t.Fatal("gogen.WriteTo failed:", err)
-		}
+		SpxTest(t, fs, "/foo", spxParserConf(), conf, expected, resultFile)
+	})
+}
+
+func SpxTest(t *testing.T, fs fsx.FileSystem, dir string, parseConf parser.Config, clConf *cl.Config, exp any, resultFile string) {
+	cl.SetDisableRecover(true)
+	defer cl.SetDisableRecover(false)
+
+	pkgs, err := parser.ParseFSDir(Conf.Fset, fs, dir, parseConf)
+	if err != nil {
+		scanner.PrintError(os.Stderr, err)
+		t.Fatal("ParseFSDir:", err)
+	}
+	bar := pkgs["main"]
+	pkg, err := cl.NewPackage("", bar, clConf)
+	if err != nil {
+		t.Fatal("NewPackage:", err)
+	}
+	var b bytes.Buffer
+	err = pkg.WriteTo(&b, resultFile)
+	if err != nil {
+		t.Fatal("gogen.WriteTo failed:", err)
+	}
+	if expected, ok := exp.(string); ok {
 		result := b.String()
 		if result != expected {
 			t.Fatalf("\nResult:\n%s\nExpected:\n%s\n", result, expected)
 		}
-	})
+	} else if test.Diff(t, dir+"/result.txt", b.Bytes(), exp.([]byte)) {
+		t.Fatal(dir, ": unexpect result")
+	}
 }
 
 func SpxErrorEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string) {
@@ -103,4 +117,38 @@ func SpxErrorEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string) {
 	if ret := err.Error(); ret != msg {
 		t.Fatalf("\nError: \"%s\"\nExpected: \"%s\"\n", ret, msg)
 	}
+}
+
+func SpxFromDir(t *testing.T, sel, relDir string) {
+	dir, err := os.Getwd()
+	if err != nil {
+		t.Fatal("Getwd failed:", err)
+	}
+	dir = path.Join(dir, relDir)
+	fis, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal("ReadDir failed:", err)
+	}
+	for _, fi := range fis {
+		name := fi.Name()
+		if !fi.IsDir() || strings.HasPrefix(name, "_") {
+			continue
+		}
+		t.Run(name, func(t *testing.T) {
+			testSpxFrom(t, dir+"/"+name, sel)
+		})
+	}
+}
+
+func testSpxFrom(t *testing.T, pkgDir, sel string) {
+	if sel != "" && !strings.Contains(pkgDir, sel) {
+		return
+	}
+	log.Println("Parsing", pkgDir)
+	parseConf := spxParserConf()
+	parseConf.Filter = func(fi fs.FileInfo) bool {
+		return !strings.HasSuffix(fi.Name(), ".go")
+	}
+	expect, _ := os.ReadFile(pkgDir + "/out.go")
+	SpxTest(t, fsx.Local, pkgDir, parseConf, Conf, expect, "")
 }

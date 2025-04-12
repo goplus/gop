@@ -19,8 +19,6 @@ package scannertest
 import (
 	"fmt"
 	"io"
-	"os"
-	"testing"
 
 	"github.com/goplus/gop/tpl/scanner"
 	"github.com/goplus/gop/tpl/token"
@@ -31,33 +29,6 @@ import (
 	gopscanner "github.com/goplus/gop/scanner"
 	goptoken "github.com/goplus/gop/token"
 )
-
-// -----------------------------------------------------------------------------
-
-func Diff(t *testing.T, outfile string, dst, src []byte) bool {
-	line := 1
-	offs := 0 // line offset
-	for i := 0; i < len(dst) && i < len(src); i++ {
-		d := dst[i]
-		s := src[i]
-		if d != s {
-			os.WriteFile(outfile, dst, 0644)
-			t.Errorf("dst:%d: %s\n", line, dst[offs:])
-			t.Errorf("src:%d: %s\n", line, src[offs:])
-			return true
-		}
-		if s == '\n' {
-			line++
-			offs = i + 1
-		}
-	}
-	if len(dst) != len(src) {
-		os.WriteFile(outfile, dst, 0644)
-		t.Errorf("len(dst) = %d, len(src) = %d\ndst = %q\nsrc = %q", len(dst), len(src), dst, src)
-		return true
-	}
-	return false
-}
 
 // -----------------------------------------------------------------------------
 

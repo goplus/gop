@@ -87,7 +87,7 @@ func (p *Rule) IsList() bool {
 		}
 	case *BinaryExpr:
 		switch e.Op {
-		case token.REM: // R1 % R2
+		case token.REM, token.INC: // R1 % R2, R1 ++ R2
 			return true
 		}
 	}

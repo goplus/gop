@@ -351,6 +351,13 @@ func buildGoplusTools(useGoProxy bool) {
 		log.Fatalln(err)
 	}
 
+	switch goVersion() {
+	case "1.24":
+		work := filepath.Join(commandsDir, "_make", "1.24", "go.work")
+		commandExecuteEnv = append(commandExecuteEnv,
+			"GOWORK="+work)
+	}
+
 	println("Building Go+ tools...\n")
 	os.Chdir(commandsDir)
 	buildOutput, err := execCommand("go", "build", "-o", gopBinPath, "-v", "-ldflags", buildFlags, "./...")
@@ -363,6 +370,25 @@ func buildGoplusTools(useGoProxy bool) {
 	cleanGopRunCache()
 
 	println("\nGo+ tools built successfully!")
+}
+
+var (
+	workfile = `use ./..
+replace golang.org/x/tools => golang.org/x/tools v0.30
+`
+)
+
+func goVersion() string {
+	out, err := execCommand("go", "version")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	if i := strings.Index(out, "go1."); i != -1 {
+		if n := strings.IndexAny(out[i+4:], ". "); n != -1 {
+			return out[i+2 : i+4+n]
+		}
+	}
+	return ""
 }
 
 func showHelpPostInstall(installPath string) {

@@ -26,6 +26,7 @@ import (
 	"testing"
 
 	"github.com/goplus/gop/tpl/scanner/scannertest"
+	"github.com/qiniu/x/test"
 )
 
 func testScan(
@@ -35,7 +36,7 @@ func testScan(
 	var b bytes.Buffer
 	scan(&b, in)
 	out := b.Bytes()
-	if scannertest.Diff(t, pkgDir+"/result.txt", out, expect) {
+	if test.Diff(t, pkgDir+"/result.txt", out, expect) {
 		t.Fatal(expFile, ": unexpect result")
 	}
 }

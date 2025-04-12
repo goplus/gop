@@ -77,16 +77,12 @@ func LookupClass(ext string) (c *modfile.Project, ok bool) {
 			Ext: ".tgmx", Class: "*MyGame",
 			Works:    []*modfile.Class{{Ext: ".tspx", Class: "Sprite"}},
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx", "math"}}, true
-	case ".t2gmx", ".t2spx", ".t2spx2":
+	case ".t2gmx", ".t2spx":
 		return &modfile.Project{
 			Ext: ".t2gmx", Class: "Game",
-			Works: []*modfile.Class{{Ext: ".t2spx", Class: "Sprite"},
-				{Ext: ".t2spx2", Class: "Sprite2"}},
-			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
-	case "_t3spx.gox", ".t3spx2":
-		return &modfile.Project{
-			Works: []*modfile.Class{{Ext: "_t3spx.gox", Class: "Sprite"},
-				{Ext: ".t3spx2", Class: "Sprite2"}},
+			Works: []*modfile.Class{
+				{Ext: ".t2spx", Class: "Sprite"},
+			},
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
 	case "_spx.gox":
 		return &modfile.Project{
@@ -99,6 +95,15 @@ func LookupClass(ext string) (c *modfile.Project, ok bool) {
 			Ext: "_xtest.gox", Class: "App",
 			Works:    []*modfile.Class{{Ext: "_xtest.gox", Class: "Case"}},
 			PkgPaths: []string{"github.com/goplus/gop/test", "testing"}}, true
+	case "_mcp.gox", "_tool.gox", "_prompt.gox":
+		return &modfile.Project{
+			Ext: "_mcp.gox", Class: "Game",
+			Works: []*modfile.Class{
+				{Ext: "_tool.gox", Class: "Tool", Proto: "ToolProto"},
+				{Ext: "_prompt.gox", Class: "Prompt", Proto: "PromptProto"},
+				{Ext: "_res.gox", Class: "Resource", Proto: "ResourceProto"},
+			},
+			PkgPaths: []string{"github.com/goplus/gop/cl/internal/mcp"}}, true
 	}
 	return
 }

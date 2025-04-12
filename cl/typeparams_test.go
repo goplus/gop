@@ -744,3 +744,26 @@ func main() {
 }
 `)
 }
+
+func TestGenericFuncAlias(t *testing.T) {
+	gopClTest(t, `import "github.com/goplus/gop/cl/internal/overload/foo"
+foo.test(100)
+foo.test("hello",100)
+foo.test__1(100)
+foo.test__1[int](100)
+foo.test__2(1, true)
+foo.test__2[int, string](1, "hello")
+`, `package main
+
+import "github.com/goplus/gop/cl/internal/overload/foo"
+
+func main() {
+	foo.Test__1(100)
+	foo.Test__2("hello", 100)
+	foo.Test__1(100)
+	foo.Test__1[int](100)
+	foo.Test__2(1, true)
+	foo.Test__2[int, string](1, "hello")
+}
+`)
+}

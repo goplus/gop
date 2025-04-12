@@ -43,31 +43,6 @@ func gopSpxErrorTestEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string)
 	cltest.SpxErrorEx(t, msg, gmx, spxcode, gmxfile, spxfile)
 }
 
-func TestSpxNoGame(t *testing.T) {
-	gopSpxTestEx(t, ``, `
-`, `package main
-
-import "github.com/goplus/gop/cl/internal/spx"
-
-type Kai struct {
-	spx.Sprite
-	*MyGame
-}
-type MyGame struct {
-	*spx.MyGame
-}
-
-func (this *Kai) Main() {
-}
-func (this *MyGame) Main() {
-	spx.Gopt_MyGame_Main(this)
-}
-func main() {
-	new(MyGame).Main()
-}
-`, "", "Kai.tspx")
-}
-
 func TestSpxError(t *testing.T) {
 	gopSpxErrorTestEx(t, `Game.tgmx:6:2: userScore redeclared
 	Game.tgmx:5:2 other declaration of userScore`, `
@@ -97,57 +72,6 @@ println "hi"
 }
 
 func TestSpxBasic(t *testing.T) {
-	gopSpxTestEx(t, `
-func onInit() {
-	for {
-	}
-}
-
-initGameApp
-`, `
-func onMsg(msg string) {
-	for {
-		say "Hi"
-	}
-}
-`, `package main
-
-import "github.com/goplus/gop/cl/internal/spx"
-
-type Game struct {
-	*spx.MyGame
-}
-type Kai struct {
-	spx.Sprite
-	*Game
-}
-
-func (this *Game) onInit() {
-	for {
-		spx.SchedNow()
-	}
-}
-func (this *Game) MainEntry() {
-	this.InitGameApp()
-}
-func (this *Game) Main() {
-	spx.Gopt_MyGame_Main(this)
-}
-func (this *Kai) onMsg(msg string) {
-	for {
-		spx.Sched()
-		this.Say("Hi")
-	}
-}
-func (this *Kai) Main() {
-}
-func main() {
-	new(Game).Main()
-}
-`, "Game.tgmx", "Kai.tspx")
-}
-
-func TestSpxBasic2(t *testing.T) {
 	gopSpxTest(t, `
 import (
 	"fmt"
@@ -467,55 +391,6 @@ func main() {
 `, "index.tgmx", "Kai.tspx")
 }
 
-func TestSpxRunWithWorkers(t *testing.T) {
-	gopSpxTestEx(t, `
-var (
-	Kai Kai
-)
-
-run
-`, `
-echo jwt.token("Hi")
-`, `package main
-
-import (
-	"fmt"
-	"github.com/goplus/gop/cl/internal/spx3"
-	"github.com/goplus/gop/cl/internal/spx3/jwt"
-)
-
-type Kai struct {
-	spx3.Sprite
-	*Game
-}
-type Game struct {
-	spx3.Game
-	Kai Kai
-}
-
-func (this *Game) MainEntry() {
-	this.Run()
-}
-func (this *Game) Main() {
-	spx3.Gopt_Game_Main(this, new(Kai))
-}
-func (this *Kai) Main(_gop_arg0 string) {
-	this.Sprite.Main(_gop_arg0)
-	fmt.Println(jwt.Token("Hi"))
-}
-func (this *Kai) Classfname() string {
-	return "Kai"
-}
-func (this *Kai) Classclone() spx3.Handler {
-	_gop_ret := *this
-	return &_gop_ret
-}
-func main() {
-	new(Game).Main()
-}
-`, "main_spx.gox", "Kai_spx.gox")
-}
-
 func TestSpxNewObj(t *testing.T) {
 	gopSpxTestEx(t, `
 a := new
@@ -597,73 +472,6 @@ func main() {
 	new(Game).Main()
 }
 `, "Game.t2gmx", "Kai.t2spx")
-}
-
-func TestSpx3(t *testing.T) {
-	gopSpxTestEx(t, `
-println("Hi, Sprite2")
-`, `
-func onMsg(msg string) {
-}
-`, `package main
-
-import (
-	"fmt"
-	"github.com/goplus/gop/cl/internal/spx2"
-)
-
-type Game struct {
-	spx2.Game
-}
-type Kai struct {
-	spx2.Sprite2
-	*Game
-}
-
-func (this *Game) MainEntry() {
-	fmt.Println("Hi, Sprite2")
-}
-func (this *Game) Main() {
-	(*spx2.Game).Main(&this.Game)
-}
-func (this *Kai) onMsg(msg string) {
-}
-func (this *Kai) Main() {
-}
-func main() {
-	new(Game).Main()
-}
-`, "Game.t2gmx", "Kai.t2spx2")
-}
-
-func TestSpx4(t *testing.T) {
-	gopSpxTestEx(t, `
-println("Hi, Sprite")
-`, `
-func onMsg(msg string) {
-}
-`, `package main
-
-import (
-	"fmt"
-	"github.com/goplus/gop/cl/internal/spx2"
-)
-
-type Dog struct {
-	spx2.Sprite
-}
-type Kai struct {
-	spx2.Sprite2
-}
-
-func (this *Dog) Main() {
-	fmt.Println("Hi, Sprite")
-}
-func (this *Kai) onMsg(msg string) {
-}
-func (this *Kai) Main() {
-}
-`, "Dog_t3spx.gox", "Kai.t3spx2")
 }
 
 func TestSpxMainEntry(t *testing.T) {
@@ -1166,7 +974,6 @@ import (
 
 type caseFoo struct {
 	test.Case
-	*App
 }
 type App struct {
 	test.App

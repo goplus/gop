@@ -86,6 +86,7 @@ func (p *Importer) CacheFile() string {
 
 	fname := ""
 	h := sha256.New()
+	io.WriteString(h, runtime.Version())
 	if root := p.mod.Root(); root != "" {
 		io.WriteString(h, root)
 		fname = filepath.Base(root)
@@ -118,7 +119,7 @@ func (p *Importer) PkgHash(pkgPath string, self bool) string {
 			return dirHash(p.mod, p.gop, pkg.Dir, self)
 		}
 	}
-	if isPkgInMod(pkgPath, gopMod) {
+	if isPkgInMod(pkgPath, gopMod) || isPkgInMod(pkgPath, xMod) {
 		return cache.HashSkip
 	}
 	log.Println("PkgHash: unexpected package -", pkgPath)
@@ -127,6 +128,7 @@ func (p *Importer) PkgHash(pkgPath string, self bool) string {
 
 const (
 	gopMod = "github.com/goplus/gop"
+	xMod   = "github.com/qiniu/x"
 )
 
 // Import imports a Go/Go+ package.
@@ -142,7 +144,7 @@ func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 			return p.impFrom.ImportFrom(pkgPath, gopRoot, 0)
 		}
 	}
-	if isPkgInMod(pkgPath, "github.com/qiniu/x") {
+	if isPkgInMod(pkgPath, xMod) {
 		return p.impFrom.ImportFrom(pkgPath, p.gop.Root, 0)
 	}
 	if mod := p.mod; mod.HasModfile() {
@@ -167,6 +169,9 @@ func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 			}
 			return p.impFrom.ImportFrom(pkgPath, ret.ModDir, 0)
 		case gopmod.PkgtModule, gopmod.PkgtLocal:
+			if pkgPath == p.mod.Path() {
+				break
+			}
 			if err = p.genGoExtern(ret.Dir, false); err != nil {
 				return
 			}
