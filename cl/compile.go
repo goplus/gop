@@ -810,7 +810,9 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 				}
 				if sp != nil && !goxTestFile {
 					if gameClass != "" {
-						typ := toType(ctx, &ast.StarExpr{X: &ast.Ident{Name: gameClass}})
+						typ := toType(ctx, &ast.Ident{Name: gameClass})
+						getUnderlying(ctx, typ) // ensure type is loaded
+						typ = types.NewPointer(typ)
 						name := getTypeName(typ)
 						if !chk.chkRedecl(ctx, name, pos) {
 							fld := types.NewField(pos, pkg, name, typ, true)
