@@ -18,7 +18,7 @@ func (this *Game) MainEntry() {
 	this.Server("protos")
 }
 func (this *Game) Main() {
-	mcp.Gopt_Game_Main(this, []mcp.ToolProto{new(hello)}, []mcp.PromptProto{new(foo)})
+	mcp.Gopt_Game_Main(this, nil, []mcp.ToolProto{new(hello)}, []mcp.PromptProto{new(foo)})
 }
 func (this *foo) Main(_gop_arg0 *mcp.Tool) string {
 	this.Prompt.Main(_gop_arg0)
