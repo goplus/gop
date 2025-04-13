@@ -29,7 +29,7 @@ jobs:
         - 1.19.x
         - 1.21.x
         - 1.22.x
-        - 1.23.x
+        - 1.24.x
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
