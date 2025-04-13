@@ -72,6 +72,9 @@ jobs:
       with:
         go-version: ${{ matrix.go }}
 
+    - name: Set types alias env
+      run: echo "GODEBUG=gotypesalias=1" >> $GITHUB_ENV
+
     - name: Test Go+ installer
       run: |
         git config --global user.email "build-robot@goplus.org"
