@@ -1,7 +1,7 @@
 github.com/fsnotify/fsnotify v1.9.0 h1:2Ml+OJNzbYCTzsxtv8vKSFD9PbJjmhYF14k/jKC7S9k=
 github.com/fsnotify/fsnotify v1.9.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=
-github.com/goplus/gogen v1.17.0 h1:+Ly/G9NuZ/pAdQZyWfdn7pG7lGhC4KsKmGAos2XF0zY=
-github.com/goplus/gogen v1.17.0/go.mod h1:owX2e1EyU5WD+Nm6oH2m/GXjLdlBYcwkLO4wN8HHXZI=
+github.com/goplus/gogen v1.17.1 h1:dx1KoggI3jK0ti4GyQAJMPAib81BP2uePA8xQ9dMJlU=
+github.com/goplus/gogen v1.17.1/go.mod h1:owX2e1EyU5WD+Nm6oH2m/GXjLdlBYcwkLO4wN8HHXZI=
 github.com/goplus/llgo v0.10.1 h1:Cla7Rv6S67SnAknMm8nNvHhxFf9Fo/daHRcs3w3rS6s=
 github.com/goplus/llgo v0.10.1/go.mod h1:YfOHsT/g3lc9b4GclLj812YzdSsJr0kd3CCB830TqHE=
 github.com/goplus/mod v0.15.1 h1:kNSnM5ZIpZbZmySzv/oqK9uJF5RCxRvcLsxjDMOxWVw=
@@ -12,5 +12,3 @@ golang.org/x/mod v0.20.0 h1:utOm6MM3R3dnawAiJgn0y+xvuYRsm1RKM/4giyfDgV0=
 golang.org/x/mod v0.20.0/go.mod h1:hTbmBsO62+eylJbnUtE2MGJUyE7QWk4xUqPFrRgJ+7c=
 golang.org/x/sys v0.21.0 h1:rF+pYz3DAGSQAxAu1CbC7catZg4ebC4UIeIhKxBZvws=
 golang.org/x/sys v0.21.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
-golang.org/x/tools v0.19.0 h1:tfGCXNR1OsFG+sVdLAitlpjAvD/I6dHDKnYrpEZUHkw=
-golang.org/x/tools v0.19.0/go.mod h1:qoJWxmGSIBmAeriMx19ogtrEPrGtDbPK634QFIcLAhc=
