@@ -351,13 +351,6 @@ func buildGoplusTools(useGoProxy bool) {
 		log.Fatalln(err)
 	}
 
-	switch goVersion() {
-	case "1.24":
-		work := filepath.Join(commandsDir, "_make", "1.24", "go.work")
-		commandExecuteEnv = append(commandExecuteEnv,
-			"GOWORK="+work)
-	}
-
 	println("Building Go+ tools...\n")
 	os.Chdir(commandsDir)
 	buildOutput, err := execCommand("go", "build", "-o", gopBinPath, "-v", "-ldflags", buildFlags, "./...")
@@ -371,12 +364,6 @@ func buildGoplusTools(useGoProxy bool) {
 
 	println("\nGo+ tools built successfully!")
 }
-
-var (
-	workfile = `use ./..
-replace golang.org/x/tools => golang.org/x/tools v0.30
-`
-)
 
 func goVersion() string {
 	out, err := execCommand("go", "version")

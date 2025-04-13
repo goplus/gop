@@ -29,7 +29,7 @@ jobs:
         - 1.19.x
         - 1.21.x
         - 1.22.x
-        - 1.23.x
+        - 1.24.x
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -71,11 +71,6 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: ${{ matrix.go }}
-
-    - name: Update golang.org/x/tools
-      run: |
-        go work init .
-        go work edit -replace golang.org/x/tools=golang.org/x/tools@v0.30
 
     - name: Test Go+ installer
       run: |
