@@ -72,11 +72,6 @@ jobs:
       with:
         go-version: ${{ matrix.go }}
 
-    - name: Update golang.org/x/tools
-      run: |
-        go work init .
-        go work edit -replace golang.org/x/tools=golang.org/x/tools@v0.30
-
     - name: Test Go+ installer
       run: |
         git config --global user.email "build-robot@goplus.org"
