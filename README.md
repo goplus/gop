@@ -116,7 +116,7 @@ module YourModulePath
 
 go 1.21 // llgo 1.0
 
-require github.com/goplus/llgo v0.9.9
+require github.com/goplus/lib v0.2.0
 ```
 
 Based on LLGo, Go+ can import libraries written in C/C++ and Python.
@@ -151,9 +151,9 @@ Here, `py"Hello world"` is a syntax supported by Go+, representing a Python stri
 
 Here are more examples of Go+ calling C/C++ and Python libraries:
 
-* [pytensor](demo/_llgo/pytensor/tensor.gop): a simple demo using [py/torch](https://pkg.go.dev/github.com/goplus/llgo/py/torch)
-* [tetris](demo/_llgo/tetris/tetris.gop): a tetris game based on [c/raylib](https://pkg.go.dev/github.com/goplus/llgo/c/raylib)
-* [sqlitedemo](demo/_llgo/sqlitedemo/sqlitedemo.gop): a demo using [c/sqlite](https://pkg.go.dev/github.com/goplus/llgo/c/sqlite)
+* [pytensor](demo/_llgo/pytensor/tensor.gop): a simple demo using [py/torch](https://pkg.go.dev/github.com/goplus/lib/py/torch)
+* [tetris](demo/_llgo/tetris/tetris.gop): a tetris game based on [c/raylib](https://pkg.go.dev/github.com/goplus/lib/c/raylib)
+* [sqlitedemo](demo/_llgo/sqlitedemo/sqlitedemo.gop): a demo using [c/sqlite](https://pkg.go.dev/github.com/goplus/lib/c/sqlite)
 
 To find out more about LLGo/Go+'s support for C/C++ and Python in detail, please refer to homepage of [llgo](https://github.com/goplus/llgo).
 

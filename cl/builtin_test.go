@@ -73,10 +73,10 @@ func TestGetGameClass(t *testing.T) {
 }
 
 func TestSimplifyPkgPath(t *testing.T) {
-	if simplifyPkgPath("c/lua") != "github.com/goplus/llgo/c/lua" {
+	if simplifyPkgPath("c/lua") != "github.com/goplus/lib/c/lua" {
 		t.Fatal("simplifyPkgPath: c/lua")
 	}
-	if simplifyPkgPath("cpp/std") != "github.com/goplus/llgo/cpp/std" {
+	if simplifyPkgPath("cpp/std") != "github.com/goplus/lib/cpp/std" {
 		t.Fatal("simplifyPkgPath: cpp/std")
 	}
 }

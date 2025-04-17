@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/goplus/llgo/py"
-	"github.com/goplus/llgo/py/std"
+	"github.com/goplus/lib/py"
+	"github.com/goplus/lib/py/std"
 )
 
 func main() {

@@ -7,10 +7,10 @@ c.printf c"Hello, llgo!\n"
 c.fprintf c.Stderr, c"Hi, %6.1f\n", 3.14
 ```
 
-Here we use `import "c"` to import libc. It's an abbreviation for `import "github.com/goplus/llgo/c"`. It is equivalent to the following code:
+Here we use `import "c"` to import libc. It's an abbreviation for `import "github.com/goplus/lib/c"`. It is equivalent to the following code:
 
 ```go
-import "github.com/goplus/llgo/c"
+import "github.com/goplus/lib/c"
 
 c.printf c"Hello, llgo!\n"
 c.fprintf c.Stderr, c"Hi, %7.1f\n", 3.14
