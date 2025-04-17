@@ -68,7 +68,7 @@ func commentStmtEx(cb *gogen.CodeBuilder, ctx *pkgCtx, stmt ast.Stmt) {
 	comments := &goast.CommentGroup{
 		List: []*goast.Comment{{Text: line}},
 	}
-	cb.SetComments(comments, false)
+	cb.SetComments(comments, true)
 }
 
 func checkStmtDoc(stmt ast.Stmt) *ast.CommentGroup {
