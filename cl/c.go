@@ -23,9 +23,9 @@ import (
 // -----------------------------------------------------------------------------
 
 const (
-	pathLibc   = "github.com/goplus/llgo/c"
-	pathLibpy  = "github.com/goplus/llgo/py"
-	pathLibcpp = "github.com/goplus/llgo/cpp"
+	pathLibc   = "github.com/goplus/lib/c"
+	pathLibpy  = "github.com/goplus/lib/py"
+	pathLibcpp = "github.com/goplus/lib/cpp"
 )
 
 func simplifyGopPackage(pkgPath string) string {
