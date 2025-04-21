@@ -51,12 +51,12 @@ func (p *gmxClass) getName(ctx *pkgCtx) string {
 }
 
 type spxObj struct {
-	obj   gogen.Ref
+	obj   gogen.Ref // work base class
 	ext   string
-	proto string
-	feats spriteFeat
+	proto string           // work class prototype
+	feats spriteFeat       // work class features
 	clone *types.Signature // prototype of Classclone
-	types []string         // <type>.spx
+	types []string         // work classes (ie. <type>.spx)
 }
 
 func spriteByProto(sprites []*spxObj, proto string) *spxObj {
@@ -84,6 +84,15 @@ type gmxProject struct {
 	hasMain_   bool
 }
 
+func (p *gmxProject) numEmbeddeds() (n int) {
+	for _, sp := range p.sprites {
+		if sp.feats&spriteEmbedded != 0 {
+			n += len(sp.types)
+		}
+	}
+	return
+}
+
 func (p *gmxProject) spriteOf(ext string) *spxObj {
 	for _, sp := range p.sprites {
 		if sp.ext == ext {
@@ -98,6 +107,8 @@ type spriteFeat uint
 const (
 	spriteClassfname spriteFeat = 1 << iota
 	spriteClassclone
+
+	spriteEmbedded spriteFeat = 0x80
 )
 
 func spriteFeature(elt types.Type, sp *spxObj) {
@@ -145,12 +156,12 @@ func spriteFeatures(game gogen.Ref, sprites []*spxObj) {
 }
 
 func (p *gmxProject) getGameClass(ctx *pkgCtx) string {
-	tname := p.gameClass_
+	tname := p.gameClass_ // project class
 	if tname != "" && tname != "main" {
 		return tname
 	}
 	gt := p.gt
-	tname = gt.Class
+	tname = gt.Class // project base class
 	if p.gameIsPtr {
 		tname = tname[1:]
 	}
@@ -264,11 +275,15 @@ func loadClass(ctx *pkgCtx, pkg *gogen.Package, file string, f *ast.File, conf *
 		nWork := len(gt.Works)
 		sprites := make([]*spxObj, nWork)
 		for i, v := range gt.Works {
-			obj, _ := spxRef(spx, v.Class)
-			sprites[i] = &spxObj{obj: obj, ext: v.Ext, proto: v.Proto}
 			if nWork > 1 && v.Proto == "" {
 				panic("should have prototype if there are multiple work classes")
 			}
+			obj, _ := spxRef(spx, v.Class)
+			sp := &spxObj{obj: obj, ext: v.Ext, proto: v.Proto}
+			if v.Embedded {
+				sp.feats |= spriteEmbedded
+			}
+			sprites[i] = sp
 		}
 		p.sprites = sprites
 		if gt.Class != "" {
@@ -425,10 +440,10 @@ func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {
 			if proj.gameIsPtr {
 				baseType = types.NewPointer(baseType)
 			}
-			name := base.Name()
-			flds := []*types.Var{
-				types.NewField(token.NoPos, pkg.Types, name, baseType, true),
-			}
+
+			flds := make([]*types.Var, 1, proj.numEmbeddeds()+1)
+			flds[0] = types.NewField(token.NoPos, pkg.Types, base.Name(), baseType, true)
+
 			decl := pkg.NewTypeDefs().NewType(classType)
 			ld.typInit = func() { // decycle
 				if debugLoad {
