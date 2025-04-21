@@ -803,7 +803,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 				var flds []*types.Var
 				var tags []string
 				chk := newCheckRedecl()
-				if baseTypeName != "" { // base class
+				if baseTypeName != "" { // base class (not normal classfile)
 					flds = append(flds, types.NewField(pos, pkg, baseTypeName, baseType, true))
 					tags = append(tags, "")
 					chk.chkRedecl(ctx, baseTypeName, pos)
@@ -819,8 +819,8 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 								tags = append(tags, "")
 							}
 						}
-					} else { // for project class
-						// TODO(xsw): embed work classes
+					} else { // embed work classes for project class
+						flds = proj.embed(flds, p)
 					}
 				}
 				rec := ctx.recorder()
