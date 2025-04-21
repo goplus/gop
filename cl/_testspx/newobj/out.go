@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/goplus/gop/cl/internal/spx3"
-	"github.com/goplus/gop/cl/internal/spx3/jwt"
 )
 
 type Kai struct {
@@ -12,11 +11,13 @@ type Kai struct {
 }
 type Game struct {
 	spx3.Game
-	Kai Kai
 }
 
 func (this *Game) MainEntry() {
-	this.Run()
+	a := spx3.New()
+	a.Run()
+	b := new(spx3.Sprite)
+	fmt.Println(b.Name())
 }
 func (this *Game) Main() {
 	_gop_obj0 := &Kai{Game: this}
@@ -24,7 +25,6 @@ func (this *Game) Main() {
 }
 func (this *Kai) Main(_gop_arg0 string) {
 	this.Sprite.Main(_gop_arg0)
-	fmt.Println(jwt.Token("Hi"))
 }
 func (this *Kai) Classfname() string {
 	return "Kai"

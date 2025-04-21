@@ -100,7 +100,7 @@ func LookupClass(ext string) (c *modfile.Project, ok bool) {
 			Ext: "_mcp.gox", Class: "Game",
 			Works: []*modfile.Class{
 				{Ext: "_tool.gox", Class: "Tool", Proto: "ToolProto"},
-				{Ext: "_prompt.gox", Class: "Prompt", Proto: "PromptProto"},
+				{Ext: "_prompt.gox", Class: "Prompt", Proto: "PromptProto", Embedded: true},
 				{Ext: "_res.gox", Class: "Resource", Proto: "ResourceProto"},
 			},
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/mcp"}}, true
