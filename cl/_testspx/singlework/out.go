@@ -19,7 +19,8 @@ func (this *Game) MainEntry() {
 	this.Run()
 }
 func (this *Game) Main() {
-	spx3.Gopt_Game_Main(this, new(Kai))
+	_gop_obj0 := &Kai{Game: this}
+	spx3.Gopt_Game_Main(this, _gop_obj0)
 }
 func (this *Kai) Main(_gop_arg0 string) {
 	this.Sprite.Main(_gop_arg0)

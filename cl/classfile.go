@@ -24,6 +24,7 @@ import (
 	"log"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/goplus/gogen"
@@ -485,50 +486,91 @@ func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {
 			defer pkg.RestoreCurFile(old)
 
 			cb := fn.BodyStart(pkg).Typ(base.Type()).MemberVal("Main")
+			stk := cb.InternalStack()
 
 			// force remove //line comments for main func
 			cb.SetComments(nil, false)
 
-			sigParams := cb.Get(-1).Type.(*types.Signature).Params()
-			if _, ok := sigParams.At(0).Type().(*types.Pointer); !ok {
-				cb.Val(recv) // template recv method
-			} else {
-				cb.Val(recv).MemberRef(base.Name()).UnaryOp(gotoken.AND)
+			mainFn := stk.Pop()
+			sigParams := mainFn.Type.(*types.Signature).Params()
+			callMain := func() {
+				stk.Push(mainFn)
+				if _, isPtr := sigParams.At(0).Type().(*types.Pointer); isPtr {
+					cb.Val(recv).MemberRef(base.Name()).UnaryOp(gotoken.AND)
+				} else {
+					cb.Val(recv) // template recv method
+				}
 			}
 
+			iobj := 0
 			narg := sigParams.Len()
 			if narg > 1 {
 				sprites := proj.sprites
-				if len(sprites) == 1 && sprites[0].proto == "" {
+				if len(sprites) == 1 && sprites[0].proto == "" { // no work class prototype
 					sp := sprites[0]
 					narg = 1 + len(sp.types)
-					new := pkg.Builtin().Ref("new")
-					for _, spt := range sp.types {
-						spto := pkg.Ref(spt)
-						cb.Val(new).Val(spto).Call(1)
-					}
+					genWorkClasses(pkg, cb, recv, sp, iobj, -1, callMain)
 				} else {
-					new := pkg.Builtin().Ref("new")
+					lstNames := make([]string, narg)
 					for i := 1; i < narg; i++ {
 						tslice := sigParams.At(i).Type()
 						tn := tslice.(*types.Slice).Elem().(*types.Named)
-						sp := spriteByProto(sprites, tn.Obj().Name())
+						sp := spriteByProto(sprites, tn.Obj().Name()) // work class
 						if n := len(sp.types); n > 0 {
-							for _, spt := range sp.types {
-								spto := pkg.Ref(spt)
-								cb.Val(new).Val(spto).Call(1)
-							}
-							cb.SliceLitEx(tslice, n, false)
+							lstNames[i] = genWorkClasses(pkg, cb, recv, sp, iobj, i, nil)
+							cb.SliceLitEx(tslice, n, false).EndInit(1)
+							iobj += n
+						}
+					}
+					callMain()
+					for i := 1; i < narg; i++ {
+						if lstName := lstNames[i]; lstName != "" {
+							cb.VarVal(lstName)
 						} else {
 							cb.Val(nil)
 						}
 					}
 				}
+			} else {
+				callMain()
 			}
 
 			cb.Call(narg).EndStmt().End()
 		})
 	})
+}
+
+func genWorkClasses(
+	pkg *gogen.Package, cb *gogen.CodeBuilder, recv *types.Var,
+	sp *spxObj, iobj, ilst int, callMain func()) (lstName string) {
+	const (
+		indexGame     = 1
+		objNamePrefix = "_gop_obj"
+		lstNamePrefix = "_gop_lst"
+	)
+	embedded := (sp.feats&spriteEmbedded != 0)
+	sptypes := sp.types
+	for i, spt := range sptypes {
+		spto := pkg.Ref(spt)
+		objName := objNamePrefix + strconv.Itoa(iobj+i)
+		cb.DefineVarStart(token.NoPos, objName).
+			Val(indexGame).Val(recv).StructLit(spto.Type(), 2, true).
+			UnaryOp(gotoken.AND).EndInit(1)
+		if embedded {
+			cb.Val(recv).MemberRef(spt).VarVal(objName).Assign(1)
+		}
+	}
+	if ilst > 0 {
+		lstName = lstNamePrefix + strconv.Itoa(ilst-1)
+		cb.DefineVarStart(token.NoPos, lstName)
+	} else {
+		callMain()
+	}
+	for i := range sptypes {
+		objName := objNamePrefix + strconv.Itoa(iobj+i)
+		cb.VarVal(objName)
+	}
+	return
 }
 
 func genMainFunc(pkg *gogen.Package, gameClass string) {
@@ -557,17 +599,16 @@ func findMethod(o types.Object, name string) *types.Func {
 
 func makeMainSig(recv *types.Var, f *types.Func) *types.Signature {
 	const (
-		paramNameTempl = "_gop_arg0"
+		namePrefix = "_gop_arg"
 	)
 	sig := f.Type().(*types.Signature)
 	in := sig.Params()
 	nin := in.Len()
 	pkg := recv.Pkg()
 	params := make([]*types.Var, nin)
-	paramName := []byte(paramNameTempl)
 	for i := 0; i < nin; i++ {
-		paramName[len(paramNameTempl)-1] = byte('0' + i)
-		params[i] = types.NewParam(token.NoPos, pkg, string(paramName), in.At(i).Type())
+		paramName := namePrefix + strconv.Itoa(i)
+		params[i] = types.NewParam(token.NoPos, pkg, paramName, in.At(i).Type())
 	}
 	return types.NewSignatureType(recv, nil, nil, types.NewTuple(params...), sig.Results(), false)
 }

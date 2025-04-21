@@ -12,13 +12,19 @@ type hello struct {
 }
 type Game struct {
 	mcp.Game
+	*foo
 }
 
 func (this *Game) MainEntry() {
 	this.Server("protos")
 }
 func (this *Game) Main() {
-	mcp.Gopt_Game_Main(this, nil, []mcp.ToolProto{new(hello)}, []mcp.PromptProto{new(foo)})
+	_gop_obj0 := &hello{Game: this}
+	_gop_lst1 := []mcp.ToolProto{_gop_obj0}
+	_gop_obj1 := &foo{Game: this}
+	this.foo = _gop_obj1
+	_gop_lst2 := []mcp.PromptProto{_gop_obj1}
+	mcp.Gopt_Game_Main(this, nil, _gop_lst1, _gop_lst2)
 }
 func (this *foo) Main(_gop_arg0 *mcp.Tool) string {
 	this.Prompt.Main(_gop_arg0)
