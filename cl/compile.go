@@ -803,22 +803,24 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 				var flds []*types.Var
 				var tags []string
 				chk := newCheckRedecl()
-				if baseTypeName != "" {
+				if baseTypeName != "" { // base class
 					flds = append(flds, types.NewField(pos, pkg, baseTypeName, baseType, true))
 					tags = append(tags, "")
 					chk.chkRedecl(ctx, baseTypeName, pos)
-				}
-				if sp != nil && !goxTestFile {
-					if gameClass != "" {
-						typ := toType(ctx, &ast.Ident{Name: gameClass})
-						getUnderlying(ctx, typ) // ensure type is loaded
-						typ = types.NewPointer(typ)
-						name := getTypeName(typ)
-						if !chk.chkRedecl(ctx, name, pos) {
-							fld := types.NewField(pos, pkg, name, typ, true)
-							flds = append(flds, fld)
-							tags = append(tags, "")
+					if sp != nil { // for work class
+						if !goxTestFile && gameClass != "" { // has project class
+							typ := toType(ctx, &ast.Ident{Name: gameClass})
+							getUnderlying(ctx, typ) // ensure type is loaded
+							typ = types.NewPointer(typ)
+							name := getTypeName(typ)
+							if !chk.chkRedecl(ctx, name, pos) {
+								fld := types.NewField(pos, pkg, name, typ, true)
+								flds = append(flds, fld)
+								tags = append(tags, "")
+							}
 						}
+					} else { // for project class
+						// TODO(xsw): embed work classes
 					}
 				}
 				rec := ctx.recorder()

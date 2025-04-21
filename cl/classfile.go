@@ -93,6 +93,19 @@ func (p *gmxProject) numEmbeddeds() (n int) {
 	return
 }
 
+func (p *gmxProject) embed(flds []*types.Var, pkg *gogen.Package) []*types.Var {
+	for _, sp := range p.sprites {
+		if sp.feats&spriteEmbedded != 0 {
+			for _, spt := range sp.types {
+				spto := pkg.Ref(spt)                // work class
+				pt := types.NewPointer(spto.Type()) // pointer to work class
+				flds = append(flds, types.NewField(token.NoPos, pkg.Types, spto.Name(), pt, true))
+			}
+		}
+	}
+	return flds
+}
+
 func (p *gmxProject) spriteOf(ext string) *spxObj {
 	for _, sp := range p.sprites {
 		if sp.ext == ext {
@@ -425,10 +438,10 @@ func gmxCheckProjs(pkg *gogen.Package, ctx *pkgCtx) (*gmxProject, bool) {
 }
 
 func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {
-	base := proj.game
-	classType := proj.getGameClass(parent)
+	base := proj.game                      // project base class
+	classType := proj.getGameClass(parent) // project class
 	ld := getTypeLoader(parent, parent.syms, token.NoPos, classType)
-	if ld.typ == nil {
+	if ld.typ == nil { // no project class, use default
 		ld.typ = func() {
 			if debugLoad {
 				log.Println("==> Load > NewType", classType)
@@ -443,6 +456,7 @@ func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {
 
 			flds := make([]*types.Var, 1, proj.numEmbeddeds()+1)
 			flds[0] = types.NewField(token.NoPos, pkg.Types, base.Name(), baseType, true)
+			flds = proj.embed(flds, pkg)
 
 			decl := pkg.NewTypeDefs().NewType(classType)
 			ld.typInit = func() { // decycle
