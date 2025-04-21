@@ -85,15 +85,6 @@ type gmxProject struct {
 	hasMain_   bool
 }
 
-func (p *gmxProject) numEmbeddeds() (n int) {
-	for _, sp := range p.sprites {
-		if sp.feats&spriteEmbedded != 0 {
-			n += len(sp.types)
-		}
-	}
-	return
-}
-
 func (p *gmxProject) embed(flds []*types.Var, pkg *gogen.Package) []*types.Var {
 	for _, sp := range p.sprites {
 		if sp.feats&spriteEmbedded != 0 {
@@ -455,9 +446,9 @@ func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {
 				baseType = types.NewPointer(baseType)
 			}
 
-			flds := make([]*types.Var, 1, proj.numEmbeddeds()+1)
-			flds[0] = types.NewField(token.NoPos, pkg.Types, base.Name(), baseType, true)
-			flds = proj.embed(flds, pkg)
+			flds := proj.embed([]*types.Var{
+				types.NewField(token.NoPos, pkg.Types, base.Name(), baseType, true),
+			}, pkg)
 
 			decl := pkg.NewTypeDefs().NewType(classType)
 			ld.typInit = func() { // decycle
