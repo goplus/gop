@@ -365,19 +365,6 @@ func buildGoplusTools(useGoProxy bool) {
 	println("\nGo+ tools built successfully!")
 }
 
-func goVersion() string {
-	out, err := execCommand("go", "version")
-	if err != nil {
-		log.Fatalln(err)
-	}
-	if i := strings.Index(out, "go1."); i != -1 {
-		if n := strings.IndexAny(out[i+4:], ". "); n != -1 {
-			return out[i+2 : i+4+n]
-		}
-	}
-	return ""
-}
-
 func showHelpPostInstall(installPath string) {
 	println("\nNEXT STEP:")
 	println("\nWe just installed Go+ into the directory: ", installPath)

@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	MainVersion = "1.3"
+	MainVersion = "1.4"
 )
 
 // buildVersion is the GoPlus tree's version string at build time.

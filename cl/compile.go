@@ -1433,6 +1433,7 @@ var unaryGopNames = map[string]string{
 
 func loadFuncBody(ctx *blockCtx, fn *gogen.Func, body *ast.BlockStmt, sigBase *types.Signature, src ast.Node) {
 	cb := fn.BodyStart(ctx.pkg, body)
+	cb.SetComments(nil, false)
 	if sigBase != nil {
 		// this.Sprite.Main(...) or this.Game.MainEntry(...)
 		cb.VarVal("this").MemberVal(ctx.baseClass.Name()).MemberVal(fn.Name())
