@@ -1144,11 +1144,11 @@ func compileDomainTextLit(ctx *blockCtx, v *ast.DomainTextLit) {
 	} else {
 		cb.Val(imp.Ref("New"))
 		if lit, ok := v.Extra.(*ast.DomainTextLitEx); ok {
+			cb.Val(lit.Raw)
 			for _, arg := range lit.Args {
 				compileExpr(ctx, arg)
 			}
 			n += len(lit.Args)
-			cb.Val(lit.Raw)
 		} else {
 			cb.Val(&goast.BasicLit{Kind: gotoken.STRING, Value: v.Value}, v)
 		}

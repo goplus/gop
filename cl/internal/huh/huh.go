@@ -7,7 +7,7 @@ type Form int
 func (f Form) Run() {
 }
 
-func New(string, int, string) Form {
+func New(string, string, int) Form {
 	return 0
 }
 
