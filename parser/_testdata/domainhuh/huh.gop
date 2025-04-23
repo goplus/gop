@@ -1,4 +1,4 @@
-form := huh`< &ret, 10
+form := huh`> &ret, 10
 <form>
 	<group>
 		<select id="Burger" title="Choose your burger">

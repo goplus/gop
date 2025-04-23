@@ -23,7 +23,7 @@ ast.FuncDecl:
               Domain:
                 ast.Ident:
                   Name: huh
-              Value: `< &ret, 10
+              Value: `> &ret, 10
 <form>
 	<group>
 		<select id="Burger" title="Choose your burger">
