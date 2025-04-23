@@ -1082,8 +1082,13 @@ const (
 	tplPkgPath = "github.com/goplus/gop/tpl"
 )
 
+// A DomainTextLit node represents a domain-specific text literal.
 // https://github.com/goplus/gop/issues/2143
-// domainTag`...` => domainTag.new(`...`)
+//
+//	domainTag`...`
+//	domainTag`> arg1, arg2, ...
+//	  ...
+//	`
 func compileDomainTextLit(ctx *blockCtx, v *ast.DomainTextLit) {
 	var cb = ctx.cb
 	var imp gogen.PkgRef
@@ -1137,8 +1142,16 @@ func compileDomainTextLit(ctx *blockCtx, v *ast.DomainTextLit) {
 			}
 		}
 	} else {
-		cb.Val(imp.Ref("New")).
-			Val(&goast.BasicLit{Kind: gotoken.STRING, Value: v.Value}, v)
+		cb.Val(imp.Ref("New"))
+		if lit, ok := v.Extra.(*ast.DomainTextLitEx); ok {
+			for _, arg := range lit.Args {
+				compileExpr(ctx, arg)
+			}
+			n += len(lit.Args)
+			cb.Val(lit.Raw)
+		} else {
+			cb.Val(&goast.BasicLit{Kind: gotoken.STRING, Value: v.Value}, v)
+		}
 	}
 	cb.CallWith(n, 0, v)
 }
