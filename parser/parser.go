@@ -1785,7 +1785,7 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTup
 			var extra any
 			if ident.Name == "tpl" {
 				extra = p.tplLit(pos+1, pos+token.Pos(len(lit))-1)
-			} else if strings.HasPrefix(lit, "`< ") { // domainTag`< ...`
+			} else if strings.HasPrefix(lit, "`> ") { // domainTag`> ...`
 				extra = p.domainTextLitEx(pos+3, pos+token.Pos(len(lit))-1)
 			}
 			x = &ast.DomainTextLit{

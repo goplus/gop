@@ -1,9 +1,14 @@
-package unit
+package huh
 
 // -----------------------------------------------------------------------------
 
-type Distance int
+type Form int
 
-const Gopu_Distance = "mm=1,cm=10,dm=100,m=1000"
+func (f Form) Run() {
+}
+
+func New(string, string, int) Form {
+	return 0
+}
 
 // -----------------------------------------------------------------------------
