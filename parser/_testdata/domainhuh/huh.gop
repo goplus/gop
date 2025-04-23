@@ -1,0 +1,12 @@
+form := huh`< &ret, 10
+<form>
+	<group>
+		<select id="Burger" title="Choose your burger">
+			<option value="classic" title="Charmburger Classic"/>
+			<option value="chickwich" title="Chickwich"/>
+			<option value="fishburger" title="Fishburger"/>
+			<option value="charmpossible" title="Charmpossible™ Burger"/>
+		</select>
+	</group>
+</form>
+`

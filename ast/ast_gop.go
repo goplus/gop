@@ -62,12 +62,22 @@ func (*OverloadFuncDecl) declNode() {}
 // A DomainTextLit node represents a domain-specific text literal.
 // https://github.com/goplus/gop/issues/2143
 //
-//	tpl`...`
+//	domainTag`...`
+//	domainTag`> arg1, arg2, ...
+//	  ...
+//	`
 type DomainTextLit struct {
 	Domain   *Ident    // domain name
 	ValuePos token.Pos // literal position
 	Value    string    // literal string; e.g. `\m\n\o`
-	Extra    any       // *ast.StringLitEx or *gop/tpl/ast.File, optional
+	Extra    any       // *DomainTextLitEx or *gop/tpl/ast.File, optional
+}
+
+// DomainTextLitEx represents extra information for domain text literal.
+type DomainTextLitEx struct {
+	Args   []Expr    // domain text arguments; or nil
+	RawPos token.Pos // position of the first character of the raw string
+	Raw    string    // raw string without backquote
 }
 
 // Pos returns position of first character belonging to the node.

@@ -1,0 +1,57 @@
+package main
+
+file huh.gop
+noEntrypoint
+ast.FuncDecl:
+  Name:
+    ast.Ident:
+      Name: main
+  Type:
+    ast.FuncType:
+      Params:
+        ast.FieldList:
+  Body:
+    ast.BlockStmt:
+      List:
+        ast.AssignStmt:
+          Lhs:
+            ast.Ident:
+              Name: form
+          Tok: :=
+          Rhs:
+            ast.DomainTextLit:
+              Domain:
+                ast.Ident:
+                  Name: huh
+              Value: `< &ret, 10
+<form>
+	<group>
+		<select id="Burger" title="Choose your burger">
+			<option value="classic" title="Charmburger Classic"/>
+			<option value="chickwich" title="Chickwich"/>
+			<option value="fishburger" title="Fishburger"/>
+			<option value="charmpossible" title="Charmpossible™ Burger"/>
+		</select>
+	</group>
+</form>
+`
+                Extra: args=2
+                  ast.UnaryExpr:
+                    Op: &
+                    X:
+                      ast.Ident:
+                        Name: ret
+                  ast.BasicLit:
+                    Kind: INT
+                    Value: 10
+                  <form>
+	<group>
+		<select id="Burger" title="Choose your burger">
+			<option value="classic" title="Charmburger Classic"/>
+			<option value="chickwich" title="Chickwich"/>
+			<option value="fishburger" title="Fishburger"/>
+			<option value="charmpossible" title="Charmpossible™ Burger"/>
+		</select>
+	</group>
+</form>
+
