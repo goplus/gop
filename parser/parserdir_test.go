@@ -116,11 +116,8 @@ func testFrom(t *testing.T, pkgDir, sel string, exclude Mode) {
 		t.Fatal("ParseDir failed:", err, reflect.TypeOf(err), len(pkgs))
 	}
 	for _, pkg := range pkgs {
-		b, err := os.ReadFile(pkgDir + "/parser.expect")
-		if err != nil {
-			t.Fatal("Parsing", pkgDir, "-", err)
-		}
-		parsertest.Expect(t, pkg, string(b))
+		b, _ := os.ReadFile(pkgDir + "/parser.expect")
+		parsertest.ExpectEx(t, pkgDir+"/result.txt", pkg, b)
 		return
 	}
 }
