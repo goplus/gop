@@ -768,6 +768,7 @@ func compileCallArgs(ctx *blockCtx, pfn *gogen.Element, fn *fnType, v *ast.CallE
 	}()
 	var needInferFunc bool
 	for i, arg := range v.Args {
+		t := fn.arg(i, ellipsis)
 		switch expr := arg.(type) {
 		case *ast.LambdaExpr:
 			if fn.typeparam {
@@ -775,7 +776,7 @@ func compileCallArgs(ctx *blockCtx, pfn *gogen.Element, fn *fnType, v *ast.CallE
 				compileIdent(ctx, ast.NewIdent("nil"), 0)
 				continue
 			}
-			sig, e := checkLambdaFuncType(ctx, expr, fn.arg(i, ellipsis), clLambaArgument, v.Fun)
+			sig, e := checkLambdaFuncType(ctx, expr, t, clLambaArgument, v.Fun)
 			if e != nil {
 				return e
 			}
@@ -788,7 +789,7 @@ func compileCallArgs(ctx *blockCtx, pfn *gogen.Element, fn *fnType, v *ast.CallE
 				compileIdent(ctx, ast.NewIdent("nil"), 0)
 				continue
 			}
-			sig, e := checkLambdaFuncType(ctx, expr, fn.arg(i, ellipsis), clLambaArgument, v.Fun)
+			sig, e := checkLambdaFuncType(ctx, expr, t, clLambaArgument, v.Fun)
 			if e != nil {
 				return e
 			}
@@ -796,11 +797,10 @@ func compileCallArgs(ctx *blockCtx, pfn *gogen.Element, fn *fnType, v *ast.CallE
 				return
 			}
 		case *ast.CompositeLit:
-			if err = compileCompositeLitEx(ctx, expr, fn.arg(i, ellipsis), true); err != nil {
+			if err = compileCompositeLitEx(ctx, expr, t, true); err != nil {
 				return
 			}
 		case *ast.SliceLit:
-			t := fn.arg(i, ellipsis)
 			switch t.(type) {
 			case *types.Slice:
 			case *types.Named:
@@ -821,9 +821,15 @@ func compileCallArgs(ctx *blockCtx, pfn *gogen.Element, fn *fnType, v *ast.CallE
 				return
 			}
 		case *ast.NumberUnitLit:
-			compileNumberUnitLit(ctx, expr, fn.arg(i, ellipsis))
+			compileNumberUnitLit(ctx, expr, t)
 		default:
 			compileExpr(ctx, arg)
+			if sigParamLen(t) == 0 {
+				cb := ctx.cb
+				if nonClosure(cb.Get(-1).Type) {
+					cb.ConvertToClosure()
+				}
+			}
 		}
 	}
 	if needInferFunc {
@@ -874,6 +880,34 @@ retry:
 		to = " to " + ctx.LoadExpr(toNode)
 	}
 	return nil, ctx.newCodeErrorf(lambda.Pos(), "cannot use lambda literal as type %v in %v%v", ftyp, flag, to)
+}
+
+func sigParamLen(typ types.Type) int {
+retry:
+	switch t := typ.(type) {
+	case *types.Signature:
+		return t.Params().Len()
+	case *types.Named:
+		typ = t.Underlying()
+		goto retry
+	}
+	return -1
+}
+
+func nonClosure(typ types.Type) bool {
+retry:
+	switch t := typ.(type) {
+	case *types.Signature:
+		return false
+	case *types.Basic:
+		if t.Kind() == types.UntypedNil {
+			return false
+		}
+	case *types.Named:
+		typ = t.Underlying()
+		goto retry
+	}
+	return true
 }
 
 func compileLambda(ctx *blockCtx, lambda ast.Expr, sig *types.Signature) {

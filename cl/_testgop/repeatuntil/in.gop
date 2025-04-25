@@ -1,0 +1,12 @@
+func RepeatUntil(cond func() bool, body func()) {
+    for !cond() {
+        body()
+    }
+}
+
+x := 0
+repeatUntil x >= 3, => {
+    echo x
+    x++
+}
+repeatUntil func() bool { return false }, => {}
