@@ -39,6 +39,13 @@ func getGoxConf() *gogen.Config {
 	return &gogen.Config{Fset: fset, Importer: imp}
 }
 
+func TestNonClosure(t *testing.T) {
+	tn := types.NewTypeName(0, nil, "a", nil)
+	if !nonClosure(types.NewNamed(tn, types.Typ[types.Int], nil)) {
+		t.Fatal("nonClosure")
+	}
+}
+
 func TestLoadExpr(t *testing.T) {
 	var ni nodeInterp
 	if v := ni.LoadExpr(&ast.Ident{Name: "x"}); v != "" {
