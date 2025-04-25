@@ -91,7 +91,7 @@ func (p *gmxProject) embed(flds []*types.Var, pkg *gogen.Package) []*types.Var {
 			for _, spt := range sp.types {
 				spto := pkg.Ref(spt)                // work class
 				pt := types.NewPointer(spto.Type()) // pointer to work class
-				flds = append(flds, types.NewField(token.NoPos, pkg.Types, spto.Name(), pt, true))
+				flds = append(flds, types.NewField(token.NoPos, pkg.Types, spto.Name(), pt, false))
 			}
 		}
 	}

@@ -12,7 +12,7 @@ type hello struct {
 }
 type Game struct {
 	mcp.Game
-	*foo
+	foo *foo
 }
 
 func (this *Game) MainEntry() {
