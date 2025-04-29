@@ -585,14 +585,15 @@ func identVal(ctx *blockCtx, x *ast.Ident, flags int, v types.Object, alias bool
 }
 
 type fnType struct {
-	next      *fnType
-	params    *types.Tuple
-	sig       *types.Signature
-	base      int
-	size      int
-	variadic  bool
-	typetype  bool
-	typeparam bool
+	next         *fnType
+	params       *types.Tuple
+	sig          *types.Signature
+	base         int
+	size         int
+	variadic     bool
+	typetype     bool
+	typeparam    bool
+	typeAsParams bool
 }
 
 func (p *fnType) arg(i int, ellipsis bool) types.Type {
@@ -609,9 +610,10 @@ func (p *fnType) arg(i int, ellipsis bool) types.Type {
 	return nil
 }
 
-func (p *fnType) init(base int, t *types.Signature) {
+func (p *fnType) init(base int, t *types.Signature, typeAsParams bool) {
 	p.base = base
 	p.sig = t
+	p.typeAsParams = typeAsParams
 	p.params, p.variadic, p.typeparam = t.Params(), t.Variadic(), t.TypeParams() != nil
 	p.size = p.params.Len()
 	if p.variadic {
@@ -633,24 +635,27 @@ func (p *fnType) load(fnt types.Type) {
 		typ, objs := gogen.CheckSigFuncExObjects(v)
 		switch typ.(type) {
 		case *gogen.TyOverloadFunc, *gogen.TyOverloadMethod:
-			p.initFuncs(0, objs)
+			p.initFuncs(0, objs, false)
 			return
 		case *gogen.TyTemplateRecvMethod:
-			p.initFuncs(1, objs)
+			p.initFuncs(1, objs, false)
+			return
+		case *gogen.TyTypeAsParams:
+			p.initFuncs(1, objs, true)
 			return
 		}
-		p.init(0, v)
+		p.init(0, v, false)
 	}
 }
 
-func (p *fnType) initFuncs(base int, funcs []types.Object) {
+func (p *fnType) initFuncs(base int, funcs []types.Object, typeAsParams bool) {
 	for i, obj := range funcs {
 		if sig, ok := obj.Type().(*types.Signature); ok {
 			if i == 0 {
-				p.init(base, sig)
+				p.init(base, sig, typeAsParams)
 			} else {
 				fn := &fnType{}
-				fn.init(base, sig)
+				fn.init(base, sig, typeAsParams)
 				p.next = fn
 				p = p.next
 			}
@@ -766,8 +771,33 @@ func compileCallArgs(ctx *blockCtx, pfn *gogen.Element, fn *fnType, v *ast.CallE
 			err = ctx.recoverErr(r, v)
 		}
 	}()
+
+	vargs := v.Args
+	if fn.typeAsParams && fn.typeparam {
+		n := fn.sig.TypeParams().Len()
+		for i := 0; i < n; i++ {
+			compileExpr(ctx, vargs[i])
+		}
+		args := ctx.cb.InternalStack().GetArgs(n)
+		var targs []types.Type
+		for i, arg := range args {
+			typ := arg.Type
+			t, ok := typ.(*gogen.TypeType)
+			if !ok {
+				return ctx.newCodeErrorf(vargs[i].Pos(), "%v not type", ctx.LoadExpr(vargs[i]))
+			}
+			targs = append(targs, t.Type())
+		}
+		ret, err := types.Instantiate(nil, fn.sig, targs, true)
+		if err != nil {
+			return ctx.newCodeError(v.Pos(), err.Error())
+		}
+		fn.init(1, ret.(*types.Signature), false)
+		vargs = vargs[n:]
+	}
+
 	var needInferFunc bool
-	for i, arg := range v.Args {
+	for i, arg := range vargs {
 		t := fn.arg(i, ellipsis)
 		switch expr := arg.(type) {
 		case *ast.LambdaExpr:
@@ -839,7 +869,7 @@ func compileCallArgs(ctx *blockCtx, pfn *gogen.Element, fn *fnType, v *ast.CallE
 			return err
 		}
 		next := &fnType{}
-		next.init(fn.base, typ.(*types.Signature))
+		next.init(fn.base, typ.(*types.Signature), false)
 		next.next = fn.next
 		fn.next = next
 		return errCallNext
