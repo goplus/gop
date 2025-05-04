@@ -15,14 +15,14 @@ Don't define a language for specific domain.
 Abstract domain knowledge for it.
 ```
 
-Go+ introduces `classfile` to abstract domain knowledge.
+Go+ introduces `classfile` and `class framework` to abstract domain knowledge.
 
 * STEM Education: [spx: A Go+ 2D Game Engine](https://github.com/goplus/spx)
 * Web Programming: [yap: Yet Another HTTP Web Framework](https://github.com/goplus/yap)
 * Web Programming: [yaptest: HTTP Test Framework](https://github.com/goplus/yap#yaptest-http-test-framework)
 * Web Programming: [ydb: Database Framework](https://github.com/goplus/yap#ydb-database-framework)
 * DevOps: [gsh: Go+ DevOps Tools](https://github.com/qiniu/x/tree/main/gsh)
-* Unit Test: [classfile: Unit Test](#classfile-unit-test)
+* Unit Test: [classfile: Unit Test](#class-framework-unit-test)
 * Mechanism: [What's Classfile](#whats-classfile)
 
 Sound a bit abstract? Let's take web programming as an example. First let us create a file named [get.yap](https://github.com/goplus/yap/blob/main/demo/classfile2_hello/get.yap) with the following content:
@@ -124,20 +124,22 @@ func Area() int {
 
 Defining variables and defining functions are all familiar to them while learning sequential programming. They can define new types using syntax they already know by heart. This will be valuable in getting a wider community to learn Go+.
 
+### What's class framework
+
 Of course, this is not enough to make classfiles an exciting feature. What's more important is its ability to abstract domain knowledge. It is accomplished by defining `base class` for a class and defining `relationships between multiple classes`.
 
-What is a `classfile`? Usually it consists of a `project class` and multiple `work classes`. The classfile not only specifies the `base class` of all `project class` and `work classes`, but also organizes all these classes together by the base class of project class. There can be no work classes, that is, the entire classfile consists of only one project class.
+What is a `class framework`? Usually it consists of a `project class` and multiple `work classes`. The class framework not only specifies the `base class` of all `project class` and `work classes`, but also organizes all these classes together by the base class of project class. There can be no work classes, that is, the entire classfile consists of only one project class.
 
-This is a bit abstract. Let's take the [2D Game Engine spx](https://github.com/goplus/spx) as an example. The base class of project class of `spx classfile` is called `Game`. The base class of work class is called `Sprite`. Obviously, there will only be one Game instance in a game, but there are many types of sprites, so many types of work classes are needed, but they all have the same base class called `Sprite`. Go+'s classfile allows you to specify different base classes for different work classes. Although this is rare, it can be done.
+This is a bit abstract. Let's take the [2D Game Engine spx](https://github.com/goplus/spx) as an example. The base class of project class of `spx class framework` is called `Game`. The base class of work class is called `Sprite`. Obviously, there will only be one Game instance in a game, but there are many types of sprites, so many types of work classes are needed, but they all have the same base class called `Sprite`. Go+'s class framework allows you to specify different base classes for different work classes. Although this is rare, it can be done.
 
-How does Go+ identify various class files of a classfile? by its filename. By convention, if we define a classfile called `foo`, then its project class is usually called `main_foo.gox`, and the work class is usually called `xxx_foo.gox`. If this classfile does not have a work class, then the project class only needs to ensure that the suffix is `_foo.gox`, and the class name can be freely chosen.
+How does Go+ identify various class files of a class framework? by its filename. By convention, if we define a class framework called `foo`, then its project class is usually called `main_foo.gox`, and the work class is usually called `xxx_foo.gox`. If this class framework does not have a work class, then the project class only needs to ensure that the suffix is `_foo.gox`, and the class name can be freely chosen.
 
-The earliest version of Go+ allows classfiles to be identified through custom file extensions. For example, the project class of the `spx classfile` is called `main.spx`, and the work class is called `xxx.spx`. Although this ability to customize extensions is still retained for now, we do not recommend its use and there is no guarantee that it will continue to be available in the future.
+The earliest version of Go+ allows classfiles to be identified through custom file extensions. For example, the project class of the `spx class framework` is called `main.spx`, and the work class is called `xxx.spx`. Although this ability to customize extensions is still retained for now, we do not recommend its use and there is no guarantee that it will continue to be available in the future.
 
 
-### classfile: Unit Test
+### class framework: Unit Test
 
-Go+ has a built-in classfile to simplify unit testing. This classfile has the file suffix `_test.gox`.
+Go+ has a built-in class framework to simplify unit testing. This class framework has the file suffix `_test.gox`.
 
 Suppose you have a function named `foo`:
 
@@ -174,7 +176,7 @@ If you want to run a subtest case, use `t.run`.
 
 ### yap: Yet Another Go/Go+ HTTP Web Framework
 
-This classfile has the file suffix `.yap`. See [yap: Yet Another HTTP Web Framework](https://github.com/goplus/yap) for more details.
+This class framework has the file suffix `.yap`. See [yap: Yet Another HTTP Web Framework](https://github.com/goplus/yap) for more details.
 
 #### Router and Parameters
 
@@ -237,7 +239,7 @@ run ":8080"
 
 ### yaptest: HTTP Test Framework
 
-This classfile has the file suffix `_ytest.gox`.
+This class framework has the file suffix `_ytest.gox`.
 
 Suppose we have a web server ([foo/get_p_#id.yap](https://github.com/goplus/yap/blob/main/ytest/demo/foo/get_p_%23id.yap)):
 
@@ -282,7 +284,7 @@ For more details, see [yaptest - Go+ HTTP Test Framework](https://github.com/gop
 
 ### spx: A Go+ 2D Game Engine for STEM education
 
-This classfile has the file suffix `.spx`. It is the earliest classfile in the world.
+This class framework has the file suffix `.spx`. It is the earliest class framework in the world.
 
 #### tutorial/01-Weather
 
