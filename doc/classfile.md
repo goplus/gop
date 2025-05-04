@@ -6,7 +6,7 @@ One language can change the world.
 Go+ is a "DSL" for all domains.
 ```
 
-Rob Pike once said that if he could only introduce one feature to Go, he would choose `interface` instead of `goroutine`. `classfile` is as important to Go+ as `interface` is to Go.
+Rob Pike once said that if he could only introduce one feature to Go, he would choose `interface` instead of `goroutine`. `classfile` (and `class framework`) is as important to Go+ as `interface` is to Go.
 
 In the design philosophy of Go+, we do not recommend `DSL` (Domain Specific Language). But `SDF` (Specific Domain Friendliness) is very important. The Go+ philosophy about `SDF` is:
 
