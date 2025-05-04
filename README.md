@@ -165,7 +165,7 @@ One language can change the whole world.
 Go+ is a "DSL" for all domains.
 ```
 
-Rob Pike once said that if he could only introduce one feature to Go, he would choose `interface` instead of `goroutine`. `classfile` is as important to Go+ as `interface` is to Go.
+Rob Pike once said that if he could only introduce one feature to Go, he would choose `interface` instead of `goroutine`. `classfile` (and `class framework`) is as important to Go+ as `interface` is to Go.
 
 In the design philosophy of Go+, we do not recommend `DSL` (Domain Specific Language). But `SDF` (Specific Domain Friendliness) is very important. The Go+ philosophy about `SDF` is:
 
@@ -174,12 +174,12 @@ Don't define a language for specific domain.
 Abstract domain knowledge for it.
 ```
 
-Go+ introduces `classfile` to abstract domain knowledge.
+Go+ introduces `classfile` and `class framework` to abstract domain knowledge.
 
 * [What's Classfile?](doc/classfile.md#whats-classfile)
 * [Dive into Go+ Classfiles](doc/classfile.md)
 
-Sound a bit abstract? Let's see some Go+ classfiles.
+Sound a bit abstract? Let's see some Go+ class frameworks.
 
 * STEM Education: [spx: A Go+ 2D Game Engine](https://github.com/goplus/spx)
 * AI Programming: [mcp: A Go+ implementation of the Model Context Protocol (MCP)](https://github.com/goplus/mcp)
@@ -189,7 +189,7 @@ Sound a bit abstract? Let's see some Go+ classfiles.
 * Web Programming: [ydb: A Go+ Database Framework](https://github.com/goplus/yap/tree/main/ydb)
 * CLI Programming: [cobra: A Commander for modern Go+ CLI interactions](https://github.com/goplus/cobra)
 * CLI Programming: [gsh: An alternative to write shell scripts](https://github.com/qiniu/x/tree/main/gsh)
-* Unit Test: [test: Unit Test](https://github.com/goplus/gop/blob/main/doc/classfile.md#classfile-unit-test)
+* Unit Test: [test: Unit Test](doc/classfile.md#class-framework-unit-test)
 
 
 ### yap: Yet Another HTTP Web Framework
