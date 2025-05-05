@@ -205,17 +205,36 @@ var (
 	repl = strings.NewReplacer(":", "", "#", "", "-", "_", ".", "_")
 )
 
-func ClassNameAndExt(file string) (name, clsfile, ext string) {
+func exClassNameAndExt(file string, keepMain bool) (name, clsfile, ext string) {
 	fname := filepath.Base(file)
 	clsfile, ext = modfile.SplitFname(fname)
 	name = clsfile
 	if strings.ContainsAny(name, ":#-.") {
 		name = repl.Replace(name)
+	} else {
+		switch name {
+		case "main":
+			if !keepMain {
+				name = "_main"
+			}
+		case "init":
+			name = "_init"
+		}
 	}
 	return
 }
 
+// ClassNameAndExt func
+// TODO(xsw): to refactor
+//
+// Deprecated: Don't use it
+func ClassNameAndExt(file string) (name, clsfile, ext string) {
+	return exClassNameAndExt(file, true)
+}
+
 // GetFileClassType get ast.File classType
+//
+// Deprecated: Don't use it (to refactor)
 func GetFileClassType(file *ast.File, filename string, lookupClass func(ext string) (c *Project, ok bool)) (classType string, isTest bool) {
 	if file.IsClass {
 		var ext string
@@ -246,7 +265,7 @@ func isGoxTestFile(ext string) bool {
 }
 
 func loadClass(ctx *pkgCtx, pkg *gogen.Package, file string, f *ast.File, conf *Config) *gmxProject {
-	tname, clsfile, ext := ClassNameAndExt(file)
+	tname, clsfile, ext := exClassNameAndExt(file, true)
 	gt, ok := conf.LookupClass(ext)
 	if !ok {
 		panic("class not found: " + ext)
