@@ -22,6 +22,11 @@ import (
 
 // ----------------------------------------------------------------------------
 
+// Errorln formats and prints to standard error.
+func Errorln(args ...any) {
+	fmt.Fprintln(os.Stderr, args...)
+}
+
 // Fatal formats and prints to standard error.
 func Fatal(args ...any) {
 	fmt.Fprintln(os.Stderr, args...)

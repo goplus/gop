@@ -64,7 +64,7 @@ func initBuiltin(_ *gogen.Package, builtin *types.Package, os, fmt, ng, osx, bui
 	}
 	if osx.Types != nil {
 		initBuiltinFns(builtin, scope, osx, []string{
-			"lines", "fatal",
+			"lines", "errorln", "fatal",
 		})
 		scope.Insert(gogen.NewOverloadFunc(token.NoPos, builtin, "blines", osx.Ref("BLines")))
 	}

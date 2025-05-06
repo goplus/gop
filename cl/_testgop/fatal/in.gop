@@ -2,6 +2,7 @@ import "os"
 
 f, err := os.open("hello.txt")
 if err != nil {
+    errorln "[WARN] an error"
     fatal "open file failed: ${err}"
 }
 f.close
