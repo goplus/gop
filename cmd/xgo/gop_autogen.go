@@ -83,6 +83,5 @@ func (this *version) Classfname() string {
 	return "version"
 }
 func main() {
-//line cmd/xgo/version_cmd.gox:23:1
 	new(App).Main()
 }
