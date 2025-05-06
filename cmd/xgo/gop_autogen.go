@@ -5,6 +5,7 @@ package main
 import (
 	fmt1 "fmt"
 	"github.com/goplus/cobra/xcmd"
+	build1 "github.com/goplus/gop/cmd/internal/build"
 	"github.com/goplus/gop/cmd/internal/gopfmt"
 	install1 "github.com/goplus/gop/cmd/internal/install"
 	run1 "github.com/goplus/gop/cmd/internal/run"
@@ -16,6 +17,10 @@ import (
 
 const _ = true
 
+type build struct {
+	xcmd.Command
+	*App
+}
 type fmt struct {
 	xcmd.Command
 	*App
@@ -41,12 +46,29 @@ type App struct {
 }
 
 func (this *App) Main() {
-	_gop_obj0 := &fmt{App: this}
-	_gop_obj1 := &install{App: this}
-	_gop_obj2 := &run{App: this}
-	_gop_obj3 := &test{App: this}
-	_gop_obj4 := &version{App: this}
-	xcmd.Gopt_App_Main(this, _gop_obj0, _gop_obj1, _gop_obj2, _gop_obj3, _gop_obj4)
+	_gop_obj0 := &build{App: this}
+	_gop_obj1 := &fmt{App: this}
+	_gop_obj2 := &install{App: this}
+	_gop_obj3 := &run{App: this}
+	_gop_obj4 := &test{App: this}
+	_gop_obj5 := &version{App: this}
+	xcmd.Gopt_App_Main(this, _gop_obj0, _gop_obj1, _gop_obj2, _gop_obj3, _gop_obj4, _gop_obj5)
+}
+//line cmd/xgo/build_cmd.gox:20
+func (this *build) Main(_gop_arg0 string) {
+	this.Command.Main(_gop_arg0)
+//line cmd/xgo/build_cmd.gox:20:1
+	this.Short("Build Go+ files")
+//line cmd/xgo/build_cmd.gox:22:1
+	this.FlagOff()
+//line cmd/xgo/build_cmd.gox:24:1
+	this.Run__1(func(args []string) {
+//line cmd/xgo/build_cmd.gox:25:1
+		build1.Cmd.Run(build1.Cmd, args)
+	})
+}
+func (this *build) Classfname() string {
+	return "build"
 }
 //line cmd/xgo/fmt_cmd.gox:20
 func (this *fmt) Main(_gop_arg0 string) {
