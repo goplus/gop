@@ -5,6 +5,7 @@ package main
 import (
 	"fmt"
 	"github.com/goplus/cobra/xcmd"
+	install1 "github.com/goplus/gop/cmd/internal/install"
 	run1 "github.com/goplus/gop/cmd/internal/run"
 	"github.com/goplus/gop/env"
 	"github.com/qiniu/x/stringutil"
@@ -13,6 +14,10 @@ import (
 
 const _ = true
 
+type install struct {
+	xcmd.Command
+	*App
+}
 type run struct {
 	xcmd.Command
 	*App
@@ -26,9 +31,26 @@ type App struct {
 }
 
 func (this *App) Main() {
-	_gop_obj0 := &run{App: this}
-	_gop_obj1 := &version{App: this}
-	xcmd.Gopt_App_Main(this, _gop_obj0, _gop_obj1)
+	_gop_obj0 := &install{App: this}
+	_gop_obj1 := &run{App: this}
+	_gop_obj2 := &version{App: this}
+	xcmd.Gopt_App_Main(this, _gop_obj0, _gop_obj1, _gop_obj2)
+}
+//line cmd/xgo/install_cmd.gox:20
+func (this *install) Main(_gop_arg0 string) {
+	this.Command.Main(_gop_arg0)
+//line cmd/xgo/install_cmd.gox:20:1
+	this.Short("Build Go+ files and install target to GOBIN")
+//line cmd/xgo/install_cmd.gox:22:1
+	this.FlagOff()
+//line cmd/xgo/install_cmd.gox:24:1
+	this.Run__1(func(args []string) {
+//line cmd/xgo/install_cmd.gox:25:1
+		install1.Cmd.Run(install1.Cmd, args)
+	})
+}
+func (this *install) Classfname() string {
+	return "install"
 }
 //line cmd/xgo/run_cmd.gox:20
 func (this *run) Main(_gop_arg0 string) {
