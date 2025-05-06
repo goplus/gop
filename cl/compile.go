@@ -733,10 +733,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 	var parent = ctx.pkgCtx
 	if f.IsClass {
 		if f.IsNormalGox {
-			classType, _, _ = ClassNameAndExt(file)
-			if classType == "main" {
-				classType = "_main"
-			}
+			classType, _, _ = exClassNameAndExt(file, false)
 			if f.ShadowEntry != nil {
 				parent.goxMainClass = classType
 				parent.goxMain++
