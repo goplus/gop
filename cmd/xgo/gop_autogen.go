@@ -14,6 +14,7 @@ import (
 	run1 "github.com/goplus/gop/cmd/internal/run"
 	serve1 "github.com/goplus/gop/cmd/internal/serve"
 	test1 "github.com/goplus/gop/cmd/internal/test"
+	watch1 "github.com/goplus/gop/cmd/internal/watch"
 	"github.com/goplus/gop/env"
 	"github.com/qiniu/x/stringutil"
 	"runtime"
@@ -61,6 +62,10 @@ type version struct {
 	xcmd.Command
 	*App
 }
+type watch struct {
+	xcmd.Command
+	*App
+}
 type App struct {
 	xcmd.App
 }
@@ -76,7 +81,8 @@ func (this *App) Main() {
 	_gop_obj7 := &serve{App: this}
 	_gop_obj8 := &test{App: this}
 	_gop_obj9 := &version{App: this}
-	xcmd.Gopt_App_Main(this, _gop_obj0, _gop_obj1, _gop_obj2, _gop_obj3, _gop_obj4, _gop_obj5, _gop_obj6, _gop_obj7, _gop_obj8, _gop_obj9)
+	_gop_obj10 := &watch{App: this}
+	xcmd.Gopt_App_Main(this, _gop_obj0, _gop_obj1, _gop_obj2, _gop_obj3, _gop_obj4, _gop_obj5, _gop_obj6, _gop_obj7, _gop_obj8, _gop_obj9, _gop_obj10)
 }
 //line cmd/xgo/build_cmd.gox:20
 func (this *build) Main(_gop_arg0 string) {
@@ -235,6 +241,22 @@ func (this *version) Main(_gop_arg0 string) {
 }
 func (this *version) Classfname() string {
 	return "version"
+}
+//line cmd/xgo/watch_cmd.gox:20
+func (this *watch) Main(_gop_arg0 string) {
+	this.Command.Main(_gop_arg0)
+//line cmd/xgo/watch_cmd.gox:20:1
+	this.Short("Monitor code changes in a Go+ workspace to generate Go files")
+//line cmd/xgo/watch_cmd.gox:22:1
+	this.FlagOff()
+//line cmd/xgo/watch_cmd.gox:24:1
+	this.Run__1(func(args []string) {
+//line cmd/xgo/watch_cmd.gox:25:1
+		watch1.Cmd.Run(watch1.Cmd, args)
+	})
+}
+func (this *watch) Classfname() string {
+	return "watch"
 }
 func main() {
 	new(App).Main()
