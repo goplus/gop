@@ -5,6 +5,8 @@ package main
 import (
 	"fmt"
 	"github.com/goplus/cobra/xcmd"
+	install1 "github.com/goplus/gop/cmd/internal/install"
+	run1 "github.com/goplus/gop/cmd/internal/run"
 	"github.com/goplus/gop/env"
 	"github.com/qiniu/x/stringutil"
 	"runtime"
@@ -12,6 +14,14 @@ import (
 
 const _ = true
 
+type install struct {
+	xcmd.Command
+	*App
+}
+type run struct {
+	xcmd.Command
+	*App
+}
 type version struct {
 	xcmd.Command
 	*App
@@ -21,8 +31,39 @@ type App struct {
 }
 
 func (this *App) Main() {
-	_gop_obj0 := &version{App: this}
-	xcmd.Gopt_App_Main(this, _gop_obj0)
+	xcmd.Gopt_App_Main(this, new(install), new(run), new(version))
+}
+//line cmd/xgo/install_cmd.gox:20
+func (this *install) Main(_gop_arg0 string) {
+	this.Command.Main(_gop_arg0)
+//line cmd/xgo/install_cmd.gox:20:1
+	this.Short("Build Go+ files and install target to GOBIN")
+//line cmd/xgo/install_cmd.gox:22:1
+	this.FlagOff()
+//line cmd/xgo/install_cmd.gox:24:1
+	this.Run__1(func(args []string) {
+//line cmd/xgo/install_cmd.gox:25:1
+		install1.Cmd.Run(install1.Cmd, args)
+	})
+}
+func (this *install) Classfname() string {
+	return "install"
+}
+//line cmd/xgo/run_cmd.gox:20
+func (this *run) Main(_gop_arg0 string) {
+	this.Command.Main(_gop_arg0)
+//line cmd/xgo/run_cmd.gox:20:1
+	this.Short("Compile and run a Go+ program")
+//line cmd/xgo/run_cmd.gox:22:1
+	this.FlagOff()
+//line cmd/xgo/run_cmd.gox:24:1
+	this.Run__1(func(args []string) {
+//line cmd/xgo/run_cmd.gox:25:1
+		run1.Cmd.Run(run1.Cmd, args)
+	})
+}
+func (this *run) Classfname() string {
+	return "run"
 }
 //line cmd/xgo/version_cmd.gox:21
 func (this *version) Main(_gop_arg0 string) {
@@ -32,7 +73,7 @@ func (this *version) Main(_gop_arg0 string) {
 //line cmd/xgo/version_cmd.gox:23:1
 	this.Run__0(func() {
 //line cmd/xgo/version_cmd.gox:24:1
-		fmt.Println(stringutil.Concat("llgo ", env.Version(), " ", runtime.GOOS, "/", runtime.GOARCH))
+		fmt.Println(stringutil.Concat("xgo ", env.Version(), " ", runtime.GOOS, "/", runtime.GOARCH))
 	})
 }
 func (this *version) Classfname() string {
