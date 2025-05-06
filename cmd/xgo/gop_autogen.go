@@ -6,6 +6,7 @@ import (
 	fmt1 "fmt"
 	"github.com/goplus/cobra/xcmd"
 	build1 "github.com/goplus/gop/cmd/internal/build"
+	doc1 "github.com/goplus/gop/cmd/internal/doc"
 	"github.com/goplus/gop/cmd/internal/gopfmt"
 	"github.com/goplus/gop/cmd/internal/gopget"
 	install1 "github.com/goplus/gop/cmd/internal/install"
@@ -19,6 +20,10 @@ import (
 const _ = true
 
 type build struct {
+	xcmd.Command
+	*App
+}
+type doc struct {
 	xcmd.Command
 	*App
 }
@@ -52,13 +57,14 @@ type App struct {
 
 func (this *App) Main() {
 	_gop_obj0 := &build{App: this}
-	_gop_obj1 := &fmt{App: this}
-	_gop_obj2 := &get{App: this}
-	_gop_obj3 := &install{App: this}
-	_gop_obj4 := &run{App: this}
-	_gop_obj5 := &test{App: this}
-	_gop_obj6 := &version{App: this}
-	xcmd.Gopt_App_Main(this, _gop_obj0, _gop_obj1, _gop_obj2, _gop_obj3, _gop_obj4, _gop_obj5, _gop_obj6)
+	_gop_obj1 := &doc{App: this}
+	_gop_obj2 := &fmt{App: this}
+	_gop_obj3 := &get{App: this}
+	_gop_obj4 := &install{App: this}
+	_gop_obj5 := &run{App: this}
+	_gop_obj6 := &test{App: this}
+	_gop_obj7 := &version{App: this}
+	xcmd.Gopt_App_Main(this, _gop_obj0, _gop_obj1, _gop_obj2, _gop_obj3, _gop_obj4, _gop_obj5, _gop_obj6, _gop_obj7)
 }
 //line cmd/xgo/build_cmd.gox:20
 func (this *build) Main(_gop_arg0 string) {
@@ -75,6 +81,22 @@ func (this *build) Main(_gop_arg0 string) {
 }
 func (this *build) Classfname() string {
 	return "build"
+}
+//line cmd/xgo/doc_cmd.gox:20
+func (this *doc) Main(_gop_arg0 string) {
+	this.Command.Main(_gop_arg0)
+//line cmd/xgo/doc_cmd.gox:20:1
+	this.Short("Show documentation for package or symbol")
+//line cmd/xgo/doc_cmd.gox:22:1
+	this.FlagOff()
+//line cmd/xgo/doc_cmd.gox:24:1
+	this.Run__1(func(args []string) {
+//line cmd/xgo/doc_cmd.gox:25:1
+		doc1.Cmd.Run(doc1.Cmd, args)
+	})
+}
+func (this *doc) Classfname() string {
+	return "doc"
 }
 //line cmd/xgo/fmt_cmd.gox:20
 func (this *fmt) Main(_gop_arg0 string) {
