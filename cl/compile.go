@@ -490,7 +490,7 @@ const (
 )
 
 const (
-	ioxPkgPath = "github.com/goplus/gop/builtin/iox"
+	osxPkgPath = "github.com/goplus/gop/builtin/osx"
 )
 
 // NewPackage creates a Go+ package instance.
@@ -520,7 +520,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 		NewBuiltin:      newBuiltinDefault,
 		DefaultGoFile:   defaultGoFile,
 		NoSkipConstant:  conf.NoSkipConstant,
-		PkgPathIox:      ioxPkgPath,
+		PkgPathIox:      osxPkgPath,
 		DbgPositioner:   interp,
 	}
 	var rec *goxRecorder

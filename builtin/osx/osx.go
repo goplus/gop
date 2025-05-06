@@ -11,19 +11,36 @@
  limitations under the License.
 */
 
-package iox
+package osx
 
 import (
 	"bufio"
+	"fmt"
 	"io"
+	"os"
 )
 
 // ----------------------------------------------------------------------------
 
+// Errorln formats and prints to standard error.
+func Errorln(args ...any) {
+	fmt.Fprintln(os.Stderr, args...)
+}
+
+// Fatal formats and prints to standard error.
+func Fatal(args ...any) {
+	fmt.Fprintln(os.Stderr, args...)
+	os.Exit(1)
+}
+
+// ----------------------------------------------------------------------------
+
+// LineIter is an iterator that reads lines from a reader.
 type LineIter struct {
 	s *bufio.Scanner
 }
 
+// Next reads the next line from the iterator.
 func (it LineIter) Next() (line string, ok bool) {
 	s := it.s
 	if ok = s.Scan(); ok {
@@ -34,6 +51,7 @@ func (it LineIter) Next() (line string, ok bool) {
 	return
 }
 
+// EnumLines returns a LineIter that reads lines from the given reader.
 func EnumLines(r io.Reader) LineIter {
 	scanner := bufio.NewScanner(r)
 	return LineIter{scanner}
@@ -41,10 +59,12 @@ func EnumLines(r io.Reader) LineIter {
 
 // ----------------------------------------------------------------------------
 
+// BLineIter is an iterator that reads lines from a reader.
 type BLineIter struct {
 	s *bufio.Scanner
 }
 
+// Next reads the next line from the iterator.
 func (it BLineIter) Next() (line []byte, ok bool) {
 	s := it.s
 	if ok = s.Scan(); ok {
@@ -55,6 +75,7 @@ func (it BLineIter) Next() (line []byte, ok bool) {
 	return
 }
 
+// EnumBLines returns a BLineIter that reads lines from the given reader.
 func EnumBLines(r io.Reader) BLineIter {
 	scanner := bufio.NewScanner(r)
 	return BLineIter{scanner}
@@ -62,6 +83,7 @@ func EnumBLines(r io.Reader) BLineIter {
 
 // ----------------------------------------------------------------------------
 
+// LineReader is a wrapper around io.Reader that provides a method to read lines.
 type LineReader struct {
 	r io.Reader
 }
@@ -70,12 +92,14 @@ func (p LineReader) Gop_Enum() LineIter {
 	return EnumLines(p.r)
 }
 
+// Lines returns a LineReader that reads lines from the given reader.
 func Lines(r io.Reader) LineReader {
 	return LineReader{r}
 }
 
 // ----------------------------------------------------------------------------
 
+// BLineReader is a wrapper around io.Reader that provides a method to read lines.
 type BLineReader struct {
 	r io.Reader
 }
@@ -84,6 +108,7 @@ func (p BLineReader) Gop_Enum() BLineIter {
 	return EnumBLines(p.r)
 }
 
+// BLines returns a BLineReader that reads lines from the given reader.
 func BLines(r io.Reader) BLineReader {
 	return BLineReader{r}
 }
