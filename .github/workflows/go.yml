@@ -105,4 +105,5 @@ jobs:
             echo "Some files are not properly formatted. Please run 'go fmt ./...'"
             exit 1
           fi
+          ./all.bash
           cd cmd/xgo; gop fmt -t ./...
