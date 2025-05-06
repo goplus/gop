@@ -31,7 +31,10 @@ type App struct {
 }
 
 func (this *App) Main() {
-	xcmd.Gopt_App_Main(this, new(install), new(run), new(version))
+	_gop_obj0 := &install{App: this}
+	_gop_obj1 := &run{App: this}
+	_gop_obj2 := &version{App: this}
+	xcmd.Gopt_App_Main(this, _gop_obj0, _gop_obj1, _gop_obj2)
 }
 //line cmd/xgo/install_cmd.gox:20
 func (this *install) Main(_gop_arg0 string) {
