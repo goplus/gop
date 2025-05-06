@@ -12,6 +12,7 @@ import (
 	"github.com/goplus/gop/cmd/internal/gopget"
 	install1 "github.com/goplus/gop/cmd/internal/install"
 	run1 "github.com/goplus/gop/cmd/internal/run"
+	serve1 "github.com/goplus/gop/cmd/internal/serve"
 	test1 "github.com/goplus/gop/cmd/internal/test"
 	"github.com/goplus/gop/env"
 	"github.com/qiniu/x/stringutil"
@@ -48,6 +49,10 @@ type run struct {
 	xcmd.Command
 	*App
 }
+type serve struct {
+	xcmd.Command
+	*App
+}
 type test struct {
 	xcmd.Command
 	*App
@@ -68,9 +73,10 @@ func (this *App) Main() {
 	_gop_obj4 := &get{App: this}
 	_gop_obj5 := &install{App: this}
 	_gop_obj6 := &run{App: this}
-	_gop_obj7 := &test{App: this}
-	_gop_obj8 := &version{App: this}
-	xcmd.Gopt_App_Main(this, _gop_obj0, _gop_obj1, _gop_obj2, _gop_obj3, _gop_obj4, _gop_obj5, _gop_obj6, _gop_obj7, _gop_obj8)
+	_gop_obj7 := &serve{App: this}
+	_gop_obj8 := &test{App: this}
+	_gop_obj9 := &version{App: this}
+	xcmd.Gopt_App_Main(this, _gop_obj0, _gop_obj1, _gop_obj2, _gop_obj3, _gop_obj4, _gop_obj5, _gop_obj6, _gop_obj7, _gop_obj8, _gop_obj9)
 }
 //line cmd/xgo/build_cmd.gox:20
 func (this *build) Main(_gop_arg0 string) {
@@ -183,6 +189,22 @@ func (this *run) Main(_gop_arg0 string) {
 }
 func (this *run) Classfname() string {
 	return "run"
+}
+//line cmd/xgo/serve_cmd.gox:20
+func (this *serve) Main(_gop_arg0 string) {
+	this.Command.Main(_gop_arg0)
+//line cmd/xgo/serve_cmd.gox:20:1
+	this.Short("Serve as a Go+ LangServer")
+//line cmd/xgo/serve_cmd.gox:22:1
+	this.FlagOff()
+//line cmd/xgo/serve_cmd.gox:24:1
+	this.Run__1(func(args []string) {
+//line cmd/xgo/serve_cmd.gox:25:1
+		serve1.Cmd.Run(serve1.Cmd, args)
+	})
+}
+func (this *serve) Classfname() string {
+	return "serve"
 }
 //line cmd/xgo/test_cmd.gox:20
 func (this *test) Main(_gop_arg0 string) {
