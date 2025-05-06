@@ -7,6 +7,7 @@ import (
 	"github.com/goplus/cobra/xcmd"
 	build1 "github.com/goplus/gop/cmd/internal/build"
 	"github.com/goplus/gop/cmd/internal/gopfmt"
+	"github.com/goplus/gop/cmd/internal/gopget"
 	install1 "github.com/goplus/gop/cmd/internal/install"
 	run1 "github.com/goplus/gop/cmd/internal/run"
 	test1 "github.com/goplus/gop/cmd/internal/test"
@@ -22,6 +23,10 @@ type build struct {
 	*App
 }
 type fmt struct {
+	xcmd.Command
+	*App
+}
+type get struct {
 	xcmd.Command
 	*App
 }
@@ -48,11 +53,12 @@ type App struct {
 func (this *App) Main() {
 	_gop_obj0 := &build{App: this}
 	_gop_obj1 := &fmt{App: this}
-	_gop_obj2 := &install{App: this}
-	_gop_obj3 := &run{App: this}
-	_gop_obj4 := &test{App: this}
-	_gop_obj5 := &version{App: this}
-	xcmd.Gopt_App_Main(this, _gop_obj0, _gop_obj1, _gop_obj2, _gop_obj3, _gop_obj4, _gop_obj5)
+	_gop_obj2 := &get{App: this}
+	_gop_obj3 := &install{App: this}
+	_gop_obj4 := &run{App: this}
+	_gop_obj5 := &test{App: this}
+	_gop_obj6 := &version{App: this}
+	xcmd.Gopt_App_Main(this, _gop_obj0, _gop_obj1, _gop_obj2, _gop_obj3, _gop_obj4, _gop_obj5, _gop_obj6)
 }
 //line cmd/xgo/build_cmd.gox:20
 func (this *build) Main(_gop_arg0 string) {
@@ -85,6 +91,22 @@ func (this *fmt) Main(_gop_arg0 string) {
 }
 func (this *fmt) Classfname() string {
 	return "fmt"
+}
+//line cmd/xgo/get_cmd.gox:20
+func (this *get) Main(_gop_arg0 string) {
+	this.Command.Main(_gop_arg0)
+//line cmd/xgo/get_cmd.gox:20:1
+	this.Short("Add dependencies to current module and install them")
+//line cmd/xgo/get_cmd.gox:22:1
+	this.FlagOff()
+//line cmd/xgo/get_cmd.gox:24:1
+	this.Run__1(func(args []string) {
+//line cmd/xgo/get_cmd.gox:25:1
+		gopget.Cmd.Run(gopget.Cmd, args)
+	})
+}
+func (this *get) Classfname() string {
+	return "get"
 }
 //line cmd/xgo/install_cmd.gox:20
 func (this *install) Main(_gop_arg0 string) {
