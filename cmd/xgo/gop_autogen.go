@@ -7,6 +7,7 @@ import (
 	"github.com/goplus/cobra/xcmd"
 	install1 "github.com/goplus/gop/cmd/internal/install"
 	run1 "github.com/goplus/gop/cmd/internal/run"
+	test1 "github.com/goplus/gop/cmd/internal/test"
 	"github.com/goplus/gop/env"
 	"github.com/qiniu/x/stringutil"
 	"runtime"
@@ -22,6 +23,10 @@ type run struct {
 	xcmd.Command
 	*App
 }
+type test struct {
+	xcmd.Command
+	*App
+}
 type version struct {
 	xcmd.Command
 	*App
@@ -33,8 +38,9 @@ type App struct {
 func (this *App) Main() {
 	_gop_obj0 := &install{App: this}
 	_gop_obj1 := &run{App: this}
-	_gop_obj2 := &version{App: this}
-	xcmd.Gopt_App_Main(this, _gop_obj0, _gop_obj1, _gop_obj2)
+	_gop_obj2 := &test{App: this}
+	_gop_obj3 := &version{App: this}
+	xcmd.Gopt_App_Main(this, _gop_obj0, _gop_obj1, _gop_obj2, _gop_obj3)
 }
 //line cmd/xgo/install_cmd.gox:20
 func (this *install) Main(_gop_arg0 string) {
@@ -68,6 +74,22 @@ func (this *run) Main(_gop_arg0 string) {
 func (this *run) Classfname() string {
 	return "run"
 }
+//line cmd/xgo/test_cmd.gox:20
+func (this *test) Main(_gop_arg0 string) {
+	this.Command.Main(_gop_arg0)
+//line cmd/xgo/test_cmd.gox:20:1
+	this.Short("Test Go+ packages")
+//line cmd/xgo/test_cmd.gox:22:1
+	this.FlagOff()
+//line cmd/xgo/test_cmd.gox:24:1
+	this.Run__1(func(args []string) {
+//line cmd/xgo/test_cmd.gox:25:1
+		test1.Cmd.Run(test1.Cmd, args)
+	})
+}
+func (this *test) Classfname() string {
+	return "test"
+}
 //line cmd/xgo/version_cmd.gox:21
 func (this *version) Main(_gop_arg0 string) {
 	this.Command.Main(_gop_arg0)
@@ -83,5 +105,6 @@ func (this *version) Classfname() string {
 	return "version"
 }
 func main() {
+//line cmd/xgo/version_cmd.gox:23:1
 	new(App).Main()
 }
