@@ -489,10 +489,6 @@ const (
 	testingGoFile  = "_test"
 )
 
-const (
-	osxPkgPath = "github.com/goplus/gop/builtin/osx"
-)
-
 // NewPackage creates a Go+ package instance.
 func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Package, err error) {
 	relBaseDir := conf.RelativeBase

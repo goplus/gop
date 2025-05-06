@@ -240,7 +240,7 @@ println a+1/2r
 
 import (
 	"fmt"
-	"github.com/goplus/gop/builtin/ng"
+	"github.com/qiniu/x/gop/ng"
 	"math/big"
 )
 
@@ -264,7 +264,7 @@ for line <- lines(r) {
 
 import (
 	"fmt"
-	"github.com/goplus/gop/builtin/osx"
+	"github.com/qiniu/x/gop/osx"
 	"io"
 )
 

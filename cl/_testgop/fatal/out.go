@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/goplus/gop/builtin/osx"
+	"github.com/qiniu/x/gop/osx"
 	"github.com/qiniu/x/stringutil"
 	"os"
 )

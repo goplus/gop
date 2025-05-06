@@ -77,16 +77,20 @@ func initBuiltin(_ *gogen.Package, builtin *types.Package, os, fmt, ng, osx, bui
 	scope.Insert(types.NewTypeName(token.NoPos, builtin, "any", gogen.TyEmptyInterface))
 }
 
+const (
+	osxPkgPath = "github.com/qiniu/x/gop/osx"
+)
+
 func newBuiltinDefault(pkg *gogen.Package, conf *gogen.Config) *types.Package {
 	builtin := types.NewPackage("", "")
 	fmt := pkg.TryImport("fmt")
 	os := pkg.TryImport("os")
 	reflect := pkg.TryImport("reflect")
-	buil := pkg.TryImport("github.com/goplus/gop/builtin")
-	ng := pkg.TryImport("github.com/goplus/gop/builtin/ng")
-	osx := pkg.TryImport("github.com/goplus/gop/builtin/osx")
+	osx := pkg.TryImport(osxPkgPath)
+	buil := pkg.TryImport("github.com/qiniu/x/gop")
+	ng := pkg.TryImport("github.com/qiniu/x/gop/ng")
 	strx := pkg.TryImport("github.com/qiniu/x/stringutil")
-	stringslice := pkg.TryImport("github.com/goplus/gop/builtin/stringslice")
+	stringslice := pkg.TryImport("github.com/qiniu/x/stringslice")
 	pkg.TryImport("strconv")
 	pkg.TryImport("strings")
 	if ng.Types != nil {

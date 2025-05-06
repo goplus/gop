@@ -1,0 +1,5 @@
+import "os"
+
+for line <- os.Stdin {
+	println line
+}
