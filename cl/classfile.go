@@ -585,6 +585,8 @@ func genWorkClasses(
 
 func genMainFunc(pkg *gogen.Package, gameClass string) {
 	if o := pkg.TryRef(gameClass); o != nil {
+		// force remove //line comments for main func
+		pkg.CB().SetComments(nil, false)
 		// new(gameClass).Main()
 		new := pkg.Builtin().Ref("new")
 		pkg.NewFunc(nil, "main", nil, nil, false).BodyStart(pkg).
