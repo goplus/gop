@@ -1,0 +1,7 @@
+import "os"
+
+f, err := os.open("hello.txt")
+if err != nil {
+    fatal "open file failed: ${err}"
+}
+f.close

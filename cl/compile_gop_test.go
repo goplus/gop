@@ -1050,13 +1050,13 @@ for line <- open("foo.txt")! {
 
 import (
 	"fmt"
-	"github.com/goplus/gop/builtin/iox"
+	"github.com/goplus/gop/builtin/osx"
 	"github.com/qiniu/x/errors"
 	"os"
 )
 
 func main() {
-	for _gop_it := iox.EnumLines(func() (_gop_ret *os.File) {
+	for _gop_it := osx.EnumLines(func() (_gop_ret *os.File) {
 		var _gop_err error
 		_gop_ret, _gop_err = os.Open("foo.txt")
 		if _gop_err != nil {
@@ -1087,12 +1087,12 @@ for line <- os.Stdin {
 
 import (
 	"fmt"
-	"github.com/goplus/gop/builtin/iox"
+	"github.com/goplus/gop/builtin/osx"
 	"os"
 )
 
 func main() {
-	for _gop_it := iox.EnumLines(os.Stdin); ; {
+	for _gop_it := osx.EnumLines(os.Stdin); ; {
 		var _gop_ok bool
 		line, _gop_ok := _gop_it.Next()
 		if !_gop_ok {
@@ -1117,14 +1117,14 @@ for line <- lines(r) {
 
 import (
 	"fmt"
-	"github.com/goplus/gop/builtin/iox"
+	"github.com/goplus/gop/builtin/osx"
 	"io"
 )
 
 var r io.Reader
 
 func main() {
-	for _gop_it := iox.Lines(r).Gop_Enum(); ; {
+	for _gop_it := osx.Lines(r).Gop_Enum(); ; {
 		var _gop_ok bool
 		line, _gop_ok := _gop_it.Next()
 		if !_gop_ok {

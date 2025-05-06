@@ -38,7 +38,7 @@ func initBuiltinFns(builtin *types.Package, scope *types.Scope, pkg gogen.PkgRef
 	}
 }
 
-func initBuiltin(_ *gogen.Package, builtin *types.Package, os, fmt, ng, iox, buil, reflect gogen.PkgRef) {
+func initBuiltin(_ *gogen.Package, builtin *types.Package, os, fmt, ng, osx, buil, reflect gogen.PkgRef) {
 	scope := builtin.Scope()
 	if ng.Types != nil {
 		typs := []string{"bigint", "bigrat", "bigfloat"}
@@ -62,11 +62,11 @@ func initBuiltin(_ *gogen.Package, builtin *types.Package, os, fmt, ng, iox, bui
 			"open", "create",
 		})
 	}
-	if iox.Types != nil {
-		initBuiltinFns(builtin, scope, iox, []string{
-			"lines",
+	if osx.Types != nil {
+		initBuiltinFns(builtin, scope, osx, []string{
+			"lines", "fatal",
 		})
-		scope.Insert(gogen.NewOverloadFunc(token.NoPos, builtin, "blines", iox.Ref("BLines")))
+		scope.Insert(gogen.NewOverloadFunc(token.NoPos, builtin, "blines", osx.Ref("BLines")))
 	}
 	if reflect.Types != nil {
 		scope.Insert(gogen.NewOverloadFunc(token.NoPos, builtin, "type", reflect.Ref("TypeOf")))
@@ -84,7 +84,7 @@ func newBuiltinDefault(pkg *gogen.Package, conf *gogen.Config) *types.Package {
 	reflect := pkg.TryImport("reflect")
 	buil := pkg.TryImport("github.com/goplus/gop/builtin")
 	ng := pkg.TryImport("github.com/goplus/gop/builtin/ng")
-	iox := pkg.TryImport("github.com/goplus/gop/builtin/iox")
+	osx := pkg.TryImport("github.com/goplus/gop/builtin/osx")
 	strx := pkg.TryImport("github.com/qiniu/x/stringutil")
 	stringslice := pkg.TryImport("github.com/goplus/gop/builtin/stringslice")
 	pkg.TryImport("strconv")
@@ -97,7 +97,7 @@ func newBuiltinDefault(pkg *gogen.Package, conf *gogen.Config) *types.Package {
 			}
 		}
 	}
-	initBuiltin(pkg, builtin, os, fmt, ng, iox, buil, reflect)
+	initBuiltin(pkg, builtin, os, fmt, ng, osx, buil, reflect)
 	gogen.InitBuiltin(pkg, builtin, conf)
 	if strx.Types != nil {
 		ti := pkg.BuiltinTI(types.Typ[types.String])
