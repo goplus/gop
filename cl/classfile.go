@@ -217,8 +217,8 @@ func exClassNameAndExt(file string, keepMain bool) (name, clsfile, ext string) {
 			if !keepMain {
 				name = "_main"
 			}
-		case "init":
-			name = "_init"
+		case "init", "go":
+			name = "_" + name
 		}
 	}
 	return

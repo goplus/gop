@@ -6,12 +6,16 @@ import (
 	fmt1 "fmt"
 	"github.com/goplus/cobra/xcmd"
 	build1 "github.com/goplus/gop/cmd/internal/build"
+	clean1 "github.com/goplus/gop/cmd/internal/clean"
 	doc1 "github.com/goplus/gop/cmd/internal/doc"
+	"github.com/goplus/gop/cmd/internal/gengo"
 	"github.com/goplus/gop/cmd/internal/gopfmt"
 	"github.com/goplus/gop/cmd/internal/gopget"
 	install1 "github.com/goplus/gop/cmd/internal/install"
 	run1 "github.com/goplus/gop/cmd/internal/run"
+	serve1 "github.com/goplus/gop/cmd/internal/serve"
 	test1 "github.com/goplus/gop/cmd/internal/test"
+	watch1 "github.com/goplus/gop/cmd/internal/watch"
 	"github.com/goplus/gop/env"
 	"github.com/qiniu/x/stringutil"
 	"runtime"
@@ -20,6 +24,10 @@ import (
 const _ = true
 
 type build struct {
+	xcmd.Command
+	*App
+}
+type clean struct {
 	xcmd.Command
 	*App
 }
@@ -35,11 +43,19 @@ type get struct {
 	xcmd.Command
 	*App
 }
+type _go struct {
+	xcmd.Command
+	*App
+}
 type install struct {
 	xcmd.Command
 	*App
 }
 type run struct {
+	xcmd.Command
+	*App
+}
+type serve struct {
 	xcmd.Command
 	*App
 }
@@ -51,20 +67,28 @@ type version struct {
 	xcmd.Command
 	*App
 }
+type watch struct {
+	xcmd.Command
+	*App
+}
 type App struct {
 	xcmd.App
 }
 
 func (this *App) Main() {
 	_gop_obj0 := &build{App: this}
-	_gop_obj1 := &doc{App: this}
-	_gop_obj2 := &fmt{App: this}
-	_gop_obj3 := &get{App: this}
-	_gop_obj4 := &install{App: this}
-	_gop_obj5 := &run{App: this}
-	_gop_obj6 := &test{App: this}
-	_gop_obj7 := &version{App: this}
-	xcmd.Gopt_App_Main(this, _gop_obj0, _gop_obj1, _gop_obj2, _gop_obj3, _gop_obj4, _gop_obj5, _gop_obj6, _gop_obj7)
+	_gop_obj1 := &clean{App: this}
+	_gop_obj2 := &doc{App: this}
+	_gop_obj3 := &fmt{App: this}
+	_gop_obj4 := &get{App: this}
+	_gop_obj5 := &_go{App: this}
+	_gop_obj6 := &install{App: this}
+	_gop_obj7 := &run{App: this}
+	_gop_obj8 := &serve{App: this}
+	_gop_obj9 := &test{App: this}
+	_gop_obj10 := &version{App: this}
+	_gop_obj11 := &watch{App: this}
+	xcmd.Gopt_App_Main(this, _gop_obj0, _gop_obj1, _gop_obj2, _gop_obj3, _gop_obj4, _gop_obj5, _gop_obj6, _gop_obj7, _gop_obj8, _gop_obj9, _gop_obj10, _gop_obj11)
 }
 //line cmd/xgo/build_cmd.gox:20
 func (this *build) Main(_gop_arg0 string) {
@@ -81,6 +105,22 @@ func (this *build) Main(_gop_arg0 string) {
 }
 func (this *build) Classfname() string {
 	return "build"
+}
+//line cmd/xgo/clean_cmd.gox:20
+func (this *clean) Main(_gop_arg0 string) {
+	this.Command.Main(_gop_arg0)
+//line cmd/xgo/clean_cmd.gox:20:1
+	this.Short("Clean all Go+ auto generated files")
+//line cmd/xgo/clean_cmd.gox:22:1
+	this.FlagOff()
+//line cmd/xgo/clean_cmd.gox:24:1
+	this.Run__1(func(args []string) {
+//line cmd/xgo/clean_cmd.gox:25:1
+		clean1.Cmd.Run(clean1.Cmd, args)
+	})
+}
+func (this *clean) Classfname() string {
+	return "clean"
 }
 //line cmd/xgo/doc_cmd.gox:20
 func (this *doc) Main(_gop_arg0 string) {
@@ -130,6 +170,22 @@ func (this *get) Main(_gop_arg0 string) {
 func (this *get) Classfname() string {
 	return "get"
 }
+//line cmd/xgo/go_cmd.gox:20
+func (this *_go) Main(_gop_arg0 string) {
+	this.Command.Main(_gop_arg0)
+//line cmd/xgo/go_cmd.gox:20:1
+	this.Short("Convert Go+ code into Go code")
+//line cmd/xgo/go_cmd.gox:22:1
+	this.FlagOff()
+//line cmd/xgo/go_cmd.gox:24:1
+	this.Run__1(func(args []string) {
+//line cmd/xgo/go_cmd.gox:25:1
+		gengo.Cmd.Run(gengo.Cmd, args)
+	})
+}
+func (this *_go) Classfname() string {
+	return "go"
+}
 //line cmd/xgo/install_cmd.gox:20
 func (this *install) Main(_gop_arg0 string) {
 	this.Command.Main(_gop_arg0)
@@ -162,6 +218,22 @@ func (this *run) Main(_gop_arg0 string) {
 func (this *run) Classfname() string {
 	return "run"
 }
+//line cmd/xgo/serve_cmd.gox:20
+func (this *serve) Main(_gop_arg0 string) {
+	this.Command.Main(_gop_arg0)
+//line cmd/xgo/serve_cmd.gox:20:1
+	this.Short("Serve as a Go+ LangServer")
+//line cmd/xgo/serve_cmd.gox:22:1
+	this.FlagOff()
+//line cmd/xgo/serve_cmd.gox:24:1
+	this.Run__1(func(args []string) {
+//line cmd/xgo/serve_cmd.gox:25:1
+		serve1.Cmd.Run(serve1.Cmd, args)
+	})
+}
+func (this *serve) Classfname() string {
+	return "serve"
+}
 //line cmd/xgo/test_cmd.gox:20
 func (this *test) Main(_gop_arg0 string) {
 	this.Command.Main(_gop_arg0)
@@ -192,7 +264,22 @@ func (this *version) Main(_gop_arg0 string) {
 func (this *version) Classfname() string {
 	return "version"
 }
+//line cmd/xgo/watch_cmd.gox:20
+func (this *watch) Main(_gop_arg0 string) {
+	this.Command.Main(_gop_arg0)
+//line cmd/xgo/watch_cmd.gox:20:1
+	this.Short("Monitor code changes in a Go+ workspace to generate Go files")
+//line cmd/xgo/watch_cmd.gox:22:1
+	this.FlagOff()
+//line cmd/xgo/watch_cmd.gox:24:1
+	this.Run__1(func(args []string) {
+//line cmd/xgo/watch_cmd.gox:25:1
+		watch1.Cmd.Run(watch1.Cmd, args)
+	})
+}
+func (this *watch) Classfname() string {
+	return "watch"
+}
 func main() {
-//line cmd/xgo/version_cmd.gox:23:1
 	new(App).Main()
 }
