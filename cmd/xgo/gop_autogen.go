@@ -5,6 +5,7 @@ package main
 import (
 	fmt1 "fmt"
 	"github.com/goplus/cobra/xcmd"
+	bug1 "github.com/goplus/gop/cmd/internal/bug"
 	build1 "github.com/goplus/gop/cmd/internal/build"
 	clean1 "github.com/goplus/gop/cmd/internal/clean"
 	doc1 "github.com/goplus/gop/cmd/internal/doc"
@@ -24,6 +25,10 @@ import (
 
 const _ = true
 
+type bug struct {
+	xcmd.Command
+	*App
+}
 type build struct {
 	xcmd.Command
 	*App
@@ -81,20 +86,37 @@ type App struct {
 }
 
 func (this *App) Main() {
-	_gop_obj0 := &build{App: this}
-	_gop_obj1 := &clean{App: this}
-	_gop_obj2 := &doc{App: this}
-	_gop_obj3 := &env{App: this}
-	_gop_obj4 := &fmt{App: this}
-	_gop_obj5 := &get{App: this}
-	_gop_obj6 := &_go{App: this}
-	_gop_obj7 := &install{App: this}
-	_gop_obj8 := &run{App: this}
-	_gop_obj9 := &serve{App: this}
-	_gop_obj10 := &test{App: this}
-	_gop_obj11 := &version{App: this}
-	_gop_obj12 := &watch{App: this}
-	xcmd.Gopt_App_Main(this, _gop_obj0, _gop_obj1, _gop_obj2, _gop_obj3, _gop_obj4, _gop_obj5, _gop_obj6, _gop_obj7, _gop_obj8, _gop_obj9, _gop_obj10, _gop_obj11, _gop_obj12)
+	_gop_obj0 := &bug{App: this}
+	_gop_obj1 := &build{App: this}
+	_gop_obj2 := &clean{App: this}
+	_gop_obj3 := &doc{App: this}
+	_gop_obj4 := &env{App: this}
+	_gop_obj5 := &fmt{App: this}
+	_gop_obj6 := &get{App: this}
+	_gop_obj7 := &_go{App: this}
+	_gop_obj8 := &install{App: this}
+	_gop_obj9 := &run{App: this}
+	_gop_obj10 := &serve{App: this}
+	_gop_obj11 := &test{App: this}
+	_gop_obj12 := &version{App: this}
+	_gop_obj13 := &watch{App: this}
+	xcmd.Gopt_App_Main(this, _gop_obj0, _gop_obj1, _gop_obj2, _gop_obj3, _gop_obj4, _gop_obj5, _gop_obj6, _gop_obj7, _gop_obj8, _gop_obj9, _gop_obj10, _gop_obj11, _gop_obj12, _gop_obj13)
+}
+//line cmd/xgo/bug_cmd.gox:20
+func (this *bug) Main(_gop_arg0 string) {
+	this.Command.Main(_gop_arg0)
+//line cmd/xgo/bug_cmd.gox:20:1
+	this.Short("Start a bug report")
+//line cmd/xgo/bug_cmd.gox:22:1
+	this.FlagOff()
+//line cmd/xgo/bug_cmd.gox:24:1
+	this.Run__1(func(args []string) {
+//line cmd/xgo/bug_cmd.gox:25:1
+		bug1.Cmd.Run(bug1.Cmd, args)
+	})
+}
+func (this *bug) Classfname() string {
+	return "bug"
 }
 //line cmd/xgo/build_cmd.gox:20
 func (this *build) Main(_gop_arg0 string) {
