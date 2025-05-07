@@ -26,13 +26,13 @@ import (
 )
 
 // gop mod tidy
-var cmdTidy = &base.Command{
+var CmdTidy = &base.Command{
 	UsageLine: "gop mod tidy [-e -v]",
 	Short:     "add missing and remove unused modules",
 }
 
 func init() {
-	cmdTidy.Run = runTidy
+	CmdTidy.Run = runTidy
 }
 
 func runTidy(cmd *base.Command, args []string) {

@@ -19,11 +19,12 @@ import (
 
 short "initialize new module in current directory"
 
+flagOff
+
 run args => {
 	if args.len < 1 {
 		help
 		return
 	}
-	subcmd := self.Cmd.Commands[0]
-	subcmd.Run subcmd, args
+	self.CmdInit.Run self.CmdInit, args
 }

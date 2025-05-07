@@ -22,11 +22,11 @@ import (
 )
 
 // gop mod download
-var cmdDownload = &base.Command{
+var CmdDownload = &base.Command{
 	UsageLine: "gop mod download [-x -json] [modules]",
 	Short:     "download modules to local cache",
 }
 
 func init() {
-	cmdDownload.Run = gopget.Cmd.Run
+	CmdDownload.Run = gopget.Cmd.Run
 }
