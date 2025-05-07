@@ -1,0 +1,7 @@
+import "io"
+
+var r io.Reader
+
+for line <- lines(r) {
+	println line
+}

@@ -1,7 +1,7 @@
 package builtin
 
 import (
-	"gop/builtin/iox"
+	"github.com/qiniu/x/gop/osx"
 	"io"
 	"os"
 	"reflect"
@@ -11,7 +11,9 @@ import (
 // Spaces are always added between operands and a newline is appended.
 // It returns the number of bytes written and any write error encountered.
 func Echo(a ...any) (n int, err error)
-func Blines(r io.Reader) iox.BLineReader
+
+// Blines returns a BLineReader that reads lines from the given reader.
+func Blines(r io.Reader) osx.BLineReader
 
 // Type returns the reflection [Type] that represents the dynamic type of i.
 // If i is a nil interface value, Type returns nil.
@@ -75,12 +77,23 @@ func Sprintf(format string, a ...any) string
 func Open(name string) (*os.File, error)
 
 // Create creates or truncates the named file. If the file already exists,
-// it is truncated. If the file does not exist, it is created with mode 0666
+// it is truncated. If the file does not exist, it is created with mode 0o666
 // (before umask). If successful, methods on the returned File can
 // be used for I/O; the associated file descriptor has mode O_RDWR.
+// The directory containing the file must already exist.
 // If there is an error, it will be of type *PathError.
 func Create(name string) (*os.File, error)
-func Lines(r io.Reader) iox.LineReader
+
+// Lines returns a LineReader that reads lines from the given reader.
+func Lines(r io.Reader) osx.LineReader
+
+// Errorln formats and prints to standard error.
+func Errorln(args ...any)
+
+// Fatal formats and prints to standard error.
+func Fatal(args ...any)
+
+// Gop_Enum returns a LineIter that reads lines from the given reader.
 func (r io.Reader) Gop_Enum() iox.LineIter
 
 // String is equivalent to strconv.FormatFloat(f, 'g', -1, 64)
@@ -91,14 +104,14 @@ func (r io.Reader) Gop_Enum() iox.LineIter
 // value of bitSize bits (32 for float32, 64 for float64).
 //
 // The format fmt is one of
-// 'b' (-ddddp±ddd, a binary exponent),
-// 'e' (-d.dddde±dd, a decimal exponent),
-// 'E' (-d.ddddE±dd, a decimal exponent),
-// 'f' (-ddd.dddd, no exponent),
-// 'g' ('e' for large exponents, 'f' otherwise),
-// 'G' ('E' for large exponents, 'f' otherwise),
-// 'x' (-0xd.ddddp±ddd, a hexadecimal fraction and binary exponent), or
-// 'X' (-0Xd.ddddP±ddd, a hexadecimal fraction and binary exponent).
+//   - 'b' (-ddddp±ddd, a binary exponent),
+//   - 'e' (-d.dddde±dd, a decimal exponent),
+//   - 'E' (-d.ddddE±dd, a decimal exponent),
+//   - 'f' (-ddd.dddd, no exponent),
+//   - 'g' ('e' for large exponents, 'f' otherwise),
+//   - 'G' ('E' for large exponents, 'f' otherwise),
+//   - 'x' (-0xd.ddddp±ddd, a hexadecimal fraction and binary exponent), or
+//   - 'X' (-0Xd.ddddP±ddd, a hexadecimal fraction and binary exponent).
 //
 // The precision prec controls the number of digits (excluding the exponent)
 // printed by the 'e', 'E', 'f', 'g', 'G', 'x', and 'X' formats.
@@ -107,9 +120,11 @@ func (r io.Reader) Gop_Enum() iox.LineIter
 // zeros are removed).
 // The special precision -1 uses the smallest number of digits
 // necessary such that ParseFloat will return f exactly.
+// The exponent is written as a decimal integer;
+// for all formats other than 'b', it will be at least two digits.
 func (f float64) String() string
 
-// String is equivalent to FormatInt(int64(i), 10).
+// String is equivalent to [FormatInt](int64(i), 10).
 func (i int) String() string
 
 // String is equivalent to strconv.FormatInt(i, 10)
@@ -128,12 +143,12 @@ func (u uint64) String() string
 
 // The len built-in function returns the length of v, according to its type:
 //
-//	Array: the number of elements in v.
-//	Pointer to array: the number of elements in *v (even if v is nil).
-//	Slice, or map: the number of elements in v; if v is nil, len(v) is zero.
-//	String: the number of bytes in v.
-//	Channel: the number of elements queued (unread) in the channel buffer;
-//	         if v is nil, len(v) is zero.
+//   - Array: the number of elements in v.
+//   - Pointer to array: the number of elements in *v (even if v is nil).
+//   - Slice, or map: the number of elements in v; if v is nil, len(v) is zero.
+//   - String: the number of bytes in v.
+//   - Channel: the number of elements queued (unread) in the channel buffer;
+//     if v is nil, len(v) is zero.
 //
 // For some arguments, such as a string literal or a simple array expression, the
 // result can be a constant. See the Go language specification's "Length and
@@ -165,11 +180,11 @@ func (s string) Int() (int, error)
 // correspond to int, int8, int16, int32, and int64.
 // If bitSize is below 0 or above 64, an error is returned.
 //
-// The errors that ParseInt returns have concrete type *NumError
+// The errors that ParseInt returns have concrete type [*NumError]
 // and include err.Num = s. If s is empty or contains invalid
-// digits, err.Err = ErrSyntax and the returned value is 0;
+// digits, err.Err = [ErrSyntax] and the returned value is 0;
 // if the value corresponding to s cannot be represented by a
-// signed integer of the given size, err.Err = ErrRange and the
+// signed integer of the given size, err.Err = [ErrRange] and the
 // returned value is the maximum magnitude integer of the
 // appropriate bitSize and sign.
 //
@@ -178,7 +193,7 @@ func (s string) Int64() (i int64, err error)
 
 // Uint64 is equivalent to strconv.ParseUint(s, 10, 64)
 //
-// ParseUint is like ParseInt but for unsigned numbers.
+// ParseUint is like [ParseInt] but for unsigned numbers.
 //
 // A sign prefix is not permitted.
 func (s string) Uint64() (uint64, error)
@@ -226,7 +241,7 @@ func (s string) IndexByte(c byte) int
 
 // IndexRune returns the index of the first instance of the Unicode code point
 // r, or -1 if rune is not present in s.
-// If r is utf8.RuneError, it returns the first instance of any
+// If r is [utf8.RuneError], it returns the first instance of any
 // invalid UTF-8 byte sequence.
 func (s string) IndexRune(r rune) int
 
@@ -253,9 +268,9 @@ func (s string) ContainsRune(r rune) bool
 // Compare returns an integer comparing two strings lexicographically.
 // The result will be 0 if a == b, -1 if a < b, and +1 if a > b.
 //
-// Compare is included only for symmetry with package bytes.
-// It is usually clearer and always faster to use the built-in
-// string comparison operators ==, <, >, and so on.
+// Use Compare when you need to perform a three-way comparison (with
+// [slices.SortFunc], for example). It is usually clearer and always faster
+// to use the built-in string comparison operators ==, <, >, and so on.
 func (s string) Compare(b string) int
 
 // EqualFold reports whether s and t, interpreted as UTF-8 strings,
@@ -272,14 +287,15 @@ func (s string) HasSuffix(suffix string) bool
 // Quote returns a double-quoted Go string literal representing s. The
 // returned string uses Go escape sequences (\t, \n, \xFF, \u0100) for
 // control characters and non-printable characters as defined by
-// IsPrint.
+// [IsPrint].
 func (s string) Quote() string
 
 // Unquote interprets s as a single-quoted, double-quoted,
 // or backquoted Go string literal, returning the string value
 // that s quotes.  (If s is single-quoted, it would be a Go
 // character literal; Unquote returns the corresponding
-// one-character string.)
+// one-character string. For an empty character literal
+// Unquote returns the empty string.)
 func (s string) Unquote() (string, error)
 
 // ToTitle returns a copy of the string s with all Unicode letters mapped to
@@ -293,7 +309,7 @@ func (s string) ToUpper() string
 func (s string) ToLower() string
 
 // Fields splits the string s around each instance of one or more consecutive white space
-// characters, as defined by unicode.IsSpace, returning a slice of substrings of s or an
+// characters, as defined by [unicode.IsSpace], returning a slice of substrings of s or an
 // empty slice if s contains only white space.
 func (s string) Fields() []string
 
@@ -314,7 +330,7 @@ func (s string) Repeat(count int) string
 //
 // It is equivalent to [SplitN] with a count of -1.
 //
-// To split around the first instance of a separator, see Cut.
+// To split around the first instance of a separator, see [Cut].
 func (s string) Split(sep string) []string
 
 // SplitAfter slices s into all substrings after each instance of sep and
@@ -333,37 +349,30 @@ func (s string) SplitAfter(sep string) []string
 // the substrings between those separators.
 //
 // The count determines the number of substrings to return:
-//
-//	n > 0: at most n substrings; the last substring will be the unsplit remainder.
-//	n == 0: the result is nil (zero substrings)
-//	n < 0: all substrings
+//   - n > 0: at most n substrings; the last substring will be the unsplit remainder;
+//   - n == 0: the result is nil (zero substrings);
+//   - n < 0: all substrings.
 //
 // Edge cases for s and sep (for example, empty strings) are handled
 // as described in the documentation for [Split].
 //
-// To split around the first instance of a separator, see Cut.
+// To split around the first instance of a separator, see [Cut].
 func (s string) SplitN(sep string, n int) []string
 
 // SplitAfterN slices s into substrings after each instance of sep and
 // returns a slice of those substrings.
 //
 // The count determines the number of substrings to return:
-//
-//	n > 0: at most n substrings; the last substring will be the unsplit remainder.
-//	n == 0: the result is nil (zero substrings)
-//	n < 0: all substrings
+//   - n > 0: at most n substrings; the last substring will be the unsplit remainder;
+//   - n == 0: the result is nil (zero substrings);
+//   - n < 0: all substrings.
 //
 // Edge cases for s and sep (for example, empty strings) are handled
-// as described in the documentation for SplitAfter.
+// as described in the documentation for [SplitAfter].
 func (s string) SplitAfterN(sep string, n int) []string
 
-// Replace returns a copy of the string s with the first n
-// non-overlapping instances of old replaced by new.
-// If old is empty, it matches at the beginning of the string
-// and after each UTF-8 sequence, yielding up to k+1 replacements
-// for a k-rune string.
-// If n < 0, there is no limit on the number of replacements.
-func (s string) Replace(old, new string, n int) string
+// Replace returns a copy of s with all replacements performed.
+func (s string) Replace() string
 
 // ReplaceAll returns a copy of the string s with all
 // non-overlapping instances of old replaced by new.
@@ -406,12 +415,12 @@ func (s string) Capitalize() string
 
 // The len built-in function returns the length of v, according to its type:
 //
-//	Array: the number of elements in v.
-//	Pointer to array: the number of elements in *v (even if v is nil).
-//	Slice, or map: the number of elements in v; if v is nil, len(v) is zero.
-//	String: the number of bytes in v.
-//	Channel: the number of elements queued (unread) in the channel buffer;
-//	         if v is nil, len(v) is zero.
+//   - Array: the number of elements in v.
+//   - Pointer to array: the number of elements in *v (even if v is nil).
+//   - Slice, or map: the number of elements in v; if v is nil, len(v) is zero.
+//   - String: the number of bytes in v.
+//   - Channel: the number of elements queued (unread) in the channel buffer;
+//     if v is nil, len(v) is zero.
 //
 // For some arguments, such as a string literal or a simple array expression, the
 // result can be a constant. See the Go language specification's "Length and
@@ -420,12 +429,12 @@ func (v []string) Len() int
 
 // The cap built-in function returns the capacity of v, according to its type:
 //
-//	Array: the number of elements in v (same as len(v)).
-//	Pointer to array: the number of elements in *v (same as len(v)).
-//	Slice: the maximum length the slice can reach when resliced;
-//	if v is nil, cap(v) is zero.
-//	Channel: the channel buffer capacity, in units of elements;
-//	if v is nil, cap(v) is zero.
+//   - Array: the number of elements in v (same as len(v)).
+//   - Pointer to array: the number of elements in *v (same as len(v)).
+//   - Slice: the maximum length the slice can reach when resliced;
+//     if v is nil, cap(v) is zero.
+//   - Channel: the channel buffer capacity, in units of elements;
+//     if v is nil, cap(v) is zero.
 //
 // For some arguments, such as a simple array expression, the result can be a
 // constant. See the Go language specification's "Length and capacity" section for

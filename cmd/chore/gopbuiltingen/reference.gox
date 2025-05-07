@@ -58,9 +58,10 @@ var (
 		"strconv": "${goroot}/src/strconv",
 		"strings": "${goroot}/src/strings",
 
-		"buil":        "${root}/builtin",
-		"iox":         "${root}/builtin/iox",
-		"stringslice": "${root}/builtin/stringslice",
+		"buil":        "${root}/../x/gop",
+		"iox":         "${root}/../x/gop/osx",
+		"osx":         "${root}/../x/gop/osx",
+		"stringslice": "${root}/../x/stringslice",
 		"strx":        "${root}/../x/stringutil",
 	}
 )
@@ -75,8 +76,8 @@ func getAST() *ast.FuncDecl {
 }
 
 func .funcDecl(pkg *ast.Package, name string) *ast.FuncDecl {
-	for file <- pkg.Files {
-		for decl <- file.Decls {
+	for file in pkg.Files {
+		for decl in file.Decls {
 			if fn, ok := decl.(*ast.FuncDecl); ok && fn.Name.Name == name {
 				return fn
 			}
@@ -95,7 +96,7 @@ func .pkgOf(pkgPath string) *ast.Package {
 		panic("unknown package: ${pkgPath}")
 	}
 
-	for name, pkg <- parser.parseDir(fset, dir, nil, parser.ParseComments)! {
+	for name, pkg in parser.parseDir(fset, dir, nil, parser.ParseComments)! {
 		if name.hasSuffix("_test") {
 			continue
 		}

@@ -1050,8 +1050,8 @@ for line <- open("foo.txt")! {
 
 import (
 	"fmt"
-	"github.com/goplus/gop/builtin/osx"
 	"github.com/qiniu/x/errors"
+	"github.com/qiniu/x/gop/osx"
 	"os"
 )
 
@@ -1065,66 +1065,6 @@ func main() {
 		}
 		return
 	}()); ; {
-		var _gop_ok bool
-		line, _gop_ok := _gop_it.Next()
-		if !_gop_ok {
-			break
-		}
-		fmt.Println(line)
-	}
-}
-`)
-}
-
-func TestFileEnumLines(t *testing.T) {
-	gopClTest(t, `
-import "os"
-
-for line <- os.Stdin {
-	println line
-}
-`, `package main
-
-import (
-	"fmt"
-	"github.com/goplus/gop/builtin/osx"
-	"os"
-)
-
-func main() {
-	for _gop_it := osx.EnumLines(os.Stdin); ; {
-		var _gop_ok bool
-		line, _gop_ok := _gop_it.Next()
-		if !_gop_ok {
-			break
-		}
-		fmt.Println(line)
-	}
-}
-`)
-}
-
-func TestIoxLines(t *testing.T) {
-	gopClTest(t, `
-import "io"
-
-var r io.Reader
-
-for line <- lines(r) {
-	println line
-}
-`, `package main
-
-import (
-	"fmt"
-	"github.com/goplus/gop/builtin/osx"
-	"io"
-)
-
-var r io.Reader
-
-func main() {
-	for _gop_it := osx.Lines(r).Gop_Enum(); ; {
 		var _gop_ok bool
 		line, _gop_ok := _gop_it.Next()
 		if !_gop_ok {
@@ -1398,32 +1338,6 @@ func main() {
 	for _gop_k := 0; _gop_k < 10; _gop_k += 1 {
 		fmt.Println("Hi")
 	}
-}
-`)
-}
-
-func TestRangeExpr7(t *testing.T) {
-	gopClTest(t, `
-println [x for x <- 0:3:1]
-`, `package main
-
-import (
-	"fmt"
-	"github.com/goplus/gop/builtin"
-)
-
-func main() {
-	fmt.Println(func() (_gop_ret []int) {
-		for _gop_it := builtin.NewRange__0(0, 3, 1).Gop_Enum(); ; {
-			var _gop_ok bool
-			x, _gop_ok := _gop_it.Next()
-			if !_gop_ok {
-				break
-			}
-			_gop_ret = append(_gop_ret, x)
-		}
-		return
-	}())
 }
 `)
 }
