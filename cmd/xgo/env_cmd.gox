@@ -14,12 +14,13 @@
  */
 
 import (
-	self "gop/env"
-	"runtime"
+	self "github.com/goplus/gop/cmd/internal/env"
 )
 
-short "Print Go+ version"
+short "Prints Go+ environment information"
 
-run => {
-	echo "xgo ${self.version} ${runtime.GOOS}/${runtime.GOARCH}"
+flagOff
+
+run args => {
+	self.Cmd.Run self.Cmd, args
 }
