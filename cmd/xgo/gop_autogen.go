@@ -14,6 +14,7 @@ import (
 	"github.com/goplus/gop/cmd/internal/gopfmt"
 	"github.com/goplus/gop/cmd/internal/gopget"
 	install1 "github.com/goplus/gop/cmd/internal/install"
+	mod1 "github.com/goplus/gop/cmd/internal/mod"
 	run1 "github.com/goplus/gop/cmd/internal/run"
 	serve1 "github.com/goplus/gop/cmd/internal/serve"
 	test1 "github.com/goplus/gop/cmd/internal/test"
@@ -61,6 +62,22 @@ type install struct {
 	xcmd.Command
 	*App
 }
+type mod struct {
+	xcmd.Command
+	*App
+}
+type mod_download struct {
+	xcmd.Command
+	*App
+}
+type mod_init struct {
+	xcmd.Command
+	*App
+}
+type mod_tidy struct {
+	xcmd.Command
+	*App
+}
 type run struct {
 	xcmd.Command
 	*App
@@ -95,12 +112,16 @@ func (this *App) Main() {
 	_gop_obj6 := &get{App: this}
 	_gop_obj7 := &_go{App: this}
 	_gop_obj8 := &install{App: this}
-	_gop_obj9 := &run{App: this}
-	_gop_obj10 := &serve{App: this}
-	_gop_obj11 := &test{App: this}
-	_gop_obj12 := &version{App: this}
-	_gop_obj13 := &watch{App: this}
-	xcmd.Gopt_App_Main(this, _gop_obj0, _gop_obj1, _gop_obj2, _gop_obj3, _gop_obj4, _gop_obj5, _gop_obj6, _gop_obj7, _gop_obj8, _gop_obj9, _gop_obj10, _gop_obj11, _gop_obj12, _gop_obj13)
+	_gop_obj9 := &mod{App: this}
+	_gop_obj10 := &mod_download{App: this}
+	_gop_obj11 := &mod_init{App: this}
+	_gop_obj12 := &mod_tidy{App: this}
+	_gop_obj13 := &run{App: this}
+	_gop_obj14 := &serve{App: this}
+	_gop_obj15 := &test{App: this}
+	_gop_obj16 := &version{App: this}
+	_gop_obj17 := &watch{App: this}
+	xcmd.Gopt_App_Main(this, _gop_obj0, _gop_obj1, _gop_obj2, _gop_obj3, _gop_obj4, _gop_obj5, _gop_obj6, _gop_obj7, _gop_obj8, _gop_obj9, _gop_obj10, _gop_obj11, _gop_obj12, _gop_obj13, _gop_obj14, _gop_obj15, _gop_obj16, _gop_obj17)
 }
 //line cmd/xgo/bug_cmd.gox:20
 func (this *bug) Main(_gop_arg0 string) {
@@ -245,6 +266,82 @@ func (this *install) Main(_gop_arg0 string) {
 }
 func (this *install) Classfname() string {
 	return "install"
+}
+//line cmd/xgo/mod_cmd.gox:20
+func (this *mod) Main(_gop_arg0 string) {
+	this.Command.Main(_gop_arg0)
+//line cmd/xgo/mod_cmd.gox:20:1
+	this.Short("Module maintenance")
+//line cmd/xgo/mod_cmd.gox:22:1
+	this.Run__0(func() {
+//line cmd/xgo/mod_cmd.gox:23:1
+		this.Help()
+	})
+}
+func (this *mod) Classfname() string {
+	return "mod"
+}
+//line cmd/xgo/mod_download_cmd.gox:20
+func (this *mod_download) Main(_gop_arg0 string) {
+	this.Command.Main(_gop_arg0)
+//line cmd/xgo/mod_download_cmd.gox:20:1
+	this.Short("download modules to local cache")
+//line cmd/xgo/mod_download_cmd.gox:22:1
+	this.Run__1(func(args []string) {
+//line cmd/xgo/mod_download_cmd.gox:23:1
+		if len(args) < 1 {
+//line cmd/xgo/mod_download_cmd.gox:24:1
+			this.Help()
+//line cmd/xgo/mod_download_cmd.gox:25:1
+			return
+		}
+//line cmd/xgo/mod_download_cmd.gox:27:1
+		subcmd := mod1.Cmd.Commands[1]
+//line cmd/xgo/mod_download_cmd.gox:28:1
+		subcmd.Run(subcmd, args)
+	})
+}
+func (this *mod_download) Classfname() string {
+	return "mod_download"
+}
+//line cmd/xgo/mod_init_cmd.gox:20
+func (this *mod_init) Main(_gop_arg0 string) {
+	this.Command.Main(_gop_arg0)
+//line cmd/xgo/mod_init_cmd.gox:20:1
+	this.Short("initialize new module in current directory")
+//line cmd/xgo/mod_init_cmd.gox:22:1
+	this.Run__1(func(args []string) {
+//line cmd/xgo/mod_init_cmd.gox:23:1
+		if len(args) < 1 {
+//line cmd/xgo/mod_init_cmd.gox:24:1
+			this.Help()
+//line cmd/xgo/mod_init_cmd.gox:25:1
+			return
+		}
+//line cmd/xgo/mod_init_cmd.gox:27:1
+		subcmd := mod1.Cmd.Commands[0]
+//line cmd/xgo/mod_init_cmd.gox:28:1
+		subcmd.Run(subcmd, args)
+	})
+}
+func (this *mod_init) Classfname() string {
+	return "mod_init"
+}
+//line cmd/xgo/mod_tidy_cmd.gox:20
+func (this *mod_tidy) Main(_gop_arg0 string) {
+	this.Command.Main(_gop_arg0)
+//line cmd/xgo/mod_tidy_cmd.gox:20:1
+	this.Short("add missing and remove unused modules")
+//line cmd/xgo/mod_tidy_cmd.gox:22:1
+	this.Run__1(func(args []string) {
+//line cmd/xgo/mod_tidy_cmd.gox:23:1
+		subcmd := mod1.Cmd.Commands[2]
+//line cmd/xgo/mod_tidy_cmd.gox:24:1
+		subcmd.Run(subcmd, args)
+	})
+}
+func (this *mod_tidy) Classfname() string {
+	return "mod_tidy"
 }
 //line cmd/xgo/run_cmd.gox:20
 func (this *run) Main(_gop_arg0 string) {
