@@ -100,7 +100,7 @@ func LookupClass(ext string) (c *modfile.Project, ok bool) {
 		return &modfile.Project{
 			Ext: "_mcp.gox", Class: "Game",
 			Works: []*modfile.Class{
-				{Ext: "_tool.gox", Class: "Tool", Proto: "ToolProto"},
+				{Ext: "_tool.gox", Class: "Tool", Proto: "ToolProto", Prefix: "Tool_"},
 				{Ext: "_prompt.gox", Class: "Prompt", Proto: "PromptProto", Embedded: true},
 				{Ext: "_res.gox", Class: "Resource", Proto: "ResourceProto"},
 			},

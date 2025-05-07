@@ -55,7 +55,7 @@ func TestLoadExpr(t *testing.T) {
 
 func TestSpriteOf(t *testing.T) {
 	proj := &gmxProject{}
-	if proj.spriteOf("a") != nil {
+	if getSpxObj(proj, "a") != nil {
 		t.Fatal("spriteOf: not nil?")
 	}
 }
