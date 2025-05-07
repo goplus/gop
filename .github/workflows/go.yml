@@ -88,3 +88,22 @@ jobs:
       uses: codecov/codecov-action@v5
       with:
         slug: goplus/gop
+
+  FormatCheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.2"
+
+      - name: Check formatting
+        run: |
+          if [ -n "$(go fmt ./... | grep -v gop_autogen)" ]; then
+            echo "Some files are not properly formatted. Please run 'go fmt ./...'"
+            exit 1
+          fi
+          ./all.bash
+          cd cmd/xgo; gop fmt -t ./...

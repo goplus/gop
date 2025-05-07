@@ -43,6 +43,7 @@ import (
 	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modfile"
+	"github.com/qiniu/x/test"
 )
 
 var (
@@ -99,8 +100,8 @@ func LookupClass(ext string) (c *modfile.Project, ok bool) {
 		return &modfile.Project{
 			Ext: "_mcp.gox", Class: "Game",
 			Works: []*modfile.Class{
-				{Ext: "_tool.gox", Class: "Tool", Proto: "ToolProto"},
-				{Ext: "_prompt.gox", Class: "Prompt", Proto: "PromptProto"},
+				{Ext: "_tool.gox", Class: "Tool", Proto: "ToolProto", Prefix: "Tool_"},
+				{Ext: "_prompt.gox", Class: "Prompt", Proto: "PromptProto", Embedded: true},
 				{Ext: "_res.gox", Class: "Resource", Proto: "ResourceProto"},
 			},
 			PkgPaths: []string{"github.com/goplus/gop/cl/internal/mcp"}}, true
@@ -141,7 +142,7 @@ func Mixed(t *testing.T, pkgname, gocode, gopcode, expected string, outline ...b
 
 func DoFS(
 	t *testing.T, conf *cl.Config,
-	fs parser.FileSystem, dir string, filter func(fs.FileInfo) bool, pkgname, expected string) {
+	fs parser.FileSystem, dir string, filter func(fs.FileInfo) bool, pkgname string, exp any) {
 	cl.SetDisableRecover(true)
 	defer cl.SetDisableRecover(false)
 
@@ -164,9 +165,13 @@ func DoFS(
 	if err != nil {
 		t.Fatal("gogen.WriteTo failed:", err)
 	}
-	result := b.String()
-	if result != expected {
-		t.Fatalf("\nResult:\n%s\nExpected:\n%s\n", result, expected)
+	if expected, ok := exp.(string); ok {
+		result := b.String()
+		if result != expected {
+			t.Fatalf("\nResult:\n%s\nExpected:\n%s\n", result, expected)
+		}
+	} else if test.Diff(t, dir+"/result.txt", b.Bytes(), exp.([]byte)) {
+		t.Fatal(dir, ": unexpect result")
 	}
 }
 
@@ -199,11 +204,7 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 	}
 	log.Println("Parsing", pkgDir)
 	out := pkgDir + "/out.go"
-	b, err := os.ReadFile(out)
-	if err != nil {
-		t.Fatal("ReadFile failed:", err)
-	}
-	expected := string(b)
+	b, _ := os.ReadFile(out)
 	filter := func(fi fs.FileInfo) bool {
 		return fi.Name() == "in.gop"
 	}
@@ -220,7 +221,7 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 		confCopy.RelativeBase = GopRoot
 		conf = &confCopy
 	}
-	DoFS(t, conf, fsx.Local, pkgDir, filter, "main", expected)
+	DoFS(t, conf, fsx.Local, pkgDir, filter, "main", b)
 }
 
 func Go1Point() int {

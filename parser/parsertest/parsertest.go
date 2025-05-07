@@ -30,6 +30,7 @@ import (
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/token"
 	tpltoken "github.com/goplus/gop/tpl/token"
+	"github.com/qiniu/x/test"
 )
 
 func sortedKeys(m any) []string {
@@ -102,6 +103,13 @@ func FprintNode(w io.Writer, lead string, v any, prefix, indent string) {
 					FprintNode(w, "", part, prefix, indent)
 				}
 			}
+		} else if lit, ok := v.(*ast.DomainTextLitEx); ok {
+			fmt.Fprintf(w, "%sExtra: args=%d\n", prefix, len(lit.Args))
+			prefix += indent
+			for _, arg := range lit.Args {
+				FprintNode(w, "", arg, prefix, indent)
+			}
+			fmt.Fprintf(w, "%s%v\n", prefix, lit.Raw)
 		} else {
 			log.Panicln("FprintNode unexpected type:", t)
 		}
@@ -133,6 +141,14 @@ func Expect(t *testing.T, pkg *ast.Package, expected string) {
 	output := b.String()
 	if expected != output {
 		fmt.Fprint(os.Stderr, output)
+		t.Fatal("gop.Parser: unexpect result")
+	}
+}
+
+func ExpectEx(t *testing.T, outfile string, pkg *ast.Package, expected []byte) {
+	b := bytes.NewBuffer(nil)
+	Fprint(b, pkg)
+	if test.Diff(t, outfile, b.Bytes(), expected) {
 		t.Fatal("gop.Parser: unexpect result")
 	}
 }

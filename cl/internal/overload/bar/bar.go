@@ -31,3 +31,16 @@ func Gopx_Var_Cast__0[T basetype]() *Var__0[T] {
 func Gopx_Var_Cast__1[T map[string]any]() *Var__1[T] {
 	return new(Var__1[T])
 }
+
+type Player struct {
+}
+
+func Gopt_Player_Gopx_OnCmd__0[T any](p *Player, handler func(cmd T) error) {
+	var t T
+	handler(t)
+}
+
+func Gopt_Player_Gopx_OnCmd__1[T1 ~int, T2 any](p *Player, n T1, handler func(n T1, cmd T2) error) {
+	var t T2
+	handler(n, t)
+}

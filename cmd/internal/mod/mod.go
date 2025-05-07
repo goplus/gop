@@ -28,9 +28,9 @@ var Cmd = &base.Command{
 	Short:     "Module maintenance",
 
 	Commands: []*base.Command{
-		cmdInit,
-		cmdDownload,
-		cmdTidy,
+		CmdInit,
+		CmdDownload,
+		CmdTidy,
 	},
 }
 

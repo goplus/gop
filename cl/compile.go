@@ -489,10 +489,6 @@ const (
 	testingGoFile  = "_test"
 )
 
-const (
-	ioxPkgPath = "github.com/goplus/gop/builtin/iox"
-)
-
 // NewPackage creates a Go+ package instance.
 func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Package, err error) {
 	relBaseDir := conf.RelativeBase
@@ -520,7 +516,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 		NewBuiltin:      newBuiltinDefault,
 		DefaultGoFile:   defaultGoFile,
 		NoSkipConstant:  conf.NoSkipConstant,
-		PkgPathIox:      ioxPkgPath,
+		PkgPathIox:      osxPkgPath,
 		DbgPositioner:   interp,
 	}
 	var rec *goxRecorder
@@ -734,9 +730,6 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 	if f.IsClass {
 		if f.IsNormalGox {
 			classType, _, _ = ClassNameAndExt(file)
-			if classType == "main" {
-				classType = "_main"
-			}
 			if f.ShadowEntry != nil {
 				parent.goxMainClass = classType
 				parent.goxMain++
@@ -762,7 +755,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 					baseType = types.NewPointer(baseType)
 				}
 			} else {
-				sp = proj.spriteOf(c.ext)
+				sp = c.sp
 				o := sp.obj
 				ctx.baseClass = o
 				baseTypeName, baseType = o.Name(), o.Type()
@@ -803,22 +796,24 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 				var flds []*types.Var
 				var tags []string
 				chk := newCheckRedecl()
-				if baseTypeName != "" {
+				if baseTypeName != "" { // base class (not normal classfile)
 					flds = append(flds, types.NewField(pos, pkg, baseTypeName, baseType, true))
 					tags = append(tags, "")
 					chk.chkRedecl(ctx, baseTypeName, pos)
-				}
-				if sp != nil && !goxTestFile {
-					if gameClass != "" {
-						typ := toType(ctx, &ast.Ident{Name: gameClass})
-						getUnderlying(ctx, typ) // ensure type is loaded
-						typ = types.NewPointer(typ)
-						name := getTypeName(typ)
-						if !chk.chkRedecl(ctx, name, pos) {
-							fld := types.NewField(pos, pkg, name, typ, true)
-							flds = append(flds, fld)
-							tags = append(tags, "")
+					if sp != nil { // for work class
+						if !goxTestFile && gameClass != "" { // has project class
+							typ := toType(ctx, &ast.Ident{Name: gameClass})
+							getUnderlying(ctx, typ) // ensure type is loaded
+							typ = types.NewPointer(typ)
+							name := getTypeName(typ)
+							if !chk.chkRedecl(ctx, name, pos) {
+								fld := types.NewField(pos, pkg, name, typ, true)
+								flds = append(flds, fld)
+								tags = append(tags, "")
+							}
 						}
+					} else { // embed work classes for project class
+						flds = proj.embed(flds, p)
 					}
 				}
 				rec := ctx.recorder()

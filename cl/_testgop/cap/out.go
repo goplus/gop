@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/goplus/gop/builtin/stringslice"
+	"github.com/qiniu/x/stringslice"
 )
 
 func main() {

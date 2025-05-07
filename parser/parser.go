@@ -1725,6 +1725,31 @@ func (p *parser) stringLitExpr(parts []any, off, end token.Pos) []any {
 	return parts
 }
 
+func (p *parser) domainTextLitEx(off, end token.Pos) *ast.DomainTextLitEx {
+	file := p.file
+	base := file.Base()
+	src := p.scanner.CodeTo(int(end) - base)
+
+	var args []ast.Expr
+	var sp parser
+	sp.initSub(file, src, int(off)-base, 0)
+
+	for {
+		expr := sp.parseRHS()
+		args = append(args, expr)
+		if sp.tok != token.COMMA {
+			break
+		}
+		sp.next()
+	}
+	sp.expect(token.SEMICOLON)
+	return &ast.DomainTextLitEx{
+		Args:   args,
+		RawPos: sp.pos,
+		Raw:    string(src[int(sp.pos)-base:]),
+	}
+}
+
 func (p *parser) tplLit(off, end token.Pos) any {
 	file := p.file
 	base := file.Base()
@@ -1760,6 +1785,8 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTup
 			var extra any
 			if ident.Name == "tpl" {
 				extra = p.tplLit(pos+1, pos+token.Pos(len(lit))-1)
+			} else if strings.HasPrefix(lit, "`> ") { // domainTag`> ...`
+				extra = p.domainTextLitEx(pos+3, pos+token.Pos(len(lit))-1)
 			}
 			x = &ast.DomainTextLit{
 				Domain:   ident,

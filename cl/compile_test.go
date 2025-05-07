@@ -1469,7 +1469,7 @@ var x, y uint128
 var z uint128 = x + y
 `, `package main
 
-import "github.com/goplus/gop/builtin/ng"
+import "github.com/qiniu/x/gop/ng"
 
 var x, y ng.Uint128
 var z ng.Uint128 = (ng.Uint128).Gop_Add__1(x, y)
@@ -1482,7 +1482,7 @@ var x, y int128
 var z int128 = x + y
 `, `package main
 
-import "github.com/goplus/gop/builtin/ng"
+import "github.com/qiniu/x/gop/ng"
 
 var x, y ng.Int128
 var z ng.Int128 = (ng.Int128).Gop_Add__1(x, y)
@@ -1495,7 +1495,7 @@ var x, y bigint
 var z bigint = x + y
 `, `package main
 
-import "github.com/goplus/gop/builtin/ng"
+import "github.com/qiniu/x/gop/ng"
 
 var x, y ng.Bigint
 var z ng.Bigint = (ng.Bigint).Gop_Add(x, y)
@@ -1508,7 +1508,7 @@ var x = 1r
 `, `package main
 
 import (
-	"github.com/goplus/gop/builtin/ng"
+	"github.com/qiniu/x/gop/ng"
 	"math/big"
 )
 
@@ -1521,7 +1521,7 @@ func TestUint128Lit(t *testing.T) {
 var x uint128 = 1
 `, `package main
 
-import "github.com/goplus/gop/builtin/ng"
+import "github.com/qiniu/x/gop/ng"
 
 var x ng.Uint128 = ng.Uint128_Init__0(1)
 `)
@@ -1532,7 +1532,7 @@ func TestInt128Lit(t *testing.T) {
 var x int128 = 1
 `, `package main
 
-import "github.com/goplus/gop/builtin/ng"
+import "github.com/qiniu/x/gop/ng"
 
 var x ng.Int128 = ng.Int128_Init__0(1)
 `)
@@ -1544,7 +1544,7 @@ var x = 1/2r
 `, `package main
 
 import (
-	"github.com/goplus/gop/builtin/ng"
+	"github.com/qiniu/x/gop/ng"
 	"math/big"
 )
 
@@ -1558,7 +1558,7 @@ var x = 3 + 1/2r
 `, `package main
 
 import (
-	"github.com/goplus/gop/builtin/ng"
+	"github.com/qiniu/x/gop/ng"
 	"math/big"
 )
 
@@ -1575,7 +1575,7 @@ var z = 100 + y
 `, `package main
 
 import (
-	"github.com/goplus/gop/builtin/ng"
+	"github.com/qiniu/x/gop/ng"
 	"math/big"
 )
 
@@ -1688,7 +1688,7 @@ var x bigint
 x += 3
 `, `package main
 
-import "github.com/goplus/gop/builtin/ng"
+import "github.com/qiniu/x/gop/ng"
 
 var x ng.Bigint
 
@@ -1705,7 +1705,7 @@ x *= 2
 `, `package main
 
 import (
-	"github.com/goplus/gop/builtin/ng"
+	"github.com/qiniu/x/gop/ng"
 	"math/big"
 )
 
@@ -1723,7 +1723,7 @@ x *= 2r
 `, `package main
 
 import (
-	"github.com/goplus/gop/builtin/ng"
+	"github.com/qiniu/x/gop/ng"
 	"math/big"
 )
 

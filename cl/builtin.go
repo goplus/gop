@@ -38,7 +38,7 @@ func initBuiltinFns(builtin *types.Package, scope *types.Scope, pkg gogen.PkgRef
 	}
 }
 
-func initBuiltin(_ *gogen.Package, builtin *types.Package, os, fmt, ng, iox, buil, reflect gogen.PkgRef) {
+func initBuiltin(_ *gogen.Package, builtin *types.Package, os, fmt, ng, osx, buil, reflect gogen.PkgRef) {
 	scope := builtin.Scope()
 	if ng.Types != nil {
 		typs := []string{"bigint", "bigrat", "bigfloat"}
@@ -62,11 +62,11 @@ func initBuiltin(_ *gogen.Package, builtin *types.Package, os, fmt, ng, iox, bui
 			"open", "create",
 		})
 	}
-	if iox.Types != nil {
-		initBuiltinFns(builtin, scope, iox, []string{
-			"lines",
+	if osx.Types != nil {
+		initBuiltinFns(builtin, scope, osx, []string{
+			"lines", "errorln", "fatal",
 		})
-		scope.Insert(gogen.NewOverloadFunc(token.NoPos, builtin, "blines", iox.Ref("BLines")))
+		scope.Insert(gogen.NewOverloadFunc(token.NoPos, builtin, "blines", osx.Ref("BLines")))
 	}
 	if reflect.Types != nil {
 		scope.Insert(gogen.NewOverloadFunc(token.NoPos, builtin, "type", reflect.Ref("TypeOf")))
@@ -77,16 +77,20 @@ func initBuiltin(_ *gogen.Package, builtin *types.Package, os, fmt, ng, iox, bui
 	scope.Insert(types.NewTypeName(token.NoPos, builtin, "any", gogen.TyEmptyInterface))
 }
 
+const (
+	osxPkgPath = "github.com/qiniu/x/gop/osx"
+)
+
 func newBuiltinDefault(pkg *gogen.Package, conf *gogen.Config) *types.Package {
 	builtin := types.NewPackage("", "")
 	fmt := pkg.TryImport("fmt")
 	os := pkg.TryImport("os")
 	reflect := pkg.TryImport("reflect")
-	buil := pkg.TryImport("github.com/goplus/gop/builtin")
-	ng := pkg.TryImport("github.com/goplus/gop/builtin/ng")
-	iox := pkg.TryImport("github.com/goplus/gop/builtin/iox")
+	osx := pkg.TryImport(osxPkgPath)
+	buil := pkg.TryImport("github.com/qiniu/x/gop")
+	ng := pkg.TryImport("github.com/qiniu/x/gop/ng")
 	strx := pkg.TryImport("github.com/qiniu/x/stringutil")
-	stringslice := pkg.TryImport("github.com/goplus/gop/builtin/stringslice")
+	stringslice := pkg.TryImport("github.com/qiniu/x/stringslice")
 	pkg.TryImport("strconv")
 	pkg.TryImport("strings")
 	if ng.Types != nil {
@@ -97,7 +101,7 @@ func newBuiltinDefault(pkg *gogen.Package, conf *gogen.Config) *types.Package {
 			}
 		}
 	}
-	initBuiltin(pkg, builtin, os, fmt, ng, iox, buil, reflect)
+	initBuiltin(pkg, builtin, os, fmt, ng, osx, buil, reflect)
 	gogen.InitBuiltin(pkg, builtin, conf)
 	if strx.Types != nil {
 		ti := pkg.BuiltinTI(types.Typ[types.String])

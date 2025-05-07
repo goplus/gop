@@ -767,3 +767,80 @@ func main() {
 }
 `)
 }
+
+func TestGoptLambdaFunc(t *testing.T) {
+	gopClTest(t, `
+import "github.com/goplus/gop/cl/internal/overload/bar"
+
+type Message struct {
+	info string
+}
+p := &bar.Player{}
+p.onCmd Message, msg => {
+	echo msg.info
+	return nil
+}
+p.onCmd int, Message, 100, (n,msg) => {
+	echo n, msg.info
+	return nil
+}
+`, `package main
+
+import (
+	"fmt"
+	"github.com/goplus/gop/cl/internal/overload/bar"
+)
+
+type Message struct {
+	info string
+}
+
+func main() {
+	p := &bar.Player{}
+	bar.Gopt_Player_Gopx_OnCmd__0[Message](p, func(msg Message) error {
+		fmt.Println(msg.info)
+		return nil
+	})
+	bar.Gopt_Player_Gopx_OnCmd__1[int, Message](p, 100, func(n int, msg Message) error {
+		fmt.Println(n, msg.info)
+		return nil
+	})
+}
+`)
+}
+
+func TestGoptLambdaError(t *testing.T) {
+	codeErrorTest(t, `bar.gop:8:9: 100 not type`, `
+import "github.com/goplus/gop/cl/internal/overload/bar"
+
+type Message struct {
+	info string
+}
+p := &bar.Player{}
+p.onCmd 100, Message, 100, (n, msg) => {
+	echo msg.info
+	return nil
+}
+`)
+	var msg string
+	switch runtime.Version()[:6] {
+	case "go1.18":
+		msg = "bar.gop:8:1: string does not implement ~int"
+	case "go1.19":
+		msg = "bar.gop:8:1: string does not implement ~int (string missing in ~int)"
+	default:
+		msg = "bar.gop:8:1: string does not satisfy ~int (string missing in ~int)"
+	}
+	codeErrorTest(t, msg, `
+import "github.com/goplus/gop/cl/internal/overload/bar"
+
+type Message struct {
+	info string
+}
+p := &bar.Player{}
+p.onCmd string, Message,"hello",(n, msg) => {
+	echo msg.info
+	return nil
+}
+`)
+}

@@ -27,7 +27,7 @@ func gen() []byte {
 	f.Decls <- &ast.GenDecl{
 		Tok: token.IMPORT,
 		Specs: []ast.Spec{
-			importSpec("gop/builtin/iox"),
+			importSpec("github.com/qiniu/x/gop/osx"),
 			importSpec("io"),
 			importSpec("os"),
 			importSpec("reflect"),
@@ -40,12 +40,12 @@ func gen() []byte {
 }
 
 func genDecls(f *ast.File) {
-	for built <- Builtins {
+	for built in Builtins {
 		f.Decls <- built.genAST()
 	}
-	for t <- Types {
+	for t in Types {
 		mthds := t.Methods
-		for m <- mthds {
+		for m in mthds {
 			f.Decls <- m.genMethodAST(mthds)
 		}
 	}
@@ -54,9 +54,9 @@ func genDecls(f *ast.File) {
 func initBuiltinTIs(fn gopq.NodeSet, f *gopast.File) (tistr *builtinTI) {
 	ti := fn.body.any.assignStmt.rhs(0).x.compositeLit("BuiltinTI")
 	methods := ti.elt("methods").cache
-	for method <- methods {
+	for method in methods {
 		aTI := &builtinTI{}
-		for item <- method.elt {
+		for item in method.elt {
 			mthd := item.elt(0).unquotedString!
 			fn := item.elt(1).one
 			if ref := fn.callExpr.one; ref.ok {
@@ -84,9 +84,9 @@ func initBuiltinTIs(fn gopq.NodeSet, f *gopast.File) (tistr *builtinTI) {
 
 func newBuiltinDefault(fn gopq.NodeSet, tistr *builtinTI) {
 	methods := fn.body.any.exprStmt.x.callExpr("ti.AddMethods").cache
-	for method <- methods {
+	for method in methods {
 		aTI := &builtinTI{}
-		for arg <- method.varg(0).x {
+		for arg in method.varg(0).x {
 			mthd := arg.elt("Name").unquotedString!
 			ref := arg.elt("Fn").callExpr.one
 			pkg := ref.fun.x.ident!
@@ -106,7 +106,7 @@ func newBuiltinDefault(fn gopq.NodeSet, tistr *builtinTI) {
 func initBuiltin(fn gopq.NodeSet) {
 	stmt := fn.body.any.exprStmt.x.cache
 	item := stmt.callExpr("scope.Insert").arg(0).cache
-	for call <- item.callExpr("gogen.NewOverloadFunc") {
+	for call in item.callExpr("gogen.NewOverloadFunc") {
 		built := call.arg(2).unquotedString!
 		if built != "newRange" { // hide builtin `newRange`
 			ref := call.arg(3).callExpr.one
@@ -115,10 +115,10 @@ func initBuiltin(fn gopq.NodeSet) {
 			Builtins <- builtin{built, {pkg, name, nil}}
 		}
 	}
-	for call <- stmt.callExpr("initBuiltinFns") {
+	for call in stmt.callExpr("initBuiltinFns") {
 		pkg := call.arg(2).ident!
 		builtins := call.arg(3).unquotedStringElts!
-		for built <- builtins {
+		for built in builtins {
 			Builtins <- builtin{built, {pkg, built.capitalize, nil}}
 		}
 	}
