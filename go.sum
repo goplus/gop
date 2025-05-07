@@ -1,7 +1,7 @@
 github.com/fsnotify/fsnotify v1.9.0 h1:2Ml+OJNzbYCTzsxtv8vKSFD9PbJjmhYF14k/jKC7S9k=
 github.com/fsnotify/fsnotify v1.9.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=
-github.com/goplus/cobra v1.9.9 h1:jUculMMZ5zLSc5tt+8OvJVLzOwd4gaZ73OAnqXAQvf0=
-github.com/goplus/cobra v1.9.9/go.mod h1:p4LhfNJDKEpiGjGiNn0crUXL5dUPA5DX2ztYpEJR34E=
+github.com/goplus/cobra v1.9.10 h1:1go7LlrHSfpm49AublHDeR1cuqGY1H9KbgRARGFYKsc=
+github.com/goplus/cobra v1.9.10/go.mod h1:p4LhfNJDKEpiGjGiNn0crUXL5dUPA5DX2ztYpEJR34E=
 github.com/goplus/gogen v1.18.0 h1:B0PJE/4e8lfRDmrGJbElEB1weokD1vyOyyXb5eZdjfk=
 github.com/goplus/gogen v1.18.0/go.mod h1:owX2e1EyU5WD+Nm6oH2m/GXjLdlBYcwkLO4wN8HHXZI=
 github.com/goplus/lib v0.2.0 h1:AjqkN1XK5H23wZMMlpaUYAMCDAdSBQ2NMFrLtSh7W4g=
