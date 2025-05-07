@@ -37,27 +37,29 @@ import (
 // -----------------------------------------------------------------------------
 
 type gmxClass struct {
-	tname_  string // class type
+	name    string // class type, empty for default project class
 	clsfile string
 	ext     string
 	proj    *gmxProject
+	sp      *spxObj
 }
 
 func (p *gmxClass) getName(ctx *pkgCtx) string {
-	tname := p.tname_
-	if tname == "main" {
+	tname := p.name
+	if tname == "" { // use default project class
 		tname = p.proj.getGameClass(ctx)
 	}
 	return tname
 }
 
 type spxObj struct {
-	obj   gogen.Ref // work base class
-	ext   string
-	proto string           // work class prototype
-	feats spriteFeat       // work class features
-	clone *types.Signature // prototype of Classclone
-	types []string         // work classes (ie. <type>.spx)
+	obj    gogen.Ref // work base class
+	ext    string
+	proto  string           // work class prototype
+	prefix string           // work class prefix
+	feats  spriteFeat       // work class features
+	clone  *types.Signature // prototype of Classclone
+	types  []string         // work classes (ie. <type>.spx)
 }
 
 func spriteByProto(sprites []*spxObj, proto string) *spxObj {
@@ -96,15 +98,6 @@ func (p *gmxProject) embed(flds []*types.Var, pkg *gogen.Package) []*types.Var {
 		}
 	}
 	return flds
-}
-
-func (p *gmxProject) spriteOf(ext string) *spxObj {
-	for _, sp := range p.sprites {
-		if sp.ext == ext {
-			return sp
-		}
-	}
-	return nil
 }
 
 type spriteFeat uint
@@ -205,36 +198,20 @@ var (
 	repl = strings.NewReplacer(":", "", "#", "", "-", "_", ".", "_")
 )
 
-func exClassNameAndExt(file string, keepMain bool) (name, clsfile, ext string) {
+func ClassNameAndExt(file string) (name, clsfile, ext string) {
 	fname := filepath.Base(file)
 	clsfile, ext = modfile.SplitFname(fname)
 	name = clsfile
 	if strings.ContainsAny(name, ":#-.") {
 		name = repl.Replace(name)
-	} else {
-		switch name {
-		case "main":
-			if !keepMain {
-				name = "_main"
-			}
-		case "init", "go":
-			name = "_" + name
-		}
 	}
 	return
 }
 
-// ClassNameAndExt func
+// GetFileClassType get ast.File classType
 // TODO(xsw): to refactor
 //
 // Deprecated: Don't use it
-func ClassNameAndExt(file string) (name, clsfile, ext string) {
-	return exClassNameAndExt(file, true)
-}
-
-// GetFileClassType get ast.File classType
-//
-// Deprecated: Don't use it (to refactor)
 func GetFileClassType(file *ast.File, filename string, lookupClass func(ext string) (c *Project, ok bool)) (classType string, isTest bool) {
 	if file.IsClass {
 		var ext string
@@ -265,7 +242,7 @@ func isGoxTestFile(ext string) bool {
 }
 
 func loadClass(ctx *pkgCtx, pkg *gogen.Package, file string, f *ast.File, conf *Config) *gmxProject {
-	tname, clsfile, ext := exClassNameAndExt(file, true)
+	tname, clsfile, ext := ClassNameAndExt(file)
 	gt, ok := conf.LookupClass(ext)
 	if !ok {
 		panic("class not found: " + ext)
@@ -303,7 +280,7 @@ func loadClass(ctx *pkgCtx, pkg *gogen.Package, file string, f *ast.File, conf *
 				panic("should have prototype if there are multiple work classes")
 			}
 			obj, _ := spxRef(spx, v.Class)
-			sp := &spxObj{obj: obj, ext: v.Ext, proto: v.Proto}
+			sp := &spxObj{obj: obj, ext: v.Ext, proto: v.Proto, prefix: v.Prefix}
 			if v.Embedded {
 				sp.feats |= spriteEmbedded
 			}
@@ -318,6 +295,7 @@ func loadClass(ctx *pkgCtx, pkg *gogen.Package, file string, f *ast.File, conf *
 			p.scheds, p.hasScheds = strings.SplitN(x, ",", 2), true
 		}
 	}
+	cls := &gmxClass{clsfile: clsfile, ext: ext, proj: p}
 	if f.IsProj {
 		if p.gameClass_ != "" {
 			panic("multiple project files found: " + tname + ", " + p.gameClass_)
@@ -327,15 +305,49 @@ func loadClass(ctx *pkgCtx, pkg *gogen.Package, file string, f *ast.File, conf *
 		if !p.isTest {
 			ctx.nproj++
 		}
+		if tname != "main" {
+			cls.name = tname
+		}
 	} else {
-		sp := p.spriteOf(ext)
+		sp := getSpxObj(p, ext)
+		tname := spName(sp, tname)
 		sp.types = append(sp.types, tname)
+		cls.sp = sp
+		cls.name = tname
 	}
-	ctx.classes[f] = &gmxClass{tname, clsfile, ext, p}
+	ctx.classes[f] = cls
 	if debugLoad {
 		log.Println("==> InitClass", tname, "isProj:", f.IsProj)
 	}
 	return p
+}
+
+type none = struct{}
+
+var specialNames = map[string]none{
+	"init": {}, "main": {}, "go": {}, "goto": {}, "type": {}, "var": {}, "import": {},
+	"package": {}, "interface": {}, "struct": {}, "const": {}, "func": {}, "map": {},
+	"for": {}, "if": {}, "else": {}, "switch": {}, "case": {}, "select": {}, "defer": {},
+	"range": {}, "return": {}, "break": {}, "continue": {}, "fallthrough": {}, "default": {},
+}
+
+func spName(sp *spxObj, name string) string {
+	if sp.prefix != "" {
+		return sp.prefix + name
+	}
+	if _, ok := specialNames[name]; ok {
+		name = "_" + name
+	}
+	return name
+}
+
+func getSpxObj(p *gmxProject, ext string) *spxObj {
+	for _, sp := range p.sprites {
+		if sp.ext == ext {
+			return sp
+		}
+	}
+	return nil
 }
 
 func spxLookup(pkgImps []gogen.PkgRef, name string) gogen.Ref {

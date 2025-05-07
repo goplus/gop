@@ -6,7 +6,7 @@ type foo struct {
 	mcp.Prompt
 	*Game
 }
-type hello struct {
+type Tool_hello struct {
 	mcp.Tool
 	*Game
 }
@@ -19,7 +19,7 @@ func (this *Game) MainEntry() {
 	this.Server("protos")
 }
 func (this *Game) Main() {
-	_gop_obj0 := &hello{Game: this}
+	_gop_obj0 := &Tool_hello{Game: this}
 	_gop_lst1 := []mcp.ToolProto{_gop_obj0}
 	_gop_obj1 := &foo{Game: this}
 	this.foo = _gop_obj1
@@ -30,7 +30,7 @@ func (this *foo) Main(_gop_arg0 *mcp.Tool) string {
 	this.Prompt.Main(_gop_arg0)
 	return "Hi"
 }
-func (this *hello) Main(_gop_arg0 string) int {
+func (this *Tool_hello) Main(_gop_arg0 string) int {
 	this.Tool.Main(_gop_arg0)
 	return -1
 }

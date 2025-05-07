@@ -729,7 +729,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 	var parent = ctx.pkgCtx
 	if f.IsClass {
 		if f.IsNormalGox {
-			classType, _, _ = exClassNameAndExt(file, false)
+			classType, _, _ = ClassNameAndExt(file)
 			if f.ShadowEntry != nil {
 				parent.goxMainClass = classType
 				parent.goxMain++
@@ -755,7 +755,7 @@ func preloadGopFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 					baseType = types.NewPointer(baseType)
 				}
 			} else {
-				sp = proj.spriteOf(c.ext)
+				sp = c.sp
 				o := sp.obj
 				ctx.baseClass = o
 				baseTypeName, baseType = o.Name(), o.Type()
