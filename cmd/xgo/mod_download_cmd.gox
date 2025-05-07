@@ -19,11 +19,12 @@ import (
 
 short "download modules to local cache"
 
+flagOff
+
 run args => {
 	if args.len < 1 {
 		help
 		return
 	}
-	subcmd := self.Cmd.Commands[1]
-	subcmd.Run subcmd, args
+	self.CmdDownload.Run self.CmdDownload, args
 }

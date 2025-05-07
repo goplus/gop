@@ -19,7 +19,8 @@ import (
 
 short "add missing and remove unused modules"
 
+flagOff
+
 run args => {
-	subcmd := self.Cmd.Commands[2]
-	subcmd.Run subcmd, args
+	self.CmdTidy.Run self.CmdTidy, args
 }

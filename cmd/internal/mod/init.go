@@ -29,19 +29,19 @@ import (
 )
 
 // gop mod init
-var cmdInit = &base.Command{
+var CmdInit = &base.Command{
 	UsageLine: "gop mod init [-llgo -tinygo] module-path",
 	Short:     "initialize new module in current directory",
 }
 
 var (
-	flagInit   = &cmdInit.Flag
+	flagInit   = &CmdInit.Flag
 	flagLLGo   = flagInit.Bool("llgo", false, "use llgo as the compiler")
 	flagTinyGo = flagInit.Bool("tinygo", false, "use tinygo as the compiler")
 )
 
 func init() {
-	cmdInit.Run = runInit
+	CmdInit.Run = runInit
 }
 
 func runInit(cmd *base.Command, args []string) {
