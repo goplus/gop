@@ -17,6 +17,8 @@ import (
 	self "github.com/goplus/gop/cmd/internal/clean"
 )
 
+use "clean [flags] <gopSrcDir>"
+
 short "Clean all Go+ auto generated files"
 
 flagOff
