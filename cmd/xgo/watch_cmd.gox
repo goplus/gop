@@ -17,6 +17,8 @@ import (
 	self "github.com/goplus/gop/cmd/internal/watch"
 )
 
+use "watch [flags] [dir]"
+
 short "Monitor code changes in a Go+ workspace to generate Go files"
 
 flagOff

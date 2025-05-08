@@ -17,6 +17,8 @@ import (
 	self "github.com/goplus/gop/cmd/internal/mod"
 )
 
+use "download [flags] [modules]"
+
 short "download modules to local cache"
 
 flagOff

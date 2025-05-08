@@ -17,6 +17,8 @@ import (
 	self "github.com/goplus/gop/cmd/internal/mod"
 )
 
+use "init [flags] module-path"
+
 short "initialize new module in current directory"
 
 flagOff

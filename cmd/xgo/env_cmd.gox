@@ -17,6 +17,8 @@ import (
 	self "github.com/goplus/gop/cmd/internal/env"
 )
 
+use "env [flags] [var ...]"
+
 short "Prints Go+ environment information"
 
 flagOff

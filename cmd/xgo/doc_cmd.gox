@@ -17,6 +17,8 @@ import (
 	self "github.com/goplus/gop/cmd/internal/doc"
 )
 
+use "doc [flags] [pkgPath]"
+
 short "Show documentation for package or symbol"
 
 flagOff
