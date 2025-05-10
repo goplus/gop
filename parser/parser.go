@@ -4062,6 +4062,19 @@ func (p *parser) parseGlobalStmts(sync map[token.Token]bool, pos token.Pos, stmt
 	if p.tok != token.EOF {
 		p.errorExpected(p.pos, "statement", 2)
 	}
+
+	// Determine appropriate positions for the block statement
+	// Use file beginning position as fallback when no statements are available
+	startPos := pos
+	endPos := p.pos
+	if len(list) > 0 {
+		if first := list[0]; first != nil {
+			startPos = first.Pos()
+		}
+		if last := list[len(list)-1]; last != nil {
+			endPos = last.End()
+		}
+	}
 	return &ast.FuncDecl{
 		Name: &ast.Ident{NamePos: pos, Name: "main"},
 		Doc:  doc,
@@ -4069,7 +4082,11 @@ func (p *parser) parseGlobalStmts(sync map[token.Token]bool, pos token.Pos, stmt
 			Func:   pos,
 			Params: &ast.FieldList{},
 		},
-		Body:   &ast.BlockStmt{List: list},
+		Body: &ast.BlockStmt{
+			Lbrace: startPos,
+			List:   list,
+			Rbrace: endPos,
+		},
 		Shadow: true,
 	}
 }
