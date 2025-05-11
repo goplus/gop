@@ -4069,10 +4069,7 @@ func (p *parser) parseGlobalStmts(sync map[token.Token]bool, pos token.Pos, stmt
 	endPos := p.pos
 	if len(list) > 0 {
 		startPos = list[0].Pos()
-
-		if last := list[len(list)-1]; last != nil {
-			endPos = last.End()
-		}
+		endPos = list[len(list)-1].End()
 	}
 	return &ast.FuncDecl{
 		Name: &ast.Ident{NamePos: pos, Name: "main"},
