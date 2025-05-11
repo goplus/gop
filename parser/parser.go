@@ -4068,9 +4068,8 @@ func (p *parser) parseGlobalStmts(sync map[token.Token]bool, pos token.Pos, stmt
 	startPos := pos
 	endPos := p.pos
 	if len(list) > 0 {
-		if first := list[0]; first != nil {
-			startPos = first.Pos()
-		}
+		startPos = list[0].Pos()
+
 		if last := list[len(list)-1]; last != nil {
 			endPos = last.End()
 		}
