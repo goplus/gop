@@ -579,13 +579,18 @@ func lookupClassErr(ext string) (c *modfile.Project, ok bool) {
 }
 
 func TestGetGoFile(t *testing.T) {
-	if f := genGoFile("a_test.gop", false); f != testingGoFile {
+	ctx := &pkgCtx{}
+	if f := ctx.genGoFile("a_test.gop", false); f != testingGoFile {
 		t.Fatal("TestGetGoFile:", f)
 	}
-	if f := genGoFile("a_test.gox", true); f != testingGoFile {
+	if f := ctx.genGoFile("a_test.gox", true); f != testingGoFile {
 		t.Fatal("TestGetGoFile:", f)
 	}
-	if f := genGoFile("a.gop", false); f != defaultGoFile {
+	if f := ctx.genGoFile("a.gop", false); f != defaultGoFile {
+		t.Fatal("TestGetGoFile:", f)
+	}
+	ctx.multiFiles = true
+	if f := ctx.genGoFile("a.gop", false); f != "a.gop" {
 		t.Fatal("TestGetGoFile:", f)
 	}
 }
