@@ -8,7 +8,7 @@ require (
 	github.com/goplus/gogen v1.18.0
 	github.com/goplus/lib v0.2.0
 	github.com/goplus/mod v0.16.1
-	github.com/qiniu/x v1.14.0
+	github.com/qiniu/x v1.14.6
 )
 
 require (
