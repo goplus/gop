@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package spx
+package spx4
 
 import (
 	"github.com/goplus/gop/cl/internal/spx/pkg"

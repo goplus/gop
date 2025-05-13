@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package spx
+package spx4
 
 const (
 	GopPackage = "github.com/goplus/gop/cl/internal/spx/pkg"
