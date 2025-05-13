@@ -69,6 +69,20 @@ var (
 )
 println "hi"
 `, "Game.tgmx", "Kai.tspx")
+
+	gopSpxErrorTestEx(t, `Game.t4gmx:6:2: userScore redeclared
+	Game.t4gmx:5:2 other declaration of userScore
+Kai.t4spx:1:1: cannot use 
+pri (type *Kai) as type github.com/goplus/gop/cl/internal/spx4.Sprite in argument to `, `
+import "bytes"
+var (
+	Kai Kai
+	userScore int
+	userScore string
+)
+`, `
+println "hi"
+`, "Game.t4gmx", "Kai.t4spx")
 }
 
 func TestSpxBasic(t *testing.T) {
