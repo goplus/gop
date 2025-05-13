@@ -516,11 +516,12 @@ func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {
 			mainFn := stk.Pop()
 			sigParams := mainFn.Type.(*types.Signature).Params()
 			callMain := func() {
+				src := parent.node(proj.gameClass_ + proj.gt.Ext)
 				stk.Push(mainFn)
 				if _, isPtr := sigParams.At(0).Type().(*types.Pointer); isPtr {
-					cb.Val(recv).MemberRef(base.Name()).UnaryOp(gotoken.AND)
+					cb.Val(recv, src).MemberRef(base.Name()).UnaryOp(gotoken.AND)
 				} else {
-					cb.Val(recv) // template recv method
+					cb.Val(recv, src) // template recv method
 				}
 			}
 
@@ -531,7 +532,7 @@ func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {
 				if len(sprites) == 1 && sprites[0].proto == "" { // no work class prototype
 					sp := sprites[0]
 					narg = 1 + len(sp.types)
-					genWorkClasses(pkg, cb, recv, sp, iobj, -1, callMain)
+					genWorkClasses(pkg, parent, cb, recv, sp, iobj, -1, callMain)
 				} else {
 					lstNames := make([]string, narg)
 					for i := 1; i < narg; i++ {
@@ -539,7 +540,7 @@ func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {
 						tn := tslice.(*types.Slice).Elem().(*types.Named)
 						sp := spriteByProto(sprites, tn.Obj().Name()) // work class
 						if n := len(sp.types); n > 0 {
-							lstNames[i] = genWorkClasses(pkg, cb, recv, sp, iobj, i, nil)
+							lstNames[i] = genWorkClasses(pkg, parent, cb, recv, sp, iobj, i, nil)
 							cb.SliceLitEx(tslice, n, false).EndInit(1)
 							iobj += n
 						}
@@ -563,7 +564,7 @@ func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {
 }
 
 func genWorkClasses(
-	pkg *gogen.Package, cb *gogen.CodeBuilder, recv *types.Var,
+	pkg *gogen.Package, parent *pkgCtx, cb *gogen.CodeBuilder, recv *types.Var,
 	sp *spxObj, iobj, ilst int, callMain func()) (lstName string) {
 	const (
 		indexGame     = 1
@@ -588,9 +589,10 @@ func genWorkClasses(
 	} else {
 		callMain()
 	}
-	for i := range sptypes {
+	for i, spt := range sptypes {
+		src := parent.node(spt + sp.ext)
 		objName := objNamePrefix + strconv.Itoa(iobj+i)
-		cb.VarVal(objName)
+		cb.VarVal(objName, src)
 	}
 	return
 }

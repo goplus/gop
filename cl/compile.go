@@ -483,6 +483,16 @@ func (p *pkgCtx) recoverErr(e any, src ast.Node) error {
 	return err
 }
 
+func (p *pkgCtx) node(name string) ast.Node {
+	if name == "" {
+		return nil
+	}
+	if f, ok := p.files[name]; ok {
+		return f.Name
+	}
+	return nil
+}
+
 const (
 	defaultGoFile  = ""
 	skippingGoFile = "_skip"
