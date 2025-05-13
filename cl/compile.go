@@ -232,6 +232,9 @@ func (p *nodeInterp) LoadExpr(node ast.Node) string {
 	pos := p.fset.Position(start)
 	f := p.files[pos.Filename]
 	n := int(node.End() - start)
+	if len(f.Code[pos.Offset:]) < n {
+		return string(f.Code[pos.Offset:])
+	}
 	return string(f.Code[pos.Offset : pos.Offset+n])
 }
 
