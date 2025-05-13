@@ -487,9 +487,6 @@ func (p *pkgCtx) recoverErr(e any, src ast.Node) error {
 }
 
 func (p *pkgCtx) node(name string) ast.Node {
-	if name == "" {
-		return nil
-	}
 	if f, ok := p.files[name]; ok {
 		return f.Name
 	}
