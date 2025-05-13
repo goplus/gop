@@ -89,10 +89,9 @@ var (
 println "hi"
 `, "Game.t4gmx", "Kai.t4spx")
 
-	gopSpxErrorTestMap(t, `Game.t4gmx:6:2: userScore redeclared
-	Game.t4gmx:5:2 other declaration of userScore
-Kai.t4spx:1:1: cannot use 
-pri (type *Kai) as type github.com/goplus/gop/cl/internal/spx4.Sprite in argument to `, map[string][]string{
+	gopSpxErrorTestMap(t, `Kai.t4spx:4:2: userScore redeclared
+	Kai.t4spx:3:2 other declaration of userScore
+Greem.t4spx:1:1: cannot use  (type *Greem) as type github.com/goplus/gop/cl/internal/spx4.Sprite in argument to `, map[string][]string{
 		"/foo": {"Game.t4gmx", "Kai.t4spx", "Greem.t4spx"},
 	}, map[string]string{
 		"/foo/Game.t4gmx": `println "hi"`,
