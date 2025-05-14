@@ -379,6 +379,18 @@ func TestNumberUnitLit(t *testing.T) {
 	p.toIdent(&ast.NumberUnitLit{})
 }
 
+func TestImplicitIdent(t *testing.T) {
+	if ast.NewIdentEx(100, "foo", ast.ImplicitPkg).End() != 100 {
+		t.Fatal("TestImplicitPkg: not 100")
+	}
+	if ast.NewIdentEx(100, "foo", ast.ImplicitFun).End() != 100 {
+		t.Fatal("TestImplicitFun: not 100")
+	}
+	if ast.NewIdentEx(100, "foo", ast.Fun).End() != 103 {
+		t.Fatal("TestFun: not 103")
+	}
+}
+
 func TestErrGlobalVarWithSyntaxError(t *testing.T) {
 	// Parse the code
 	testShadowEntry(t, `var (
