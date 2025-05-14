@@ -232,9 +232,6 @@ func (p *nodeInterp) LoadExpr(node ast.Node) string {
 	pos := p.fset.Position(start)
 	f := p.files[pos.Filename]
 	n := int(node.End() - start)
-	if len(f.Code[pos.Offset:]) < n {
-		return string(f.Code[pos.Offset:])
-	}
 	return string(f.Code[pos.Offset : pos.Offset+n])
 }
 
@@ -490,10 +487,24 @@ func (p *pkgCtx) recoverErr(e any, src ast.Node) error {
 func (p *pkgCtx) lookupClassNode(name string) ast.Node {
 	for f, cls := range p.classes {
 		if name == cls.clsfile {
-			return f.Name
+			return &EmptyNode{
+				pos: f.Name.Pos(),
+			}
 		}
 	}
 	return nil
+}
+
+type EmptyNode struct {
+	pos token.Pos
+}
+
+func (c *EmptyNode) Pos() token.Pos {
+	return c.pos
+}
+
+func (c *EmptyNode) End() token.Pos {
+	return c.pos
 }
 
 const (
