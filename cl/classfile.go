@@ -516,11 +516,7 @@ func gmxProjMain(pkg *gogen.Package, parent *pkgCtx, proj *gmxProject) {
 			mainFn := stk.Pop()
 			sigParams := mainFn.Type.(*types.Signature).Params()
 			callMain := func() {
-				var src ast.Node
-				f := parent.lookupClassFile(proj.gameClass_)
-				if f != nil {
-					src = f.Name
-				}
+				src := parent.lookupClassNode(proj.gameClass_)
 				stk.Push(mainFn)
 				if _, isPtr := sigParams.At(0).Type().(*types.Pointer); isPtr {
 					cb.Val(recv, src).MemberRef(base.Name()).UnaryOp(gotoken.AND)
@@ -594,11 +590,7 @@ func genWorkClasses(
 		callMain()
 	}
 	for i, spt := range sptypes {
-		var src ast.Node
-		f := parent.lookupClassFile(spt)
-		if f != nil {
-			src = f.Name
-		}
+		src := parent.lookupClassNode(spt)
 		objName := objNamePrefix + strconv.Itoa(iobj+i)
 		cb.VarVal(objName, src)
 	}

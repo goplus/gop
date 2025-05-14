@@ -487,10 +487,10 @@ func (p *pkgCtx) recoverErr(e any, src ast.Node) error {
 }
 
 // lookupClassFile looks up the class file by name.
-func (p *pkgCtx) lookupClassFile(name string) *ast.File {
+func (p *pkgCtx) lookupClassNode(name string) ast.Node {
 	for f, cls := range p.classes {
 		if name == cls.clsfile {
-			return f
+			return f.Name
 		}
 	}
 	return nil
