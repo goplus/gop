@@ -17,6 +17,8 @@ import (
 	self "github.com/goplus/gop/cmd/internal/build"
 )
 
+use "build [flags] [packages]"
+
 short "Build Go+ files"
 
 flagOff

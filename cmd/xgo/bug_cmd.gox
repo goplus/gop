@@ -17,6 +17,8 @@ import (
 	self "github.com/goplus/gop/cmd/internal/bug"
 )
 
+use "bug"
+
 short "Start a bug report"
 
 flagOff

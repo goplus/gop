@@ -17,6 +17,8 @@ import (
 	self "github.com/goplus/gop/cmd/internal/gopget"
 )
 
+use "get [flags] [packages]"
+
 short "Add dependencies to current module and install them"
 
 flagOff
