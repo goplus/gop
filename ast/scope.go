@@ -154,6 +154,10 @@ const (
 	Var                // variable
 	Fun                // function or method
 	Lbl                // label
+	implicitBase
+
+	ImplicitPkg = ObjKind(implicitBase)
+	ImplicitFun = ObjKind(implicitBase + 1)
 )
 
 var objKindStrings = [...]string{
@@ -164,6 +168,9 @@ var objKindStrings = [...]string{
 	Var: "var",
 	Fun: "func",
 	Lbl: "label",
+
+	ImplicitPkg: "package",
+	ImplicitFun: "func",
 }
 
 func (kind ObjKind) String() string { return objKindStrings[kind] }
