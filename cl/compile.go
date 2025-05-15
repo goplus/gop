@@ -29,6 +29,7 @@ import (
 	"github.com/goplus/gogen"
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/fromgo"
+	"github.com/goplus/gop/cl/internal/typesalias"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/mod/modfile"
 	"github.com/qiniu/x/errors"
@@ -349,6 +350,8 @@ type pkgCtx struct {
 
 	goxMain      int // normal gox files with main func
 	goxMainClass string
+
+	gotypesalias bool // support go typesalias
 }
 
 type pkgImp struct {
@@ -523,7 +526,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 		LoadNamed:       ctx.loadNamed,
 		HandleErr:       ctx.handleErr,
 		NodeInterpreter: interp,
-		NewBuiltin:      newBuiltinDefault,
+		NewBuiltin:      ctx.newBuiltinDefault,
 		DefaultGoFile:   defaultGoFile,
 		NoSkipConstant:  conf.NoSkipConstant,
 		PkgPathIox:      osxPkgPath,
@@ -1078,7 +1081,7 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 								if debugLoad {
 									log.Println("==> Load > AliasType", name)
 								}
-								aliasType(pkg, t.Pos(), name, toType(ctx, t.Type))
+								aliasType(ctx, pkg, t.Pos(), name, t)
 								return
 							}
 							if debugLoad {
@@ -1310,9 +1313,30 @@ func newType(pkg *types.Package, pos token.Pos, name string) *types.Named {
 	return types.NewNamed(typName, nil, nil)
 }
 
-func aliasType(pkg *types.Package, pos token.Pos, name string, typ types.Type) {
-	o := types.NewTypeName(pos, pkg, name, typ)
-	pkg.Scope().Insert(o)
+func aliasType(ctx *blockCtx, pkg *types.Package, pos token.Pos, name string, t *ast.TypeSpec) {
+	if ctx.gotypesalias {
+		var typeParams []*types.TypeParam
+		if t.TypeParams != nil {
+			typeParams = toTypeParams(ctx, t.TypeParams)
+			ctx.tlookup = &typeParamLookup{typeParams}
+			defer func() {
+				ctx.tlookup = nil
+			}()
+			org := ctx.inInst
+			ctx.inInst = 0
+			defer func() {
+				ctx.inInst = org
+			}()
+		}
+		o := typesalias.NewAlias(types.NewTypeName(pos, pkg, name, nil), toType(ctx, t.Type))
+		if typeParams != nil {
+			typesalias.SetTypeParams(o, typeParams)
+		}
+		pkg.Scope().Insert(o.Obj())
+	} else {
+		o := types.NewTypeName(pos, pkg, name, toType(ctx, t.Type))
+		pkg.Scope().Insert(o)
+	}
 }
 
 func loadFunc(ctx *blockCtx, recv *types.Var, name string, d *ast.FuncDecl, genBody bool) {

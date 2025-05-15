@@ -146,7 +146,7 @@ type DataString = Data[string]
 type SliceString = Slice[[]string, string]
 
 func main() {
-	fmt.Println(Data[int]{1}.v)
+	fmt.Println(DataInt{1}.v)
 	fmt.Println(DataString{"hello"}.v)
 	fmt.Println(Data[int]{100}.v)
 	fmt.Println(Data[string]{"hello"}.v)
@@ -154,7 +154,7 @@ func main() {
 		X int
 		Y int
 	}]{}.v.X)
-	v1 := Slice[[]int, int]{}
+	v1 := SliceInt{}
 	v2 := SliceString{}
 	v3 := Slice[[]int, int]{}
 	v3.Append([]int{1, 2, 3, 4}...)
@@ -343,7 +343,7 @@ _ = At[int]
 
 func TestTypeParamsErrInferFunc(t *testing.T) {
 	var expect string
-	if cltest.Go1Point() == 24 {
+	if go1point == 24 {
 		expect = `b.gop:2:5: cannot infer T2 (declared at /foo/a.go:4:21)`
 	} else {
 		expect = `b.gop:2:5: cannot infer T2 (/foo/a.go:4:21)`
@@ -841,6 +841,54 @@ p := &bar.Player{}
 p.onCmd string, Message,"hello",(n, msg) => {
 	echo msg.info
 	return nil
+}
+`)
+}
+
+func TestAliasTypeparams(t *testing.T) {
+	if !gotypesalias || go1point < 23 {
+		t.Skip()
+	}
+	t.Setenv("GOEXPERIMENT", "aliastypeparams")
+	gopMixedClTest(t, "main", `package main
+
+type Set[T comparable] = map[T]struct{}
+`, `
+set := Set[string]{
+	"go":  {},
+	"gop": {},
+	"gox": {},
+}
+echo set
+`, `package main
+
+import "fmt"
+
+func main() {
+	set := Set[string]{"go": struct {
+	}{}, "gop": struct {
+	}{}, "gox": struct {
+	}{}}
+	fmt.Println(set)
+}
+`)
+
+	gopMixedClTest(t, "main", `package main
+
+type Pair[T, U any] = struct {
+	First  T
+	Second U
+}
+`, `
+c := &Pair[string, bool]{"hello", true}
+echo c
+`, `package main
+
+import "fmt"
+
+func main() {
+	c := &Pair[string, bool]{"hello", true}
+	fmt.Println(c)
 }
 `)
 }
