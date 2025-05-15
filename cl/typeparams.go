@@ -20,6 +20,7 @@ import (
 	"go/types"
 
 	"github.com/goplus/gop/ast"
+	"github.com/goplus/gop/cl/internal/typesalias"
 	"github.com/goplus/gop/token"
 )
 
@@ -155,8 +156,13 @@ func initType(ctx *blockCtx, named *types.Named, spec *ast.TypeSpec) {
 		ctx.inInst = org
 	}()
 	typ := toType(ctx, spec.Type)
-	if named, ok := typ.(*types.Named); ok {
-		typ = getUnderlying(ctx, named)
+retry:
+	switch t := typ.(type) {
+	case *types.Named:
+		typ = getUnderlying(ctx, t)
+	case *typesalias.Alias:
+		typ = typesalias.Unalias(t)
+		goto retry
 	}
 	named.SetUnderlying(typ)
 }
