@@ -483,6 +483,16 @@ func (p *pkgCtx) recoverErr(e any, src ast.Node) error {
 	return err
 }
 
+// lookupClassFile looks up the class file by name.
+func (p *pkgCtx) lookupClassNode(name string) ast.Node {
+	for f, cls := range p.classes {
+		if name == cls.clsfile {
+			return f.Name
+		}
+	}
+	return nil
+}
+
 const (
 	defaultGoFile  = ""
 	skippingGoFile = "_skip"

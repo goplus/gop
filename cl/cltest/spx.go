@@ -98,6 +98,26 @@ func SpxTest(t *testing.T, fs fsx.FileSystem, dir string, parseConf parser.Confi
 	}
 }
 
+func SpxErrorFS(t *testing.T, msg string, fs parser.FileSystem) {
+	pkgs, err := parser.ParseFSDir(Conf.Fset, fs, "/foo", spxParserConf())
+	if err != nil {
+		scanner.PrintError(os.Stderr, err)
+		t.Fatal("ParseFSDir:", err)
+	}
+	conf := *Conf
+	conf.RelativeBase = "/foo"
+	conf.Recorder = nil
+	conf.NoFileLine = false
+	bar := pkgs["main"]
+	_, err = cl.NewPackage("", bar, &conf)
+	if err == nil {
+		t.Fatal("no error?")
+	}
+	if ret := err.Error(); ret != msg {
+		t.Fatalf("\nError: \"%s\"\nExpected: \"%s\"\n", ret, msg)
+	}
+}
+
 func SpxErrorEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string) {
 	fs := memfs.TwoFiles("/foo", spxfile, spxcode, gmxfile, gmx)
 	pkgs, err := parser.ParseFSDir(Conf.Fset, fs, "/foo", spxParserConf())
