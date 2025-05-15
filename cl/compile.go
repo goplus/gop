@@ -348,10 +348,10 @@ type pkgCtx struct {
 	idents   []*ast.Ident    // toType ident recored
 	inInst   int             // toType in generic instance
 
-	goxMain      int // normal gox files with main func
 	goxMainClass string
+	goxMain      int32 // normal gox files with main func
 
-	gotypesalias bool // support go typesalias
+	featTypesAlias bool // support types alias
 }
 
 type pkgImp struct {
@@ -379,9 +379,10 @@ type blockCtx struct {
 	fileScope *types.Scope // available when isGopFile
 	rec       *goxRecorder
 
-	fileLine  bool
-	isClass   bool
-	isGopFile bool // is Go+ file or not
+	fileLine   bool
+	isClass    bool
+	isGopFile  bool // is Go+ file or not
+	typesAlias bool // support types alias
 }
 
 func (p *blockCtx) cstr() gogen.Ref {
@@ -582,7 +583,8 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 		fileScope := types.NewScope(p.Types.Scope(), f.Pos(), f.End(), f.path)
 		ctx := &blockCtx{
 			pkg: p, pkgCtx: ctx, cb: p.CB(), relBaseDir: relBaseDir, fileScope: fileScope,
-			fileLine: fileLine, isClass: f.IsClass, rec: rec, imports: make(map[string]pkgImp), isGopFile: true,
+			fileLine: fileLine, isClass: f.IsClass, rec: rec, imports: make(map[string]pkgImp),
+			isGopFile: true, typesAlias: ctx.featTypesAlias,
 		}
 		if rec := ctx.rec; rec != nil {
 			rec.Scope(f.File, fileScope)
@@ -603,7 +605,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 		gofiles = append(gofiles, f)
 		ctx := &blockCtx{
 			pkg: p, pkgCtx: ctx, cb: p.CB(), relBaseDir: relBaseDir,
-			imports: make(map[string]pkgImp),
+			imports: make(map[string]pkgImp), typesAlias: ctx.featTypesAlias,
 		}
 		preloadFile(p, ctx, f, skippingGoFile, false)
 	}
@@ -1314,7 +1316,7 @@ func newType(pkg *types.Package, pos token.Pos, name string) *types.Named {
 }
 
 func aliasType(ctx *blockCtx, pkg *types.Package, pos token.Pos, name string, t *ast.TypeSpec) {
-	if ctx.gotypesalias {
+	if ctx.typesAlias {
 		var typeParams []*types.TypeParam
 		if t.TypeParams != nil {
 			typeParams = toTypeParams(ctx, t.TypeParams)

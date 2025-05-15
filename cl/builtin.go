@@ -100,7 +100,7 @@ func (ctx *pkgCtx) newBuiltinDefault(pkg *gogen.Package, conf *gogen.Config) *ty
 			if obj := ng.Types.Scope().Lookup("Gop_ninteger"); obj != nil {
 				if _, ok := obj.Type().(*types.Basic); !ok {
 					conf.EnableTypesalias = true
-					ctx.gotypesalias = true
+					ctx.featTypesAlias = true
 				}
 			}
 		}
