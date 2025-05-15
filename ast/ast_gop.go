@@ -473,7 +473,6 @@ type File struct {
 
 	Scope       *Scope          // package scope (this file only)
 	Imports     []*ImportSpec   // imports in this file
-	Unresolved  []*Ident        // unresolved identifiers in this file
 	Comments    []*CommentGroup // list of all comments in the source file
 	Code        []byte
 	ShadowEntry *FuncDecl // indicate the module entry point.

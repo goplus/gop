@@ -45,8 +45,6 @@ const (
 	DeclarationErrors = Mode(goparser.DeclarationErrors)
 	// AllErrors - report all errors (not just the first 10 on different lines)
 	AllErrors = Mode(goparser.AllErrors)
-	// SkipObjectResolution - don't resolve identifiers to objects - see ParseFile
-	SkipObjectResolution = Mode(goparser.SkipObjectResolution)
 
 	// ParseGoAsGoPlus - parse Go files by gop/parser
 	ParseGoAsGoPlus Mode = 1 << 16
