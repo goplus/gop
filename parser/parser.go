@@ -4158,7 +4158,6 @@ func (p *parser) parseFile() *ast.File {
 		Package:     pos,
 		Name:        ident,
 		Decls:       decls,
-		Scope:       p.pkgScope,
 		Imports:     p.imports,
 		Comments:    p.comments,
 		ShadowEntry: shadowEntry,

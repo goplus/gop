@@ -471,7 +471,6 @@ type File struct {
 	Name    *Ident        // package name
 	Decls   []Decl        // top-level declarations; or nil
 
-	Scope       *Scope          // package scope (this file only)
 	Imports     []*ImportSpec   // imports in this file
 	Comments    []*CommentGroup // list of all comments in the source file
 	Code        []byte

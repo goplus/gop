@@ -1100,7 +1100,6 @@ func (*FuncDecl) declNode() {}
 // collectively building a Go+ package.
 type Package struct {
 	Name    string               // package name
-	Scope   *Scope               // package scope across all files
 	Imports map[string]*Object   // map of package id -> package object
 	Files   map[string]*File     // Go+ source files by filename
 	GoFiles map[string]*ast.File // Go source files by filename

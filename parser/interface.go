@@ -101,8 +101,7 @@ func parseFile(fset *token.FileSet, filename string, src any, mode Mode) (f *ast
 			// source is not a valid Go source file - satisfy
 			// ParseFile API and return a valid (but) empty *ast.File
 			f = &ast.File{
-				Name:  new(ast.Ident),
-				Scope: ast.NewScope(nil),
+				Name: new(ast.Ident),
 			}
 		}
 		f.Code = text
