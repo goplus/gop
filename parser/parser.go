@@ -4072,7 +4072,7 @@ func (p *parser) parseGlobalStmts(sync map[token.Token]bool, pos token.Pos, stmt
 		endPos = list[len(list)-1].End()
 	}
 	return &ast.FuncDecl{
-		Name: &ast.Ident{NamePos: pos, Name: "main"},
+		Name: ast.NewIdentEx(pos, "main", ast.ImplicitFun),
 		Doc:  doc,
 		Type: &ast.FuncType{
 			Func:   pos,
@@ -4124,7 +4124,7 @@ func (p *parser) parseFile() *ast.File {
 	} else {
 		noPkgDecl = true
 		pos = token.NoPos
-		ident = &ast.Ident{NamePos: p.file.Pos(0), Name: "main"}
+		ident = ast.NewIdentEx(p.file.Pos(0), "main", ast.ImplicitPkg)
 	}
 
 	p.openScope()
