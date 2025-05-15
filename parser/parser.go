@@ -4153,18 +4153,6 @@ func (p *parser) parseFile() *ast.File {
 	assert(p.topScope == nil, "unbalanced scopes")
 	assert(p.labelScope == nil, "unbalanced label scopes")
 
-	// resolve global identifiers within the same file
-	i := 0
-	for _, ident := range p.unresolved {
-		// i <= index for current ident
-		assert(ident.Obj == unresolved, "object already resolved")
-		ident.Obj = p.pkgScope.Lookup(ident.Name) // also removes unresolved sentinel
-		if ident.Obj == nil {
-			p.unresolved[i] = ident
-			i++
-		}
-	}
-
 	return &ast.File{
 		Doc:         doc,
 		Package:     pos,
@@ -4172,7 +4160,6 @@ func (p *parser) parseFile() *ast.File {
 		Decls:       decls,
 		Scope:       p.pkgScope,
 		Imports:     p.imports,
-		Unresolved:  p.unresolved[0:i],
 		Comments:    p.comments,
 		ShadowEntry: shadowEntry,
 		NoPkgDecl:   noPkgDecl,
