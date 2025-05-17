@@ -972,6 +972,30 @@ d := bar.Var(bar.M)
 }
 
 func TestMixedOverloadNamed(t *testing.T) {
+	var expect string
+	if gotypesalias {
+		expect = `package main
+
+var a Var__0[int]
+var b Var__1[M]
+
+func main() {
+	c := Gopx_Var_Cast__0[string]()
+	d := Gopx_Var_Cast__1[M]()
+}
+`
+	} else {
+		expect = `package main
+
+var a Var__0[int]
+var b Var__1[map[string]interface{}]
+
+func main() {
+	c := Gopx_Var_Cast__0[string]()
+	d := Gopx_Var_Cast__1[map[string]interface{}]()
+}
+`
+	}
 	gopMixedClTest(t, "main", `package main
 
 type M = map[string]any
@@ -1000,16 +1024,7 @@ var a Var[int]
 var b Var[M]
 c := Var(string)
 d := Var(M)
-`, `package main
-
-var a Var__0[int]
-var b Var__1[map[string]interface{}]
-
-func main() {
-	c := Gopx_Var_Cast__0[string]()
-	d := Gopx_Var_Cast__1[map[string]interface{}]()
-}
-`)
+`, expect)
 }
 
 func TestStringLitBasic(t *testing.T) {
@@ -1077,6 +1092,28 @@ func main() {
 }
 
 func TestMixedGo(t *testing.T) {
+	var expect string
+	if gotypesalias {
+		expect = `package main
+
+var a [10]int
+var b string = f(n)
+var c foo2
+var d int = c.v
+var e = foo3{}
+var x string = c.Str()
+`
+	} else {
+		expect = `package main
+
+var a [10]int
+var b string = f(n)
+var c foo
+var d int = c.v
+var e = foo3{}
+var x string = c.Str()
+`
+	}
 	gopMixedClTest(t, "main", `package main
 
 import "strconv"
@@ -1111,15 +1148,7 @@ var c foo2
 var d int = c.v
 var e = foo3{}
 var x string = c.str
-`, `package main
-
-var a [10]int
-var b string = f(n)
-var c foo
-var d int = c.v
-var e = foo3{}
-var x string = c.Str()
-`, true)
+`, expect, true)
 	gopMixedClTest(t, "main", `package main
 type Point struct {
 	X int

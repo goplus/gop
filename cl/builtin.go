@@ -21,6 +21,7 @@ import (
 	"go/types"
 
 	"github.com/goplus/gogen"
+	"github.com/goplus/gop/cl/internal/typesalias"
 )
 
 // -----------------------------------------------------------------------------
@@ -81,7 +82,7 @@ const (
 	osxPkgPath = "github.com/qiniu/x/gop/osx"
 )
 
-func newBuiltinDefault(pkg *gogen.Package, conf *gogen.Config) *types.Package {
+func (ctx *pkgCtx) newBuiltinDefault(pkg *gogen.Package, conf *gogen.Config) *types.Package {
 	builtin := types.NewPackage("", "")
 	fmt := pkg.TryImport("fmt")
 	os := pkg.TryImport("os")
@@ -95,9 +96,12 @@ func newBuiltinDefault(pkg *gogen.Package, conf *gogen.Config) *types.Package {
 	pkg.TryImport("strings")
 	if ng.Types != nil {
 		initMathBig(pkg, conf, ng)
-		if obj := ng.Types.Scope().Lookup("Gop_ninteger"); obj != nil {
-			if _, ok := obj.Type().(*types.Basic); !ok {
-				conf.EnableTypesalias = true
+		if typesalias.Support {
+			if obj := ng.Types.Scope().Lookup("Gop_ninteger"); obj != nil {
+				if _, ok := obj.Type().(*types.Basic); !ok {
+					conf.EnableTypesalias = true
+					ctx.featTypesAlias = true
+				}
 			}
 		}
 	}

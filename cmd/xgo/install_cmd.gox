@@ -17,6 +17,8 @@ import (
 	self "github.com/goplus/gop/cmd/internal/install"
 )
 
+use "install [flags] [packages]"
+
 short "Build Go+ files and install target to GOBIN"
 
 flagOff

@@ -90,6 +90,27 @@ func testErrCode(t *testing.T, code string, errExp, panicExp string) {
 	}
 }
 
+func testShadowEntry(t *testing.T, code string, errExp string, decl *ast.FuncDecl) {
+	t.Helper()
+	fset := token.NewFileSet()
+	f, err := ParseEntry(fset, "/foo/bar.gop", code, Config{
+		Mode: ParseGoPlusClass | ParseComments | AllErrors,
+	})
+	if err != nil && err.Error() != errExp {
+		t.Fatal("testShadowEntry error:", err)
+	}
+	if err == nil && errExp != "" {
+		t.Fatal("testShadowEntry: nil")
+	}
+
+	if f.ShadowEntry == nil {
+		t.Fatal("testShadowEntry: nil")
+	}
+	if f.ShadowEntry.Body.Lbrace != decl.Body.Lbrace || f.ShadowEntry.Body.Rbrace != decl.Body.Rbrace {
+		t.Fatal("testShadowEntry: brace mismatch", f.ShadowEntry.Body.Lbrace, decl.Body.Lbrace, f.ShadowEntry.Body.Rbrace, decl.Body.Rbrace)
+	}
+}
+
 func testErrCodeParseExpr(t *testing.T, code string, errExp, panicExp string) {
 	defer func() {
 		if e := recover(); e != nil {
@@ -356,6 +377,60 @@ func TestNumberUnitLit(t *testing.T) {
 	var p parser
 	p.checkExpr(&ast.NumberUnitLit{})
 	p.toIdent(&ast.NumberUnitLit{})
+}
+
+func TestImplicitIdent(t *testing.T) {
+	if ast.NewIdentEx(100, "foo", ast.ImplicitPkg).End() != 100 {
+		t.Fatal("TestImplicitPkg: not 100")
+	}
+	if ast.NewIdentEx(100, "foo", ast.ImplicitFun).End() != 100 {
+		t.Fatal("TestImplicitFun: not 100")
+	}
+	if ast.NewIdentEx(100, "foo", ast.Fun).End() != 103 {
+		t.Fatal("TestFun: not 103")
+	}
+}
+
+func TestErrGlobalVarWithSyntaxError(t *testing.T) {
+	// Parse the code
+	testShadowEntry(t, `var (
+	foo int.=2
+	sprites []Sprite
+)
+
+func reset() {
+	foo = 10
+	sprites = make([]Sprite, 0)
+}
+
+onStart => {
+	reset()
+}
+`, `/foo/bar.gop:2:10: expected 'IDENT', found '=' (and 21 more errors)`, &ast.FuncDecl{
+		Body: &ast.BlockStmt{
+			Lbrace: 119,
+			Rbrace: 121,
+		},
+	})
+
+	testShadowEntry(t, `var (
+	foo int
+	sprites []Sprite
+)
+
+func reset() {
+	foo = 10
+	sprites = make([]Sprite, 0)
+}
+
+onStart => {
+	reset()
+}`, "", &ast.FuncDecl{
+		Body: &ast.BlockStmt{
+			Lbrace: 94,
+			Rbrace: 117,
+		},
+	})
 }
 
 // -----------------------------------------------------------------------------

@@ -29,6 +29,7 @@ import (
 	"github.com/goplus/gogen"
 	"github.com/goplus/gop/ast"
 	"github.com/goplus/gop/ast/fromgo"
+	"github.com/goplus/gop/cl/internal/typesalias"
 	"github.com/goplus/gop/token"
 	"github.com/goplus/mod/modfile"
 	"github.com/qiniu/x/errors"
@@ -347,8 +348,10 @@ type pkgCtx struct {
 	idents   []*ast.Ident    // toType ident recored
 	inInst   int             // toType in generic instance
 
-	goxMain      int // normal gox files with main func
 	goxMainClass string
+	goxMain      int32 // normal gox files with main func
+
+	featTypesAlias bool // support types alias
 }
 
 type pkgImp struct {
@@ -376,9 +379,10 @@ type blockCtx struct {
 	fileScope *types.Scope // available when isGopFile
 	rec       *goxRecorder
 
-	fileLine  bool
-	isClass   bool
-	isGopFile bool // is Go+ file or not
+	fileLine   bool
+	isClass    bool
+	isGopFile  bool // is Go+ file or not
+	typesAlias bool // support types alias
 }
 
 func (p *blockCtx) cstr() gogen.Ref {
@@ -483,6 +487,16 @@ func (p *pkgCtx) recoverErr(e any, src ast.Node) error {
 	return err
 }
 
+// lookupClassFile looks up the class file by name.
+func (p *pkgCtx) lookupClassNode(name string) ast.Node {
+	for f, cls := range p.classes {
+		if name == cls.clsfile {
+			return f.Name
+		}
+	}
+	return nil
+}
+
 const (
 	defaultGoFile  = ""
 	skippingGoFile = "_skip"
@@ -513,7 +527,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 		LoadNamed:       ctx.loadNamed,
 		HandleErr:       ctx.handleErr,
 		NodeInterpreter: interp,
-		NewBuiltin:      newBuiltinDefault,
+		NewBuiltin:      ctx.newBuiltinDefault,
 		DefaultGoFile:   defaultGoFile,
 		NoSkipConstant:  conf.NoSkipConstant,
 		PkgPathIox:      osxPkgPath,
@@ -569,7 +583,8 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 		fileScope := types.NewScope(p.Types.Scope(), f.Pos(), f.End(), f.path)
 		ctx := &blockCtx{
 			pkg: p, pkgCtx: ctx, cb: p.CB(), relBaseDir: relBaseDir, fileScope: fileScope,
-			fileLine: fileLine, isClass: f.IsClass, rec: rec, imports: make(map[string]pkgImp), isGopFile: true,
+			fileLine: fileLine, isClass: f.IsClass, rec: rec, imports: make(map[string]pkgImp),
+			isGopFile: true, typesAlias: ctx.featTypesAlias,
 		}
 		if rec := ctx.rec; rec != nil {
 			rec.Scope(f.File, fileScope)
@@ -590,7 +605,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 		gofiles = append(gofiles, f)
 		ctx := &blockCtx{
 			pkg: p, pkgCtx: ctx, cb: p.CB(), relBaseDir: relBaseDir,
-			imports: make(map[string]pkgImp),
+			imports: make(map[string]pkgImp), typesAlias: ctx.featTypesAlias,
 		}
 		preloadFile(p, ctx, f, skippingGoFile, false)
 	}
@@ -1068,7 +1083,7 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 								if debugLoad {
 									log.Println("==> Load > AliasType", name)
 								}
-								aliasType(pkg, t.Pos(), name, toType(ctx, t.Type))
+								aliasType(ctx, pkg, t.Pos(), name, t)
 								return
 							}
 							if debugLoad {
@@ -1300,9 +1315,30 @@ func newType(pkg *types.Package, pos token.Pos, name string) *types.Named {
 	return types.NewNamed(typName, nil, nil)
 }
 
-func aliasType(pkg *types.Package, pos token.Pos, name string, typ types.Type) {
-	o := types.NewTypeName(pos, pkg, name, typ)
-	pkg.Scope().Insert(o)
+func aliasType(ctx *blockCtx, pkg *types.Package, pos token.Pos, name string, t *ast.TypeSpec) {
+	if ctx.typesAlias {
+		var typeParams []*types.TypeParam
+		if t.TypeParams != nil {
+			typeParams = toTypeParams(ctx, t.TypeParams)
+			ctx.tlookup = &typeParamLookup{typeParams}
+			defer func() {
+				ctx.tlookup = nil
+			}()
+			org := ctx.inInst
+			ctx.inInst = 0
+			defer func() {
+				ctx.inInst = org
+			}()
+		}
+		o := typesalias.NewAlias(types.NewTypeName(pos, pkg, name, nil), toType(ctx, t.Type))
+		if typeParams != nil {
+			typesalias.SetTypeParams(o, typeParams)
+		}
+		pkg.Scope().Insert(o.Obj())
+	} else {
+		o := types.NewTypeName(pos, pkg, name, toType(ctx, t.Type))
+		pkg.Scope().Insert(o)
+	}
 }
 
 func loadFunc(ctx *blockCtx, recv *types.Var, name string, d *ast.FuncDecl, genBody bool) {

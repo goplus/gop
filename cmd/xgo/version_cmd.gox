@@ -18,6 +18,8 @@ import (
 	"runtime"
 )
 
+use "version [flags]"
+
 short "Print Go+ version"
 
 run => {

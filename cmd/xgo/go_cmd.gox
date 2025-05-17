@@ -17,6 +17,8 @@ import (
 	self "github.com/goplus/gop/cmd/internal/gengo"
 )
 
+use "go [flags] [packages|files]"
+
 short "Convert Go+ code into Go code"
 
 flagOff

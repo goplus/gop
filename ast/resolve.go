@@ -18,6 +18,7 @@
 
 package ast
 
+/* TODO(xsw): remove
 import (
 	"fmt"
 	"strconv"
@@ -184,3 +185,4 @@ func NewPackage(fset *token.FileSet, files map[string]*File, importer Importer, 
 	p.errors.Sort()
 	return &Package{pkgName, pkgScope, imports, files, nil}, p.errors.Err()
 }
+*/

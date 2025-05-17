@@ -21,6 +21,7 @@ import (
 
 	"github.com/goplus/gop/cl"
 	"github.com/goplus/gop/cl/cltest"
+	"github.com/goplus/gop/parser/fsx/memfs"
 )
 
 func gopSpxTest(t *testing.T, gmx, spxcode, expected string) {
@@ -41,6 +42,10 @@ func gopSpxTestExConf(t *testing.T, name string, conf *cl.Config, gmx, spxcode, 
 
 func gopSpxErrorTestEx(t *testing.T, msg, gmx, spxcode, gmxfile, spxfile string) {
 	cltest.SpxErrorEx(t, msg, gmx, spxcode, gmxfile, spxfile)
+}
+
+func gopSpxErrorTestMap(t *testing.T, msg string, dirs map[string][]string, files map[string]string) {
+	cltest.SpxErrorFS(t, msg, memfs.New(dirs, files))
 }
 
 func TestSpxError(t *testing.T) {
@@ -69,6 +74,33 @@ var (
 )
 println "hi"
 `, "Game.tgmx", "Kai.tspx")
+
+	gopSpxErrorTestEx(t, `Game.t4gmx:6:2: userScore redeclared
+	Game.t4gmx:5:2 other declaration of userScore
+Kai.t4spx:1:1: cannot use  (type *Kai) as type github.com/goplus/gop/cl/internal/spx4.Sprite in argument to `, `
+import "bytes"
+var (
+	Kai Kai
+	userScore int
+	userScore string
+)
+`, `
+println "hi"
+`, "Game.t4gmx", "Kai.t4spx")
+
+	gopSpxErrorTestMap(t, `Kai.t4spx:4:2: userScore redeclared
+	Kai.t4spx:3:2 other declaration of userScore
+Greem.t4spx:1:1: cannot use  (type *Greem) as type github.com/goplus/gop/cl/internal/spx4.Sprite in argument to `, map[string][]string{
+		"/foo": {"Game.t4gmx", "Kai.t4spx", "Greem.t4spx"},
+	}, map[string]string{
+		"/foo/Game.t4gmx": `println "hi"`,
+		"/foo/Kai.t4spx": `var (
+	Kai Kai
+	userScore int
+	userScore string
+)`,
+		"/foo/Greem.t4spx": ``,
+	})
 }
 
 func TestSpxBasic(t *testing.T) {

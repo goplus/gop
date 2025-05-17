@@ -4062,14 +4062,27 @@ func (p *parser) parseGlobalStmts(sync map[token.Token]bool, pos token.Pos, stmt
 	if p.tok != token.EOF {
 		p.errorExpected(p.pos, "statement", 2)
 	}
+
+	// Determine appropriate positions for the block statement
+	// Use file beginning position as fallback when no statements are available
+	startPos := pos
+	endPos := p.pos
+	if len(list) > 0 {
+		startPos = list[0].Pos()
+		endPos = list[len(list)-1].End()
+	}
 	return &ast.FuncDecl{
-		Name: &ast.Ident{NamePos: pos, Name: "main"},
+		Name: ast.NewIdentEx(pos, "main", ast.ImplicitFun),
 		Doc:  doc,
 		Type: &ast.FuncType{
 			Func:   pos,
 			Params: &ast.FieldList{},
 		},
-		Body:   &ast.BlockStmt{List: list},
+		Body: &ast.BlockStmt{
+			Lbrace: startPos,
+			List:   list,
+			Rbrace: endPos,
+		},
 		Shadow: true,
 	}
 }
@@ -4111,7 +4124,7 @@ func (p *parser) parseFile() *ast.File {
 	} else {
 		noPkgDecl = true
 		pos = token.NoPos
-		ident = &ast.Ident{NamePos: p.file.Pos(0), Name: "main"}
+		ident = ast.NewIdentEx(p.file.Pos(0), "main", ast.ImplicitPkg)
 	}
 
 	p.openScope()
@@ -4140,26 +4153,12 @@ func (p *parser) parseFile() *ast.File {
 	assert(p.topScope == nil, "unbalanced scopes")
 	assert(p.labelScope == nil, "unbalanced label scopes")
 
-	// resolve global identifiers within the same file
-	i := 0
-	for _, ident := range p.unresolved {
-		// i <= index for current ident
-		assert(ident.Obj == unresolved, "object already resolved")
-		ident.Obj = p.pkgScope.Lookup(ident.Name) // also removes unresolved sentinel
-		if ident.Obj == nil {
-			p.unresolved[i] = ident
-			i++
-		}
-	}
-
 	return &ast.File{
 		Doc:         doc,
 		Package:     pos,
 		Name:        ident,
 		Decls:       decls,
-		Scope:       p.pkgScope,
 		Imports:     p.imports,
-		Unresolved:  p.unresolved[0:i],
 		Comments:    p.comments,
 		ShadowEntry: shadowEntry,
 		NoPkgDecl:   noPkgDecl,

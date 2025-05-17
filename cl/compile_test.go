@@ -33,6 +33,7 @@ const (
 var (
 	gblConfLine  *cl.Config
 	gotypesalias bool
+	go1point     int
 )
 
 func init() {
@@ -47,6 +48,7 @@ func init() {
 		NoAutoGenMain: true,
 	}
 	gotypesalias = cltest.EnableTypesalias()
+	go1point = cltest.Go1Point()
 }
 
 func gopClNamedTest(t *testing.T, name string, gopcode, expected string) {

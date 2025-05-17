@@ -499,7 +499,7 @@ func MergePackageFiles(pkg *Package, mode MergeMode) *File {
 
 	// TODO(gri) need to compute unresolved identifiers!
 	return &File{
-		doc, pos, NewIdent(pkg.Name), decls, pkg.Scope,
-		imports, nil, comments, nil, nil, false, false, false, false,
+		doc, pos, NewIdent(pkg.Name), decls,
+		imports, comments, nil, nil, false, false, false, false,
 	}
 }

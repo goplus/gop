@@ -17,6 +17,8 @@ import (
 	self "github.com/goplus/gop/cmd/internal/serve"
 )
 
+use "serve [flags]"
+
 short "Serve as a Go+ LangServer"
 
 flagOff
