@@ -1660,7 +1660,7 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr, inFlags int) {
 	expr := v.X
 	switch expr.(type) {
 	case *ast.Ident, *ast.SelectorExpr:
-		expr = &ast.CallExpr{Fun: expr, NoParenEnd: v.X.End()}
+		expr = &ast.CallExpr{Fun: expr, NoParenEnd: expr.End()}
 	}
 	compileExpr(ctx, expr, inFlags)
 	x := cb.InternalStack().Pop()
