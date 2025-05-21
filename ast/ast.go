@@ -477,7 +477,11 @@ func (x *CallExpr) End() token.Pos {
 	if x.NoParenEnd != token.NoPos {
 		return x.NoParenEnd
 	}
-	return x.Rparen + 1
+	if x.Rparen.IsValid() {
+		return x.Rparen + 1
+	}
+
+	return x.Fun.End()
 }
 
 // IsCommand returns if a CallExpr is a command style CallExpr or not.
