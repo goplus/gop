@@ -904,7 +904,7 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 		compileCallExpr(ctx, &ast.CallExpr{
 			Fun:        &ast.Ident{NamePos: v.TokPos, Name: "goto", Obj: &ast.Object{Data: label}},
 			Args:       []ast.Expr{label},
-			NoParenEnd: v.TokPos,
+			NoParenEnd: v.Label.End(),
 		}, clIdentGoto)
 	case token.BREAK:
 		ctx.cb.Break(getLabel(ctx, label))

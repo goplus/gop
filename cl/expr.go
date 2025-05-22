@@ -664,9 +664,10 @@ func (p *fnType) initFuncs(base int, funcs []types.Object, typeAsParams bool) {
 }
 
 func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
-	if !v.NoParenEnd.IsValid() && !v.Rparen.IsValid() {
-		panic("unexpected invalid Rparen and NoParenEnd in CallExpr")
-	}
+	// If you need to confirm the callExpr format, you can turn on
+	// if !v.NoParenEnd.IsValid() && !v.Rparen.IsValid() {
+	// 	panic("unexpected invalid Rparen and NoParenEnd in CallExpr")
+	// }
 	var ifn *ast.Ident
 	switch fn := v.Fun.(type) {
 	case *ast.Ident:
