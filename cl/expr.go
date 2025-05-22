@@ -664,6 +664,10 @@ func (p *fnType) initFuncs(base int, funcs []types.Object, typeAsParams bool) {
 }
 
 func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
+	// If you need to confirm the callExpr format, you can turn on
+	// if !v.NoParenEnd.IsValid() && !v.Rparen.IsValid() {
+	// 	panic("unexpected invalid Rparen and NoParenEnd in CallExpr")
+	// }
 	var ifn *ast.Ident
 	switch fn := v.Fun.(type) {
 	case *ast.Ident:
@@ -1657,7 +1661,7 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr, inFlags int) {
 	expr := v.X
 	switch expr.(type) {
 	case *ast.Ident, *ast.SelectorExpr:
-		expr = &ast.CallExpr{Fun: expr}
+		expr = &ast.CallExpr{Fun: expr, NoParenEnd: expr.End()}
 	}
 	compileExpr(ctx, expr, inFlags)
 	x := cb.InternalStack().Pop()

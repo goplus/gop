@@ -54,6 +54,10 @@ func (p *MyGame) Broadcast__1(msg string, wait bool) {
 func (p *MyGame) Broadcast__2(msg string, data any, wait bool) {
 }
 
+func (p *MyGame) BackdropName() string {
+	return ""
+}
+
 func (p *MyGame) Play(media string, wait ...bool) {
 }
 
