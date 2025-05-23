@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2022 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,7 +114,7 @@ func isNotatedErr(err error, pkg *ast.Package, fset *token.FileSet) (notatedErr 
 
 // -----------------------------------------------------------------------------
 
-// Config represents a configuration for loading Go+ packages.
+// Config represents a configuration for loading XGo packages.
 type Config struct {
 	Gop      *env.Gop
 	Fset     *token.FileSet
@@ -123,7 +123,7 @@ type Config struct {
 
 	Filter func(fs.FileInfo) bool
 
-	// If not nil, it is used for returning result of checks Go+ dependencies.
+	// If not nil, it is used for returning result of checks XGo dependencies.
 	// see https://pkg.go.dev/github.com/goplus/gogen#File.CheckGopDeps
 	GopDeps *int
 
@@ -193,7 +193,7 @@ func (conf *Config) UpdateCache(verbose ...bool) {
 	}
 }
 
-// LoadMod loads a Go+ module from a specified directory.
+// LoadMod loads a XGo module from a specified directory.
 func LoadMod(dir string) (mod *gopmod.Module, err error) {
 	mod, err = gopmod.Load(dir)
 	if err != nil && !gopmod.IsNotFound(err) {
@@ -229,7 +229,7 @@ func FilterNoTestFiles(fi fs.FileInfo) bool {
 
 // -----------------------------------------------------------------------------
 
-// LoadDir loads Go+ packages from a specified directory.
+// LoadDir loads XGo packages from a specified directory.
 func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (out, test *gogen.Package, err error) {
 	if conf == nil {
 		conf = new(Config)
@@ -287,7 +287,7 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 		if out != nil {
 			return nil, nil, ErrMultiPackges
 		}
-		if len(pkg.Files) == 0 { // no Go+ source files
+		if len(pkg.Files) == 0 { // no XGo source files
 			continue
 		}
 		if promptGenGo != nil && promptGenGo[0] {
@@ -312,7 +312,7 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 }
 
 func afterLoad(mod *gopmod.Module, gop *env.Gop, out, test *gogen.Package, conf *Config) {
-	if mod.Path() == gopMod { // nothing to do for Go+ itself
+	if mod.Path() == gopMod { // nothing to do for XGo itself
 		return
 	}
 	updateMod := !conf.DontUpdateGoMod && mod.HasModfile()
@@ -349,7 +349,7 @@ func relativeBaseOf(mod *gopmod.Module) string {
 
 // -----------------------------------------------------------------------------
 
-// LoadFiles loads a Go+ package from specified files.
+// LoadFiles loads a XGo package from specified files.
 func LoadFiles(dir string, files []string, conf *Config) (out *gogen.Package, err error) {
 	if conf == nil {
 		conf = new(Config)

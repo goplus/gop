@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2023 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ func outlinePkg(proj gopprojs.Proj, conf *tool.Config) {
 		log.Panicln("`gop doc` doesn't support", reflect.TypeOf(v))
 	}
 	if tool.NotFound(err) {
-		fmt.Fprintf(os.Stderr, "gop doc %v: not Go/Go+ files found\n", obj)
+		fmt.Fprintf(os.Stderr, "gop doc %v: not Go/XGo files found\n", obj)
 	} else if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	} else {

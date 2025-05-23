@@ -1,4 +1,4 @@
-name: Go+ CI
+name: XGo CI
 
 on:
   push:
@@ -39,9 +39,9 @@ jobs:
       with:
         go-version: ${{ matrix.go }}
 
-    - name: Test Go+ installer
+    - name: Test XGo installer
       run: |
-        git config --global user.email "build-robot@goplus.org"
+        git config --global user.email "build-robot@xgo.dev"
         git config --global user.name "build robot"
         go test -v cmd/make_test.go
 
@@ -75,9 +75,9 @@ jobs:
     - name: Set types alias env
       run: echo "GODEBUG=gotypesalias=1" >> $GITHUB_ENV
 
-    - name: Test Go+ installer
+    - name: Test XGo installer
       run: |
-        git config --global user.email "build-robot@goplus.org"
+        git config --global user.email "build-robot@xgo.dev"
         git config --global user.name "build robot"
         go test -v cmd/make_test.go
 

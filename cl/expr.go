@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg gogen.PkgRef,
 		}
 	}
 
-	if ctx.isClass { // in a Go+ class file
+	if ctx.isClass { // in a XGo class file
 		if recv = classRecv(cb); recv != nil {
 			cb.Val(recv)
 			chkFlag := flags
@@ -214,7 +214,7 @@ func compileMatrixLit(ctx *blockCtx, v *ast.MatrixLit) {
 
 func compileEnvExpr(ctx *blockCtx, v *ast.EnvExpr) {
 	cb := ctx.cb
-	if ctx.isClass { // in a Go+ class file
+	if ctx.isClass { // in a XGo class file
 		if recv := classRecv(cb); recv != nil {
 			if gopMember(cb, recv, "Gop_Env", v) == nil {
 				name := v.Name

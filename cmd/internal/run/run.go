@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,12 +34,12 @@ import (
 // gop run
 var Cmd = &base.Command{
 	UsageLine: "gop run [-nc -asm -quiet -debug -prof] package [arguments...]",
-	Short:     "Run a Go+ program",
+	Short:     "Run a XGo program",
 }
 
 var (
 	flag        = &Cmd.Flag
-	flagAsm     = flag.Bool("asm", false, "generates `asm` code of Go+ bytecode backend")
+	flagAsm     = flag.Bool("asm", false, "generates `asm` code of XGo bytecode backend")
 	flagDebug   = flag.Bool("debug", false, "print debug information")
 	flagQuiet   = flag.Bool("quiet", false, "don't generate any compiling stage log")
 	flagNoChdir = flag.Bool("nc", false, "don't change dir (only for `gop run pkgPath`)")

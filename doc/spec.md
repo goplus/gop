@@ -1,4 +1,4 @@
-The Go+ Full Specification
+The XGo Full Specification
 =====
 
 TODO

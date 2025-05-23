@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ var (
 	defaultGopRoot string
 )
 
-// GOPROOT returns the root of the Go+ tree. It uses the GOPROOT environment variable,
-// if set at process start, or else the root used during the Go+ build.
+// GOPROOT returns the root of the XGo tree. It uses the GOPROOT environment variable,
+// if set at process start, or else the root used during the XGo build.
 func GOPROOT() string {
 	gopRoot, err := findGopRoot()
 	if err != nil {

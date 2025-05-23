@@ -1,4 +1,4 @@
-Go+ Code Style
+XGo Code Style
 ======
 
 TODO

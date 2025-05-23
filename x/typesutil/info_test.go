@@ -214,8 +214,8 @@ func testItems(t *testing.T, name string, items []string, goitems []string) {
 	text := strings.Join(items, "\n")
 	gotext := strings.Join(goitems, "\n")
 	if len(items) != len(goitems) || text != gotext {
-		t.Errorf(`====== check %v error (Go+ count: %v, Go count %v) ====== 
------- Go+ ------
+		t.Errorf(`====== check %v error (XGo count: %v, Go count %v) ====== 
+------ XGo ------
 %v
 ------ Go ------
 %v
@@ -1955,7 +1955,7 @@ func TestScopesInfo(t *testing.T) {
 		{`package p30; func _(){ y := {x: i for i, x <- ["1", "3", "5", "7", "11"]}; _ = y }`, []string{
 			"file:", "func:y", "for phrase:i x",
 		}},
-		{`package p31; func _(){ z := {v: k for k, v <- {"Hello": 1, "Hi": 3, "xsw": 5, "Go+": 7}, v > 3}; _ = z }`, []string{
+		{`package p31; func _(){ z := {v: k for k, v <- {"Hello": 1, "Hi": 3, "xsw": 5, "XGo": 7}, v > 3}; _ = z }`, []string{
 			"file:", "func:z", "for phrase:k v",
 		}},
 	}

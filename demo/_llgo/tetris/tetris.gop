@@ -111,7 +111,7 @@ func keyPressed(key c.Int) bool {
 	return raylib.isKeyPressed(key) || raylib.isKeyPressedRepeat(key)
 }
 
-raylib.initWindow SCREENWIDTH, SCREENHEIGHT, c"tetris (powered by raylib and Go+)"
+raylib.initWindow SCREENWIDTH, SCREENHEIGHT, c"tetris (powered by raylib and XGo)"
 raylib.setTargetFPS 60
 genShape
 

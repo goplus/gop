@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2022 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,17 +41,17 @@ import (
 
 // -----------------------------------------------------------------------------
 
-// Importer represents a Go+ importer.
+// Importer represents a XGo importer.
 type Importer struct {
 	impFrom *packages.Importer
 	mod     *gopmod.Module
 	gop     *env.Gop
 	fset    *token.FileSet
 
-	Flags GenFlags // can change this for loading Go+ modules
+	Flags GenFlags // can change this for loading XGo modules
 }
 
-// NewImporter creates a Go+ Importer.
+// NewImporter creates a XGo Importer.
 func NewImporter(mod *gopmod.Module, gop *env.Gop, fset *token.FileSet) *Importer {
 	const (
 		defaultFlags = GenFlagPrompt | GenFlagPrintError
@@ -131,7 +131,7 @@ const (
 	xMod   = "github.com/qiniu/x"
 )
 
-// Import imports a Go/Go+ package.
+// Import imports a Go/XGo package.
 func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 	if strings.HasPrefix(pkgPath, gopMod) {
 		if suffix := pkgPath[len(gopMod):]; suffix == "" || suffix[0] == '/' {

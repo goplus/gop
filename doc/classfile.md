@@ -1,27 +1,27 @@
-Go+ Classfiles
+XGo Classfiles
 =====
 
 ```
 One language can change the world.
-Go+ is a "DSL" for all domains.
+XGo is a "DSL" for all domains.
 ```
 
-Rob Pike once said that if he could only introduce one feature to Go, he would choose `interface` instead of `goroutine`. `classfile` (and `class framework`) is as important to Go+ as `interface` is to Go.
+Rob Pike once said that if he could only introduce one feature to Go, he would choose `interface` instead of `goroutine`. `classfile` (and `class framework`) is as important to XGo as `interface` is to Go.
 
-In the design philosophy of Go+, we do not recommend `DSL` (Domain Specific Language). But `SDF` (Specific Domain Friendliness) is very important. The Go+ philosophy about `SDF` is:
+In the design philosophy of XGo, we do not recommend `DSL` (Domain Specific Language). But `SDF` (Specific Domain Friendliness) is very important. The XGo philosophy about `SDF` is:
 
 ```
 Don't define a language for specific domain.
 Abstract domain knowledge for it.
 ```
 
-Go+ introduces `classfile` and `class framework` to abstract domain knowledge.
+XGo introduces `classfile` and `class framework` to abstract domain knowledge.
 
-* STEM Education: [spx: A Go+ 2D Game Engine](https://github.com/goplus/spx)
+* STEM Education: [spx: A XGo 2D Game Engine](https://github.com/goplus/spx)
 * Web Programming: [yap: Yet Another HTTP Web Framework](https://github.com/goplus/yap)
 * Web Programming: [yaptest: HTTP Test Framework](https://github.com/goplus/yap#yaptest-http-test-framework)
 * Web Programming: [ydb: Database Framework](https://github.com/goplus/yap#ydb-database-framework)
-* DevOps: [gsh: Go+ DevOps Tools](https://github.com/qiniu/x/tree/main/gsh)
+* DevOps: [gsh: XGo DevOps Tools](https://github.com/qiniu/x/tree/main/gsh)
 * Unit Test: [classfile: Unit Test](#class-framework-unit-test)
 * Mechanism: [What's Classfile](#whats-classfile)
 
@@ -122,7 +122,7 @@ func Area() int {
 }
 ```
 
-Defining variables and defining functions are all familiar to them while learning sequential programming. They can define new types using syntax they already know by heart. This will be valuable in getting a wider community to learn Go+.
+Defining variables and defining functions are all familiar to them while learning sequential programming. They can define new types using syntax they already know by heart. This will be valuable in getting a wider community to learn XGo.
 
 ### What's class framework
 
@@ -130,16 +130,16 @@ Of course, this is not enough to make classfiles an exciting feature. What's mor
 
 What is a `class framework`? Usually it consists of a `project class` and multiple `work classes`. The class framework not only specifies the `base class` of all `project class` and `work classes`, but also organizes all these classes together by the base class of project class. There can be no work classes, that is, the entire classfile consists of only one project class.
 
-This is a bit abstract. Let's take the [2D Game Engine spx](https://github.com/goplus/spx) as an example. The base class of project class of `spx class framework` is called `Game`. The base class of work class is called `Sprite`. Obviously, there will only be one Game instance in a game, but there are many types of sprites, so many types of work classes are needed, but they all have the same base class called `Sprite`. Go+'s class framework allows you to specify different base classes for different work classes. Although this is rare, it can be done.
+This is a bit abstract. Let's take the [2D Game Engine spx](https://github.com/goplus/spx) as an example. The base class of project class of `spx class framework` is called `Game`. The base class of work class is called `Sprite`. Obviously, there will only be one Game instance in a game, but there are many types of sprites, so many types of work classes are needed, but they all have the same base class called `Sprite`. XGo's class framework allows you to specify different base classes for different work classes. Although this is rare, it can be done.
 
-How does Go+ identify various class files of a class framework? by its filename. By convention, if we define a class framework called `foo`, then its project class is usually called `main_foo.gox`, and the work class is usually called `xxx_foo.gox`. If this class framework does not have a work class, then the project class only needs to ensure that the suffix is `_foo.gox`, and the class name can be freely chosen.
+How does XGo identify various class files of a class framework? by its filename. By convention, if we define a class framework called `foo`, then its project class is usually called `main_foo.gox`, and the work class is usually called `xxx_foo.gox`. If this class framework does not have a work class, then the project class only needs to ensure that the suffix is `_foo.gox`, and the class name can be freely chosen.
 
-The earliest version of Go+ allows classfiles to be identified through custom file extensions. For example, the project class of the `spx class framework` is called `main.spx`, and the work class is called `xxx.spx`. Although this ability to customize extensions is still retained for now, we do not recommend its use and there is no guarantee that it will continue to be available in the future.
+The earliest version of XGo allows classfiles to be identified through custom file extensions. For example, the project class of the `spx class framework` is called `main.spx`, and the work class is called `xxx.spx`. Although this ability to customize extensions is still retained for now, we do not recommend its use and there is no guarantee that it will continue to be available in the future.
 
 
 ### class framework: Unit Test
 
-Go+ has a built-in class framework to simplify unit testing. This class framework has the file suffix `_test.gox`.
+XGo has a built-in class framework to simplify unit testing. This class framework has the file suffix `_test.gox`.
 
 Suppose you have a function named `foo`:
 
@@ -174,7 +174,7 @@ You don't need to define a series of `TestXXX` functions like Go, just write you
 If you want to run a subtest case, use `t.run`.
 
 
-### yap: Yet Another Go/Go+ HTTP Web Framework
+### yap: Yet Another Go/XGo HTTP Web Framework
 
 This class framework has the file suffix `.yap`. See [yap: Yet Another HTTP Web Framework](https://github.com/goplus/yap) for more details.
 
@@ -279,10 +279,10 @@ json {
 
 The directive `testServer` creates the web server by [net/http/httptest](https://pkg.go.dev/net/http/httptest#NewServer) and obtained a random port as the service address. Then it calls the directive [host](https://pkg.go.dev/github.com/goplus/yap/ytest#App.Host) to map the random service address to `foo.com`. This makes all other code no need to changed.
 
-For more details, see [yaptest - Go+ HTTP Test Framework](https://github.com/goplus/yap/blob/main/ytest).
+For more details, see [yaptest - XGo HTTP Test Framework](https://github.com/goplus/yap/blob/main/ytest).
 
 
-### spx: A Go+ 2D Game Engine for STEM education
+### spx: A XGo 2D Game Engine for STEM education
 
 This class framework has the file suffix `.spx`. It is the earliest class framework in the world.
 
@@ -420,7 +420,7 @@ var (
 	gid   int
 )
 
-run "res", {Title: "Clone and Destory (by Go+)"}
+run "res", {Title: "Clone and Destory (by XGo)"}
 ```
 
 All these three variables in [main.spx](https://github.com/goplus/spx/blob/main/tutorial/03-Clone/main.spx) are shared by all sprites. `Arrow` and `Calf` are sprites that exist in this project. `gid` means `global id`. It is used to allocate id for all cloned `Calf` sprites.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2022 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,14 +82,14 @@ func TestKind(t *testing.T) {
 
 func TestGop(t *testing.T) {
 	var src = `
-println "Go+"
+println "XGo"
 `
 	var expect = `package main
 
 import "fmt"
 
 func main() {
-	fmt.Println("Go+")
+	fmt.Println("XGo")
 }
 `
 	gopClTest(t, src, expect)
@@ -107,7 +107,7 @@ func main() {
 
 func TestGox(t *testing.T) {
 	gopClTestEx(t, "Rect.gox", `
-println "Go+"
+println "XGo"
 `, `package main
 
 import "fmt"
@@ -116,7 +116,7 @@ type Rect struct {
 }
 
 func (this *Rect) Main() {
-	fmt.Println("Go+")
+	fmt.Println("XGo")
 }
 func main() {
 	new(Rect).Main()
@@ -130,7 +130,7 @@ var (
 type Buffer struct {
 	buf []byte
 }
-println "Go+"
+println "XGo"
 `, `package main
 
 import "fmt"
@@ -144,7 +144,7 @@ type Rect struct {
 }
 
 func (this *Rect) Main() {
-	fmt.Println("Go+")
+	fmt.Println("XGo")
 }
 func main() {
 	new(Rect).Main()
@@ -158,7 +158,7 @@ var (
 type Buffer struct {
 	buf []byte
 }
-println "Go+"
+println "XGo"
 `, `package main
 
 import "fmt"
@@ -172,7 +172,7 @@ type Rect struct {
 }
 
 func (this *Rect) Main() {
-	fmt.Println("Go+")
+	fmt.Println("XGo")
 }
 func main() {
 	new(Rect).Main()
@@ -184,7 +184,7 @@ var (
 	*bytes.Buffer
 	v int
 )
-println "Go+"
+println "XGo"
 `, `package main
 
 import (
@@ -198,7 +198,7 @@ type Rect struct {
 }
 
 func (this *Rect) Main() {
-	fmt.Println("Go+")
+	fmt.Println("XGo")
 }
 func main() {
 	new(Rect).Main()
@@ -210,7 +210,7 @@ var (
 	bytes.Buffer
 	v int
 )
-println "Go+"
+println "XGo"
 `, `package main
 
 import (
@@ -224,7 +224,7 @@ type Rect struct {
 }
 
 func (this *Rect) Main() {
-	fmt.Println("Go+")
+	fmt.Println("XGo")
 }
 func main() {
 	new(Rect).Main()
@@ -462,7 +462,7 @@ func TestFS(t *testing.T) {
 import "fmt"
 
 func main() {
-	fmt.Println("Go+")
+	fmt.Println("XGo")
 }
 `)
 	data, err := ctx.BuildFSDir(fsx.Local, "./_testdata/hello")
@@ -480,7 +480,7 @@ func TestAst(t *testing.T) {
 import "fmt"
 
 func main() {
-	fmt.Println("Go+")
+	fmt.Println("XGo")
 }
 `)
 	pkg, err := ctx.ParseFSDir(fsx.Local, "./_testdata/hello")
@@ -533,7 +533,7 @@ func (i *emptyImporter) Import(path string) (*types.Package, error) {
 
 func TestContext(t *testing.T) {
 	ctx := build.NewContext(&emptyImporter{}, nil)
-	_, err := ctx.BuildFile("main.gop", `import "fmt"; fmt.Println "Go+"`)
+	_, err := ctx.BuildFile("main.gop", `import "fmt"; fmt.Println "XGo"`)
 	if err == nil {
 		t.Fatal("BuildFile: no error?")
 	}

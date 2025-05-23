@@ -1,7 +1,7 @@
-The Go+ Mini Specification
+The XGo Mini Specification
 =====
 
-Go+ has a recommended best practice syntax set, which we call the Go+ Mini Specification. It is simple but Turing-complete and can elegantly implement any business requirements.
+XGo has a recommended best practice syntax set, which we call the XGo Mini Specification. It is simple but Turing-complete and can elegantly implement any business requirements.
 
 ## Notation
 
@@ -29,7 +29,7 @@ Productions are expressions constructed from terms and the following operators, 
 
 Lowercase production names are used to identify lexical (terminal) tokens. Non-terminals are in CamelCase. Lexical tokens are enclosed in double quotes `""` or back quotes ``.
 
-The form `a … b` represents the set of characters from a through b as alternatives. The horizontal ellipsis `…` is also used elsewhere in the spec to informally denote various enumerations or code snippets that are not further specified. The character … (as opposed to the three characters `...`) is not a token of the Go+ language.
+The form `a … b` represents the set of characters from a through b as alternatives. The horizontal ellipsis `…` is also used elsewhere in the spec to informally denote various enumerations or code snippets that are not further specified. The character … (as opposed to the three characters `...`) is not a token of the XGo language.
 
 ## Source code representation
 
@@ -86,11 +86,11 @@ A _general comment_ containing no newlines acts like a space. Any other comment 
 
 ### Tokens
 
-Tokens form the vocabulary of the Go+ language. There are four classes: _identifiers_, _keywords_, _operators_ and _punctuation_, and _literals_. White space, formed from spaces (U+0020), horizontal tabs (U+0009), carriage returns (U+000D), and newlines (U+000A), is ignored except as it separates tokens that would otherwise combine into a single token. Also, a newline or end of file may trigger the insertion of a [semicolon](). While breaking the input into tokens, the next token is the longest sequence of characters that form a valid token.
+Tokens form the vocabulary of the XGo language. There are four classes: _identifiers_, _keywords_, _operators_ and _punctuation_, and _literals_. White space, formed from spaces (U+0020), horizontal tabs (U+0009), carriage returns (U+000D), and newlines (U+000A), is ignored except as it separates tokens that would otherwise combine into a single token. Also, a newline or end of file may trigger the insertion of a [semicolon](). While breaking the input into tokens, the next token is the longest sequence of characters that form a valid token.
 
 ### Semicolons
 
-The formal syntax uses semicolons ";" as terminators in a number of productions. Go+ programs may omit most of these semicolons using the following two rules:
+The formal syntax uses semicolons ";" as terminators in a number of productions. XGo programs may omit most of these semicolons using the following two rules:
 
 * When the input is broken into tokens, a semicolon is automatically inserted into the token stream immediately after a line's final token if that token is
   * an [identifier](#identifiers)
@@ -284,7 +284,7 @@ false
 
 A rune literal represents a [rune constant](#constants), an integer value identifying a Unicode code point. A rune literal is expressed as one or more characters enclosed in single quotes, as in `'x'` or `'\n'`. Within the quotes, any character may appear except newline and unescaped single quote. A single quoted character represents the Unicode value of the character itself, while multi-character sequences beginning with a backslash encode values in various formats.
 
-The simplest form represents the single character within the quotes; since Go+ source text is Unicode characters encoded in UTF-8, multiple UTF-8-encoded bytes may represent a single integer value. For instance, the literal `'a'` holds a single byte representing a literal a, Unicode `U+0061`, value 0x61, while `'ä'` holds two bytes (0xc3 0xa4) representing a literal a-dieresis, `U+00E4`, value 0xe4.
+The simplest form represents the single character within the quotes; since XGo source text is Unicode characters encoded in UTF-8, multiple UTF-8-encoded bytes may represent a single integer value. For instance, the literal `'a'` holds a single byte representing a literal a, Unicode `U+0061`, value 0x61, while `'ä'` holds two bytes (0xc3 0xa4) representing a literal a-dieresis, `U+00E4`, value 0xe4.
 
 Several backslash escapes allow arbitrary values to be encoded as ASCII text. There are four ways to represent the integer value as a numeric constant: `\x` followed by exactly two hexadecimal digits; `\u` followed by exactly four hexadecimal digits; `\U` followed by exactly eight hexadecimal digits, and a plain backslash `\` followed by exactly three octal digits. In each case the value of the literal is the value represented by the digits in the corresponding base.
 
@@ -1146,7 +1146,7 @@ sort.Slice a, (i, j) => {
 }
 ```
 
-Note: Both the parameter types and return value types of anonymous functions are omitted. Go+ determines the parameter types and return value types of anonymous functions through type inference.
+Note: Both the parameter types and return value types of anonymous functions are omitted. XGo determines the parameter types and return value types of anonymous functions through type inference.
 
 Function literals are _closures_: they may refer to variables defined in a surrounding function. Those variables are then shared between the surrounding function and the function literal, and they survive as long as they are accessible.
 
@@ -2408,9 +2408,9 @@ StatementList = { Statement ";" } .
 
 In addition to explicit blocks in the source code, there are implicit blocks:
 
-* The _universe block_ encompasses all Go+ source text.
-* Each [package](#packages) has a _package block_ containing all Go+ source text for that package.
-* Each file has a _file block_ containing all Go+ source text in that file.
+* The _universe block_ encompasses all XGo source text.
+* Each [package](#packages) has a _package block_ containing all XGo source text for that package.
+* Each file has a _file block_ containing all XGo source text in that file.
 * Each "[if](#if-statements)", "[for](#for-statements)", and "[switch](#switch-statements)" statement is considered to be in its own implicit block.
 * Each clause in a "[switch](#switch-statements)" statement acts as an implicit block.
 
@@ -2430,7 +2430,7 @@ TopLevelDecl  = Declaration | FunctionDecl .
 
 The scope of a declared identifier is the extent of source text in which the identifier denotes the specified constant, type, variable, function, label, or package.
 
-Go+ is lexically scoped using blocks:
+XGo is lexically scoped using blocks:
 
 * The scope of a [predeclared identifier]() is the universe block.
 * The scope of an identifier denoting a constant, type, variable, or function declared at top level (outside any function) is the package block.
@@ -2705,7 +2705,7 @@ func IndexRune(s string, r rune) int {
 
 ## Packages
 
-Go+ programs are constructed by linking together packages. A package in turn is constructed from one or more source files that together declare constants, types, variables and functions belonging to the package and which are accessible in all files of the same package. Those elements may be [exported]() and used in another package.
+XGo programs are constructed by linking together packages. A package in turn is constructed from one or more source files that together declare constants, types, variables and functions belonging to the package and which are accessible in all files of the same package. Those elements may be [exported]() and used in another package.
 
 ### Source file organization
 
@@ -2764,7 +2764,7 @@ import _ "lib/math"
 
 ### An example package
 
-Here is a complete Go+ package that implements XXX.
+Here is a complete XGo package that implements XXX.
 
 ```go
 TODO
@@ -2958,9 +2958,9 @@ The `len` argument must be of [integer type](#numeric-types) or an untyped [cons
 
 The function `SliceData` returns a pointer to the underlying array of the `slice` argument. If the slice's capacity `cap(slice)` is not zero, that pointer is `&slice[:1][0]`. If slice is `nil`, the result is `nil`. Otherwise it is a non-nil pointer to an unspecified memory address.
 
-The function `String` returns a `string` value whose underlying bytes start at `ptr` and whose length is `len`. The same requirements apply to the `ptr` and `len` argument as in the function `Slice`. If `len` is zero, the result is the empty string `""`. Since Go+ strings are immutable, the bytes passed to `String` must not be modified afterwards.
+The function `String` returns a `string` value whose underlying bytes start at `ptr` and whose length is `len`. The same requirements apply to the `ptr` and `len` argument as in the function `Slice`. If `len` is zero, the result is the empty string `""`. Since XGo strings are immutable, the bytes passed to `String` must not be modified afterwards.
 
-The function `StringData` returns a pointer to the underlying bytes of the `str` argument. For an empty string the return value is unspecified, and may be `nil`. Since Go+ strings are immutable, the bytes returned by `StringData` must not be modified.
+The function `StringData` returns a pointer to the underlying bytes of the `str` argument. For an empty string the return value is unspecified, and may be `nil`. Since XGo strings are immutable, the bytes returned by `StringData` must not be modified.
 
 ### Size and alignment guarantees
 
@@ -2992,7 +2992,7 @@ TODO
 
 ### Type unification rules
 
-The type unification rules describe if and how two types unify. The precise details are relevant for Go+ implementations, affect the specifics of error messages (such as whether a compiler reports a type inference or other error), and may explain why type inference fails in unusual code situations. But by and large these rules can be ignored when writing Go code: type inference is designed to mostly "work as expected", and the unification rules are fine-tuned accordingly.
+The type unification rules describe if and how two types unify. The precise details are relevant for XGo implementations, affect the specifics of error messages (such as whether a compiler reports a type inference or other error), and may explain why type inference fails in unusual code situations. But by and large these rules can be ignored when writing Go code: type inference is designed to mostly "work as expected", and the unification rules are fine-tuned accordingly.
 
 Type unification is controlled by a matching mode, which may be `exact` or `loose`. As unification recursively descends a composite type structure, the matching mode used for elements of the type, the element matching mode, remains the same as the matching mode except when two types are unified for [assignability]() (≡A): in this case, the matching mode is loose at the top level but then changes to exact for element types, reflecting the fact that types don't have to be identical to be assignable.
 

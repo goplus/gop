@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,15 +40,15 @@ import (
 // Cmd - gop fmt
 var Cmd = &base.Command{
 	UsageLine: "gop fmt [flags] path ...",
-	Short:     "Format Go+ packages",
+	Short:     "Format XGo packages",
 }
 
 var (
 	flag        = &Cmd.Flag
-	flagTest    = flag.Bool("t", false, "test if Go+ files are formatted or not.")
+	flagTest    = flag.Bool("t", false, "test if XGo files are formatted or not.")
 	flagNotExec = flag.Bool("n", false, "prints commands that would be executed.")
 	flagMoveGo  = flag.Bool("mvgo", false, "move .go files to .gop files (only available in `--smart` mode).")
-	flagSmart   = flag.Bool("smart", false, "convert Go code style into Go+ style.")
+	flagSmart   = flag.Bool("smart", false, "convert Go code style into XGo style.")
 )
 
 func init() {
@@ -223,7 +223,7 @@ func runCmd(cmd *base.Command, args []string) {
 		rootDir = path
 		filepath.WalkDir(path, walker.walk)
 		if procCnt == 0 {
-			fmt.Println("no Go+ files in", path)
+			fmt.Println("no XGo files in", path)
 		}
 	}
 }

@@ -1,13 +1,13 @@
 TPL: Text Processing Language
 =====
 
-Text processing is a common task in programming, and regular expressions have long been the go-to solution. However, regular expressions are notorious for their cryptic syntax and poor readability. Enter Go+ TPL (Text Processing Language), an enhanced alternative that offers both power and intuitive syntax.
+Text processing is a common task in programming, and regular expressions have long been the go-to solution. However, regular expressions are notorious for their cryptic syntax and poor readability. Enter XGo TPL (Text Processing Language), an enhanced alternative that offers both power and intuitive syntax.
 
-Go+ TPL is a grammar-based language similar to EBNF (Extended Backus-Naur Form) that seamlessly integrates with Go+. It provides a more readable and maintainable approach to text processing while offering capabilities beyond what regular expressions can achieve.
+XGo TPL is a grammar-based language similar to EBNF (Extended Backus-Naur Form) that seamlessly integrates with XGo. It provides a more readable and maintainable approach to text processing while offering capabilities beyond what regular expressions can achieve.
 
-## Understanding Go+ TPL
+## Understanding XGo TPL
 
-To understand Go+ TPL, you need to grasp three key concepts:
+To understand XGo TPL, you need to grasp three key concepts:
 
 ### 1. Naming Rules
 
@@ -49,7 +49,7 @@ STRING = QSTRING | RAWSTRING
 
 Since TPL rules automatically filter whitespace and comments, the sequence `R1 R2` doesn't express that R1 and R2 are adjacent. This is where the adjacency operator `++` comes in.
 
-For example, Go+ [domain text literal](../doc/domian-text-lit.md) is defined as `IDENT ++ RAWSTRING`, making these valid:
+For example, XGo [domain text literal](../doc/domian-text-lit.md) is defined as `IDENT ++ RAWSTRING`, making these valid:
 
 ```go
 tpl`expr = INT % ","`
@@ -96,9 +96,9 @@ Each rule has its built-in matching result:
 
 ### 3. Rewriting Matching Results
 
-The default matching result is called "self" in TPL. You can rewrite this result using a Go+ closure `=> { ... }`.
+The default matching result is called "self" in TPL. You can rewrite this result using a XGo closure `=> { ... }`.
 
-This feature is crucial as it allows seamless integration between TPL and Go+. In Go+, you reference TPL through [domain text literal](../doc/domian-text-lit.md), and within TPL, you can call Go+ code through result rewriting.
+This feature is crucial as it allows seamless integration between TPL and XGo. In XGo, you reference TPL through [domain text literal](../doc/domian-text-lit.md), and within TPL, you can call XGo code through result rewriting.
 
 ## Practical Examples
 
@@ -122,7 +122,7 @@ This example parses a comma-separated list of integers and converts it to a flat
 
 ### Building a Calculator
 
-Creating a calculator with Go+ TPL is remarkably concise:
+Creating a calculator with XGo TPL is remarkably concise:
 
 ```go
 import "gop/tpl"
@@ -158,8 +158,8 @@ This calculator handles basic arithmetic operations with proper operator precede
 
 ## Conclusion
 
-Go+ TPL offers a powerful yet intuitive alternative to regular expressions for text processing. By combining grammar-based parsing with seamless Go+ integration, it enables developers to create clear, maintainable text processing solutions.
+XGo TPL offers a powerful yet intuitive alternative to regular expressions for text processing. By combining grammar-based parsing with seamless XGo integration, it enables developers to create clear, maintainable text processing solutions.
 
-For more examples of TPL in action, check out the Go+ demos starting with `tpl-` at [https://github.com/goplus/gop/tree/main/demo](https://github.com/goplus/gop/tree/main/demo). These examples showcase how to implement calculators, parse text to generate ASTs, and even implement entire languages in just a few hundred lines of code.
+For more examples of TPL in action, check out the XGo demos starting with `tpl-` at [https://github.com/goplus/gop/tree/main/demo](https://github.com/goplus/gop/tree/main/demo). These examples showcase how to implement calculators, parse text to generate ASTs, and even implement entire languages in just a few hundred lines of code.
 
-Whether you're parsing structured text, building domain-specific languages, or implementing complex text transformations, Go+ TPL provides a robust and readable approach that surpasses traditional regular expressions.
+Whether you're parsing structured text, building domain-specific languages, or implementing complex text transformations, XGo TPL provides a robust and readable approach that surpasses traditional regular expressions.
