@@ -24,7 +24,7 @@
 
 </div>
 
-XGo is the first AI-native language that integrates software engineering into a unified whole.
+XGo is the first AI-native programming language that integrates software engineering into a unified whole.
 
 ```
 XGo := C * Go * Python * JavaScript + Scratch

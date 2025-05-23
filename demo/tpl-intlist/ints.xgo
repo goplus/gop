@@ -1,4 +1,4 @@
-import "gop/tpl"
+import "xgo/tpl"
 
 cl := tpl`
 expr = INT % "," => {

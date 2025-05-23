@@ -105,7 +105,7 @@ This feature is crucial as it allows seamless integration between TPL and XGo. I
 ### Basic Example: Parsing Integers
 
 ```go
-import "gop/tpl"
+import "xgo/tpl"
 
 cl := tpl`
 expr = INT % "," => {
@@ -125,7 +125,7 @@ This example parses a comma-separated list of integers and converts it to a flat
 Creating a calculator with XGo TPL is remarkably concise:
 
 ```go
-import "gop/tpl"
+import "xgo/tpl"
 
 cl := tpl`
 expr = operand % ("*" | "/") % ("+" | "-") => {
