@@ -710,7 +710,7 @@ func main() {
 		var _gop_err error
 		_gop_ret, _gop_ret2, _gop_err = t()
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "t()", "/foo/bar.gop", 9, "main.main")
+			_gop_err = errors.NewFrame(_gop_err, "t()", "/foo/bar.xgo", 9, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -742,7 +742,7 @@ func main() {
 		var _gop_err error
 		_gop_err = t()
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "t()", "/foo/bar.gop", 9, "main.main")
+			_gop_err = errors.NewFrame(_gop_err, "t()", "/foo/bar.xgo", 9, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -1245,7 +1245,7 @@ func foo(script string) {
 		var _gop_err error
 		_gop_ret, _gop_err = goptest.New(script)
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "goptest.New(script)", "/foo/bar.gop", 4, "main.foo")
+			_gop_err = errors.NewFrame(_gop_err, "goptest.New(script)", "/foo/bar.xgo", 4, "main.foo")
 			panic(_gop_err)
 		}
 		return
@@ -1279,7 +1279,7 @@ func foo(script string) {
 		var _gop_err error
 		_gop_ret, _gop_err = goptest.New(script)
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "goptest.New(script)", "/foo/bar.gop", 4, "main.foo")
+			_gop_err = errors.NewFrame(_gop_err, "goptest.New(script)", "/foo/bar.xgo", 4, "main.foo")
 			panic(_gop_err)
 		}
 		return
@@ -1310,7 +1310,7 @@ func add(x string, y string) (int, error) {
 		var _gop_err error
 		_autoGo_1, _gop_err = strconv.Atoi(x)
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "strconv.Atoi(x)", "/foo/bar.gop", 5, "main.add")
+			_gop_err = errors.NewFrame(_gop_err, "strconv.Atoi(x)", "/foo/bar.xgo", 5, "main.add")
 			return 0, _gop_err
 		}
 		goto _autoGo_2
@@ -1321,7 +1321,7 @@ func add(x string, y string) (int, error) {
 		var _gop_err error
 		_autoGo_3, _gop_err = strconv.Atoi(y)
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "strconv.Atoi(y)", "/foo/bar.gop", 5, "main.add")
+			_gop_err = errors.NewFrame(_gop_err, "strconv.Atoi(y)", "/foo/bar.xgo", 5, "main.add")
 			return 0, _gop_err
 		}
 		goto _autoGo_4
@@ -1377,7 +1377,7 @@ var ret int = func() (_gop_ret int) {
 	var _gop_err error
 	_gop_ret, _gop_err = fmt.Println("Hi")
 	if _gop_err != nil {
-		_gop_err = errors.NewFrame(_gop_err, "println(\"Hi\")", "/foo/bar.gop", 2, "main.main")
+		_gop_err = errors.NewFrame(_gop_err, "println(\"Hi\")", "/foo/bar.xgo", 2, "main.main")
 		panic(_gop_err)
 	}
 	return
@@ -1404,7 +1404,7 @@ func main() {
 		var _gop_err error
 		_gop_err = mkdir("foo")
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "mkdir \"foo\"", "/foo/bar.gop", 6, "main.main")
+			_gop_err = errors.NewFrame(_gop_err, "mkdir \"foo\"", "/foo/bar.xgo", 6, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -1432,7 +1432,7 @@ func main() {
 		var _gop_err error
 		_gop_ret, _gop_err = foo()
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "foo()", "/foo/bar.gop", 6, "main.main")
+			_gop_err = errors.NewFrame(_gop_err, "foo()", "/foo/bar.xgo", 6, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -3846,24 +3846,24 @@ type Point struct {
 	x int
 	y int
 }
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 func (pt *Point) Test() {
-//line /foo/bar.gop:8:1
+//line /foo/bar.xgo:8:1
 	fmt.Println(pt.x, pt.y)
 }
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 // testPoint is test point
 func testPoint() {
-//line /foo/bar.gop:13:1
+//line /foo/bar.xgo:13:1
 	var pt Point
-//line /foo/bar.gop:14:1
+//line /foo/bar.xgo:14:1
 	pt.Test()
 }
-//line /foo/bar.gop:17
+//line /foo/bar.xgo:17
 func main() {
-//line /foo/bar.gop:17:1
+//line /foo/bar.xgo:17:1
 	fmt.Println("hello")
-//line /foo/bar.gop:18:1
+//line /foo/bar.xgo:18:1
 	testPoint()
 }
 `)
@@ -3900,24 +3900,24 @@ type Point struct {
 	x int
 	y int
 }
-//line ../bar.gop:7:1
+//line ../bar.xgo:7:1
 func (pt *Point) Test() {
-//line ../bar.gop:8:1
+//line ../bar.xgo:8:1
 	fmt.Println(pt.x, pt.y)
 }
-//line ../bar.gop:11:1
+//line ../bar.xgo:11:1
 // testPoint is test point
 func testPoint() {
-//line ../bar.gop:13:1
+//line ../bar.xgo:13:1
 	var pt Point
-//line ../bar.gop:14:1
+//line ../bar.xgo:14:1
 	pt.Test()
 }
-//line ../bar.gop:17
+//line ../bar.xgo:17
 func main() {
-//line ../bar.gop:17:1
+//line ../bar.xgo:17:1
 	fmt.Println("hello")
-//line ../bar.gop:18:1
+//line ../bar.xgo:18:1
 	testPoint()
 }
 `
@@ -3997,18 +3997,18 @@ println c
 import "fmt"
 // doc a line2
 var a int
-//line /foo/bar.gop:4
+//line /foo/bar.xgo:4
 func main() {
-//line /foo/bar.gop:4:1
+//line /foo/bar.xgo:4:1
 	fmt.Println(a)
-//line /foo/bar.gop:6:1
+//line /foo/bar.xgo:6:1
 	// doc b line6
 	var b int
-//line /foo/bar.gop:8:1
+//line /foo/bar.xgo:8:1
 	fmt.Println(b)
-//line /foo/bar.gop:10:1
+//line /foo/bar.xgo:10:1
 	var c int
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 	fmt.Println(c)
 }
 `)
@@ -4029,21 +4029,21 @@ func demo() {
 `, `package main
 
 import "fmt"
-//line /foo/bar.gop:2:1
+//line /foo/bar.xgo:2:1
 func demo() {
-//line /foo/bar.gop:3:1
+//line /foo/bar.xgo:3:1
 	// doc a line3
 	var a int
-//line /foo/bar.gop:5:1
+//line /foo/bar.xgo:5:1
 	fmt.Println(a)
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 	// doc b line7
 	var b int
-//line /foo/bar.gop:9:1
+//line /foo/bar.xgo:9:1
 	fmt.Println(b)
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 	var c int
-//line /foo/bar.gop:12:1
+//line /foo/bar.xgo:12:1
 	fmt.Println(c)
 }
 `)
@@ -4307,7 +4307,7 @@ func main() {
 		var _gop_err error
 		_gop_ret, _gop_err = foo()
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "foo", "/foo/bar.gop", 8, "main.main")
+			_gop_err = errors.NewFrame(_gop_err, "foo", "/foo/bar.xgo", 8, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -4316,7 +4316,7 @@ func main() {
 		var _gop_err error
 		_gop_ret, _gop_err = foo(1)
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "foo(1)", "/foo/bar.gop", 9, "main.main")
+			_gop_err = errors.NewFrame(_gop_err, "foo(1)", "/foo/bar.xgo", 9, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -4325,7 +4325,7 @@ func main() {
 		var _gop_err error
 		_gop_ret, _gop_err = foo()
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "foo", "/foo/bar.gop", 10, "main.main")
+			_gop_err = errors.NewFrame(_gop_err, "foo", "/foo/bar.xgo", 10, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -4334,7 +4334,7 @@ func main() {
 		var _gop_err error
 		_gop_ret, _gop_err = Bar()
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "bar", "/foo/bar.gop", 11, "main.main")
+			_gop_err = errors.NewFrame(_gop_err, "bar", "/foo/bar.xgo", 11, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -4370,103 +4370,103 @@ import (
 	"github.com/qiniu/x/errors"
 	"strconv"
 )
-//line /foo/bar.gop:6:1
+//line /foo/bar.xgo:6:1
 func add(x string, y string) (int, error) {
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 	var _autoGo_1 int
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 	{
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 		var _gop_err error
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 		_autoGo_1, _gop_err = strconv.Atoi(x)
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 		if _gop_err != nil {
-//line /foo/bar.gop:7:1
-			_gop_err = errors.NewFrame(_gop_err, "strconv.atoi(x)", "/foo/bar.gop", 7, "main.add")
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
+			_gop_err = errors.NewFrame(_gop_err, "strconv.atoi(x)", "/foo/bar.xgo", 7, "main.add")
+//line /foo/bar.xgo:7:1
 			return 0, _gop_err
 		}
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 		goto _autoGo_2
 	_autoGo_2:
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 	}
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 	var _autoGo_3 int
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 	{
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 		var _gop_err error
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 		_autoGo_3, _gop_err = strconv.Atoi(y)
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 		if _gop_err != nil {
-//line /foo/bar.gop:7:1
-			_gop_err = errors.NewFrame(_gop_err, "strconv.atoi(y)", "/foo/bar.gop", 7, "main.add")
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
+			_gop_err = errors.NewFrame(_gop_err, "strconv.atoi(y)", "/foo/bar.xgo", 7, "main.add")
+//line /foo/bar.xgo:7:1
 			return 0, _gop_err
 		}
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 		goto _autoGo_4
 	_autoGo_4:
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 	}
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 	return _autoGo_1 + _autoGo_3, nil
 }
-//line /foo/bar.gop:10:1
+//line /foo/bar.xgo:10:1
 func addSafe(x string, y string) int {
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 	return func() (_gop_ret int) {
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 		var _gop_err error
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 		_gop_ret, _gop_err = strconv.Atoi(x)
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 		if _gop_err != nil {
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 			return 0
 		}
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 		return
 	}() + func() (_gop_ret int) {
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 		var _gop_err error
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 		_gop_ret, _gop_err = strconv.Atoi(y)
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 		if _gop_err != nil {
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 			return 0
 		}
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 		return
 	}()
 }
-//line /foo/bar.gop:14
+//line /foo/bar.xgo:14
 func main() {
-//line /foo/bar.gop:14:1
+//line /foo/bar.xgo:14:1
 	fmt.Println(func() (_gop_ret int) {
-//line /foo/bar.gop:14:1
+//line /foo/bar.xgo:14:1
 		var _gop_err error
-//line /foo/bar.gop:14:1
+//line /foo/bar.xgo:14:1
 		_gop_ret, _gop_err = add("100", "23")
-//line /foo/bar.gop:14:1
+//line /foo/bar.xgo:14:1
 		if _gop_err != nil {
-//line /foo/bar.gop:14:1
-			_gop_err = errors.NewFrame(_gop_err, "add(\"100\", \"23\")", "/foo/bar.gop", 14, "main.main")
-//line /foo/bar.gop:14:1
+//line /foo/bar.xgo:14:1
+			_gop_err = errors.NewFrame(_gop_err, "add(\"100\", \"23\")", "/foo/bar.xgo", 14, "main.main")
+//line /foo/bar.xgo:14:1
 			panic(_gop_err)
 		}
-//line /foo/bar.gop:14:1
+//line /foo/bar.xgo:14:1
 		return
 	}())
-//line /foo/bar.gop:16:1
+//line /foo/bar.xgo:16:1
 	sum, err := add("10", "abc")
-//line /foo/bar.gop:17:1
+//line /foo/bar.xgo:17:1
 	fmt.Println(sum, err)
-//line /foo/bar.gop:19:1
+//line /foo/bar.xgo:19:1
 	fmt.Println(addSafe("10", "abc"))
 }
 `)

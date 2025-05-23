@@ -1,6 +1,6 @@
 package main
 
-file static_method.gop
+file static_method.xgo
 ast.FuncDecl:
   Recv:
     ast.FieldList:

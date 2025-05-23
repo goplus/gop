@@ -135,8 +135,8 @@ func genGoEntry(list *errors.List, path string, d fs.DirEntry, conf *Config, fla
 		if d.IsDir() {
 			return filepath.SkipDir
 		}
-	} else if !d.IsDir() && strings.HasSuffix(fname, ".gop") {
-		if e := genGoSingleFile(path, conf, flags); e != nil && notIgnNotated(e, conf) {
+	} else if !d.IsDir() && (strings.HasSuffix(fname, ".xgo") || strings.HasSuffix(fname, ".gop")) {
+		if e := genGoSingleFile(path, 4, conf, flags); e != nil && notIgnNotated(e, conf) {
 			if flags&GenFlagPrintError != 0 {
 				fmt.Fprintln(os.Stderr, e)
 			}
@@ -146,9 +146,9 @@ func genGoEntry(list *errors.List, path string, d fs.DirEntry, conf *Config, fla
 	return nil
 }
 
-func genGoSingleFile(file string, conf *Config, flags GenFlags) (err error) {
+func genGoSingleFile(file string, extn int, conf *Config, flags GenFlags) (err error) {
 	dir, fname := filepath.Split(file)
-	autogen := dir + strings.TrimSuffix(fname, ".gop") + "_autogen.go"
+	autogen := dir + fname[:len(fname)-extn] + "_autogen.go"
 	if (flags & GenFlagPrompt) != 0 {
 		fmt.Fprintln(os.Stderr, "GenGo", file, "...")
 	}
@@ -271,17 +271,17 @@ func remotePkgPathDo(pkgPath string, doSth func(pkgDir, modDir string), onErr fu
 
 // -----------------------------------------------------------------------------
 
-// GenGoFiles generates gop_autogen.go for specified XGo files.
+// GenGoFiles generates xgo_autogen.go for specified XGo files.
 func GenGoFiles(autogen string, files []string, conf *Config) (outFiles []string, err error) {
 	if conf == nil {
 		conf = new(Config)
 	}
 	if autogen == "" {
-		autogen = "gop_autogen.go"
+		autogen = "xgo_autogen.go"
 		if len(files) == 1 {
 			file := files[0]
 			srcDir, fname := filepath.Split(file)
-			if hasMultiFiles(srcDir, ".gop") {
+			if hasMultiXgoFiles(srcDir) {
 				autogen = filepath.Join(srcDir, "gop_autogen_"+fname+".go")
 			}
 		}
@@ -299,13 +299,14 @@ func GenGoFiles(autogen string, files []string, conf *Config) (outFiles []string
 	return
 }
 
-func hasMultiFiles(srcDir string, ext string) bool {
+func hasMultiXgoFiles(srcDir string) bool {
 	var has bool
 	if f, err := os.Open(srcDir); err == nil {
 		defer f.Close()
 		fis, _ := f.ReadDir(-1)
 		for _, fi := range fis {
-			if !fi.IsDir() && filepath.Ext(fi.Name()) == ext {
+			ext := filepath.Ext(fi.Name())
+			if !fi.IsDir() && (ext == ".xgo" || ext == ".gop") {
 				if has {
 					return true
 				}

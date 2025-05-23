@@ -1,6 +1,6 @@
 package main
 
-file typeof.gop
+file typeof.xgo
 noEntrypoint
 ast.FuncDecl:
   Name:

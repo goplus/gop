@@ -231,7 +231,7 @@ func GetFileClassType(file *ast.File, filename string, lookupClass func(ext stri
 		} else if isTest {
 			classType = casePrefix + testNameSuffix(classType)
 		}
-	} else if strings.HasSuffix(filename, "_test.gop") {
+	} else if strings.HasSuffix(filename, "_test.xgo") || strings.HasSuffix(filename, "_test.gop") {
 		isTest = true
 	}
 	return

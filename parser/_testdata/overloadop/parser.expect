@@ -1,6 +1,6 @@
 package main
 
-file op_overload.gop
+file op_overload.xgo
 ast.GenDecl:
   Tok: type
   Specs:

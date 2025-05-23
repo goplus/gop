@@ -1,3 +1,5 @@
 .gop/
+.xgo/
 go.mod
 gop_autogen*.go
+xgo_autogen*.go

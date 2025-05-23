@@ -28,7 +28,7 @@ import (
 )
 
 func Error(t *testing.T, msg, src string) {
-	ErrorEx(t, "main", "bar.gop", msg, src)
+	ErrorEx(t, "main", "bar.xgo", msg, src)
 }
 
 func ErrorEx(t *testing.T, pkgname, filename, msg, src string) {

@@ -1,6 +1,6 @@
 package main
 
-file arrowop.gop
+file arrowop.xgo
 noEntrypoint
 ast.FuncDecl:
   Name:

@@ -1,6 +1,6 @@
 package main
 
-file cmd.gop
+file cmd.xgo
 noEntrypoint
 ast.GenDecl:
   Tok: var

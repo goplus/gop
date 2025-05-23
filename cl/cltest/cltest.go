@@ -132,14 +132,14 @@ func DoWithFname(t *testing.T, gopcode, expected string, fname string) {
 }
 
 func DoExt(t *testing.T, conf *cl.Config, pkgname, gopcode, expected string) {
-	fs := memfs.SingleFile("/foo", "bar.gop", gopcode)
+	fs := memfs.SingleFile("/foo", "bar.xgo", gopcode)
 	DoFS(t, conf, fs, "/foo", nil, pkgname, expected)
 }
 
 func Mixed(t *testing.T, pkgname, gocode, gopcode, expected string, outline ...bool) {
 	conf := *Conf
 	conf.Outline = (outline != nil && outline[0])
-	fs := memfs.TwoFiles("/foo", "a.go", gocode, "b.gop", gopcode)
+	fs := memfs.TwoFiles("/foo", "a.go", gocode, "b.xgo", gopcode)
 	DoFS(t, &conf, fs, "/foo", nil, pkgname, expected)
 }
 
@@ -211,7 +211,7 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 	out := pkgDir + "/out.go"
 	b, _ := os.ReadFile(out)
 	filter := func(fi fs.FileInfo) bool {
-		return fi.Name() == "in.gop"
+		return fi.Name() == "in.xgo"
 	}
 	conf := Conf
 	goMod := pkgDir + "/go.mod"

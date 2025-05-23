@@ -1,6 +1,6 @@
 package main
 
-file exists.gop
+file exists.xgo
 noEntrypoint
 ast.FuncDecl:
   Name:

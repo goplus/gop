@@ -46,7 +46,7 @@ func cleanAGFiles(dir string, execAct bool) {
 		}
 		if fi.IsDir() {
 			pkgDir := filepath.Join(dir, fname)
-			if fname == ".gop" {
+			if fname == ".xgo" || fname == ".gop" {
 				removeGopDir(pkgDir, execAct)
 			} else {
 				cleanAGFiles(pkgDir, execAct)
@@ -80,7 +80,7 @@ func removeGopDir(dir string, execAct bool) {
 	}
 	for _, fi := range fis {
 		fname := fi.Name()
-		if strings.HasSuffix(fname, ".gop.go") {
+		if strings.HasSuffix(fname, ".xgo.go") || strings.HasSuffix(fname, ".gop.go") {
 			genfile := filepath.Join(dir, fname)
 			fmt.Printf("Cleaning %s ...\n", genfile)
 			if execAct {

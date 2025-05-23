@@ -3,7 +3,7 @@ Overload Func/Method/Operator/Types
 
 ### Overload Funcs
 
-Define `overload func` in `inline func literal` style (see [overloadfunc1/add.gop](demo/overloadfunc1/add.gop)):
+Define `overload func` in `inline func literal` style (see [overloadfunc1/add.xgo](demo/overloadfunc1/add.xgo)):
 
 ```go
 func add = (
@@ -19,7 +19,7 @@ println add(100, 7)
 println add("Hello", "World")
 ```
 
-Define `overload func` in `ident` style (see [overloadfunc2/mul.gop](demo/overloadfunc2/mul.gop)):
+Define `overload func` in `ident` style (see [overloadfunc2/mul.xgo](demo/overloadfunc2/mul.xgo)):
 
 ```go
 func mulInt(a, b int) int {
@@ -41,7 +41,7 @@ println mul(1.2, 3.14)
 
 ### Overload Methods
 
-Define `overload method` (see [overloadmethod/method.gop](demo/overloadmethod/method.gop)):
+Define `overload method` (see [overloadmethod/method.xgo](demo/overloadmethod/method.xgo)):
 
 ```go
 type foo struct {
@@ -69,7 +69,7 @@ var d = a.mul(c)
 
 ### Overload Unary Operators
 
-Define `overload unary operator` (see [overloadop1/overloadop.gop](demo/overloadop1/overloadop.gop)):
+Define `overload unary operator` (see [overloadop1/overloadop.xgo](demo/overloadop1/overloadop.xgo)):
 
 ```go
 type foo struct {
@@ -91,7 +91,7 @@ a++
 
 ### Overload Binary Operators
 
-Define `overload binary operator` (see [overloadop1/overloadop.gop](demo/overloadop1/overloadop.gop)):
+Define `overload binary operator` (see [overloadop1/overloadop.xgo](demo/overloadop1/overloadop.xgo)):
 
 ```go
 type foo struct {
@@ -112,7 +112,7 @@ var c = a * b
 var d = a != b
 ```
 
-However, `binary operator` usually need to support interoperability between multiple types. In this case it becomes more complex (see [overloadop2/overloadop.gop](demo/overloadop2/overloadop.gop)):
+However, `binary operator` usually need to support interoperability between multiple types. In this case it becomes more complex (see [overloadop2/overloadop.xgo](demo/overloadop2/overloadop.xgo)):
 
 ```go
 type foo struct {

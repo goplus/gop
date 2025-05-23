@@ -432,7 +432,7 @@ func clean() {
 
 func cleanGopRunCache() {
 	homeDir, _ := os.UserHomeDir()
-	runCacheDir := filepath.Join(homeDir, ".gop", "run")
+	runCacheDir := filepath.Join(homeDir, ".xgo", "run")
 	files := []string{"go.mod", "go.sum"}
 	for _, file := range files {
 		fullPath := filepath.Join(runCacheDir, file)

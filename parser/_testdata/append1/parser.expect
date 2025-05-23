@@ -1,6 +1,6 @@
 package main
 
-file append.gop
+file append.xgo
 noEntrypoint
 ast.FuncDecl:
   Name:

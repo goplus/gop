@@ -47,7 +47,7 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 	}
 	t.Helper()
 	log.Println("Scanning", pkgDir)
-	in, err := os.ReadFile(pkgDir + "/in.gop")
+	in, err := os.ReadFile(pkgDir + "/in.xgo")
 	if err != nil {
 		t.Fatal("Scanning", pkgDir, "-", err)
 	}

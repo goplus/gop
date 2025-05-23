@@ -1,6 +1,6 @@
 package main
 
-file overload.gop
+file overload.xgo
 ast.OverloadFuncDecl:
   Name:
     ast.Ident:

@@ -1,6 +1,6 @@
 package main
 
-file step.gop
+file step.xgo
 noEntrypoint
 ast.FuncDecl:
   Name:

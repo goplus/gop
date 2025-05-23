@@ -81,7 +81,7 @@ func Area() int {
 }
 ```
 
-Then we create `hello.gop` file in the same directory:
+Then we create `hello.xgo` file in the same directory:
 
 ```go
 rect := &Rect{10, 20}

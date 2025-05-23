@@ -1,6 +1,6 @@
 package main
 
-file lambda4.gop
+file lambda4.xgo
 noEntrypoint
 ast.GenDecl:
   Tok: type

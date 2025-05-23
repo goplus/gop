@@ -63,11 +63,11 @@ func TestParseAll_wildcard2(t *testing.T) {
 }
 
 func TestParseAll_multiFiles(t *testing.T) {
-	projs, err := ParseAll("a.gop", "b.go")
+	projs, err := ParseAll("a.xgo", "b.go")
 	if err != nil || len(projs) != 1 {
 		t.Fatal("ParseAll failed:", projs, err)
 	}
-	if proj, ok := projs[0].(*FilesProj); !ok || len(proj.Files) != 2 || proj.Files[0] != "a.gop" {
+	if proj, ok := projs[0].(*FilesProj); !ok || len(proj.Files) != 2 || proj.Files[0] != "a.xgo" {
 		t.Fatal("ParseAll failed:", proj)
 	}
 	projs[0].projObj()

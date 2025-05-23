@@ -48,7 +48,7 @@ func init() {
 }
 
 func gopClTest(t *testing.T, gopcode any, expected string) {
-	gopClTestEx(t, "main.gop", gopcode, expected)
+	gopClTestEx(t, "main.xgo", gopcode, expected)
 }
 
 func gopClTestEx(t *testing.T, filename string, gopcode any, expected string) {
@@ -95,9 +95,9 @@ func main() {
 	gopClTest(t, src, expect)
 	gopClTest(t, []byte(src), expect)
 	gopClTest(t, bytes.NewBufferString(src), expect)
-	gopClTestEx(t, `./_testdata/hello/main.gop`, nil, expect)
+	gopClTestEx(t, `./_testdata/hello/main.xgo`, nil, expect)
 
-	f, err := os.Open("./_testdata/hello/main.gop")
+	f, err := os.Open("./_testdata/hello/main.xgo")
 	if err != nil {
 		t.Fatal("open failed", err)
 	}
@@ -317,7 +317,7 @@ func add(x string, y string) (int, error) {
 		var _gop_err error
 		_autoGo_1, _gop_err = strconv.Atoi(x)
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "strconv.Atoi(x)", "main.gop", 7, "main.add")
+			_gop_err = errors.NewFrame(_gop_err, "strconv.Atoi(x)", "main.xgo", 7, "main.add")
 			return 0, _gop_err
 		}
 		goto _autoGo_2
@@ -328,7 +328,7 @@ func add(x string, y string) (int, error) {
 		var _gop_err error
 		_autoGo_3, _gop_err = strconv.Atoi(y)
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "strconv.Atoi(y)", "main.gop", 7, "main.add")
+			_gop_err = errors.NewFrame(_gop_err, "strconv.Atoi(y)", "main.xgo", 7, "main.add")
 			return 0, _gop_err
 		}
 		goto _autoGo_4
@@ -358,7 +358,7 @@ func main() {
 		var _gop_err error
 		_gop_ret, _gop_err = add("100", "23")
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "add(\"100\", \"23\")", "main.gop", 14, "main.main")
+			_gop_err = errors.NewFrame(_gop_err, "add(\"100\", \"23\")", "main.xgo", 14, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -498,7 +498,7 @@ func main() {
 }
 
 func TestError(t *testing.T) {
-	_, err := ctx.BuildFile("main.gop", "bad code")
+	_, err := ctx.BuildFile("main.xgo", "bad code")
 	if err == nil {
 		t.Fatal("BuildFile: no error?")
 	}
@@ -510,15 +510,15 @@ func TestError(t *testing.T) {
 	if err == nil {
 		t.Fatal("BuildDir: no error?")
 	}
-	_, err = ctx.BuildFile("main.gop", "func main()")
+	_, err = ctx.BuildFile("main.xgo", "func main()")
 	if err == nil {
 		t.Fatal("BuildFile: no error?")
 	}
-	_, err = ctx.ParseFile("main.gop", 123)
+	_, err = ctx.ParseFile("main.xgo", 123)
 	if err == nil {
 		t.Fatal("ParseFile: no error?")
 	}
-	_, err = ctx.ParseFile("./demo/nofound/main.gop", nil)
+	_, err = ctx.ParseFile("./demo/nofound/main.xgo", nil)
 	if err == nil {
 		t.Fatal("ParseFile: no error?")
 	}
@@ -533,7 +533,7 @@ func (i *emptyImporter) Import(path string) (*types.Package, error) {
 
 func TestContext(t *testing.T) {
 	ctx := build.NewContext(&emptyImporter{}, nil)
-	_, err := ctx.BuildFile("main.gop", `import "fmt"; fmt.Println "XGo"`)
+	_, err := ctx.BuildFile("main.xgo", `import "fmt"; fmt.Println "XGo"`)
 	if err == nil {
 		t.Fatal("BuildFile: no error?")
 	}

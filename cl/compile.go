@@ -723,10 +723,11 @@ func loadFile(ctx *pkgCtx, f *ast.File) {
 
 // gen testingGoFile for:
 //
+//	*_test.xgo
 //	*_test.gop
 //	*test.gox
 func genGoFile(file string, goxTestFile bool) string {
-	if goxTestFile || strings.HasSuffix(file, "_test.gop") {
+	if goxTestFile || strings.HasSuffix(file, "_test.xgo") || strings.HasSuffix(file, "_test.gop") {
 		return testingGoFile
 	}
 	return defaultGoFile

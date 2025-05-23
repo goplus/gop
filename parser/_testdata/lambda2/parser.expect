@@ -1,6 +1,6 @@
 package main
 
-file lambda2.gop
+file lambda2.xgo
 ast.FuncDecl:
   Name:
     ast.Ident:

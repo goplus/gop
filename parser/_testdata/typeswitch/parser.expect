@@ -1,6 +1,6 @@
 package main
 
-file typeswitch.gop
+file typeswitch.xgo
 ast.FuncDecl:
   Name:
     ast.Ident:

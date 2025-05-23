@@ -134,4 +134,4 @@ newBuiltinDefault fns.funcDecl("newBuiltinDefault").one, tistr
 
 b := gen()
 os.Stdout.write b
-os.writeFile "${root}/builtin/doc/builtin.gop", b, 0777
+os.writeFile "${root}/builtin/doc.xgo", b, 0777

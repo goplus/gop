@@ -1,6 +1,6 @@
 package main
 
-file huh.gop
+file huh.xgo
 noEntrypoint
 ast.FuncDecl:
   Name:
