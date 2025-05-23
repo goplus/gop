@@ -47,7 +47,7 @@ var (
 	flag        = &Cmd.Flag
 	flagTest    = flag.Bool("t", false, "test if XGo files are formatted or not.")
 	flagNotExec = flag.Bool("n", false, "prints commands that would be executed.")
-	flagMoveGo  = flag.Bool("mvgo", false, "move .go files to .gop files (only available in `--smart` mode).")
+	flagMoveGo  = flag.Bool("mvgo", false, "move .go files to .xgo files (only available in `--smart` mode).")
 	flagSmart   = flag.Bool("smart", false, "convert Go code style into XGo style.")
 )
 
@@ -99,7 +99,7 @@ func gopfmt(path string, class, smart, mvgo bool) (err error) {
 		return nil
 	}
 	if mvgo {
-		newPath := strings.TrimSuffix(path, ".go") + ".gop"
+		newPath := strings.TrimSuffix(path, ".go") + ".xgo"
 		if err = os.WriteFile(newPath, target, 0666); err != nil {
 			return
 		}
@@ -149,7 +149,7 @@ func (w *walker) walk(path string, d fs.DirEntry, err error) error {
 			if mod, err := tool.LoadMod(path); err == nil {
 				fn = func(ext string) (ok bool, class bool) {
 					switch ext {
-					case ".go", ".gop":
+					case ".go", ".xgo", ".gop":
 						ok = true
 					case ".gox", ".spx", ".gmx":
 						ok, class = true, true
@@ -162,7 +162,7 @@ func (w *walker) walk(path string, d fs.DirEntry, err error) error {
 			} else {
 				fn = func(ext string) (ok bool, class bool) {
 					switch ext {
-					case ".go", ".gop":
+					case ".go", ".xgo", ".gop":
 						ok = true
 					case ".gox", ".spx", ".gmx":
 						ok, class = true, true
@@ -178,7 +178,7 @@ func (w *walker) walk(path string, d fs.DirEntry, err error) error {
 		if ok, class := fn(ext); ok && (!mvgo || ext == ".go") {
 			procCnt++
 			if *flagNotExec {
-				fmt.Println("gop fmt", path)
+				fmt.Println("xgo fmt", path)
 			} else {
 				err = gopfmt(path, class, smart && (mvgo || ext != ".go"), mvgo)
 				if err != nil {

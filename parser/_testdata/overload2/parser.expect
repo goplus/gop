@@ -1,6 +1,6 @@
 package main
 
-file overload2.gop
+file overload2.xgo
 ast.OverloadFuncDecl:
   Recv:
     ast.FieldList:

@@ -13,7 +13,7 @@ func p(a interface{}) {
 }
 ```
 
-And we have a XGo source file named `b.gop`:
+And we have a XGo source file named `b.xgo`:
 
 ```go
 func sayMix() {

@@ -162,7 +162,7 @@ func parseGoSource(fset *token.FileSet, filename string, src any, mode goparser.
 }
 
 func testGopInfo(t *testing.T, src string, gosrc string, expect string) {
-	testGopInfoEx(t, gopmod.Default, "main.gop", src, "main.go", gosrc, expect, parser.Config{})
+	testGopInfoEx(t, gopmod.Default, "main.xgo", src, "main.go", gosrc, expect, parser.Config{})
 }
 
 func testSpxInfo(t *testing.T, name string, src string, expect string) {
@@ -195,7 +195,7 @@ func testGopInfoEx(t *testing.T, mod *gopmod.Module, name string, src string, go
 
 func testInfo(t *testing.T, src any) {
 	fset := token.NewFileSet()
-	_, info, err := parseSource(fset, "main.gop", src, parser.ParseComments)
+	_, info, err := parseSource(fset, "main.xgo", src, parser.ParseComments)
 	if err != nil {
 		t.Fatal("parserSource error", err)
 	}
@@ -1961,7 +1961,7 @@ func TestScopesInfo(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		pkg, info, err := parseSource(token.NewFileSet(), "src.gop", test.src, 0)
+		pkg, info, err := parseSource(token.NewFileSet(), "src.xgo", test.src, 0)
 		if err != nil {
 			t.Fatalf("parse source failed: %v", test.src)
 		}
@@ -2125,7 +2125,7 @@ func _() {
 
 func TestMixedPackage(t *testing.T) {
 	fset := token.NewFileSet()
-	pkg, _, _, err := parseMixedSource(gopmod.Default, fset, "main.gop", `
+	pkg, _, _, err := parseMixedSource(gopmod.Default, fset, "main.xgo", `
 Test
 Test 100
 var n N

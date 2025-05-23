@@ -1075,7 +1075,7 @@ func main() {
 		var _gop_err error
 		_gop_ret, _gop_err = os.Open("foo.txt")
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "open(\"foo.txt\")", "/foo/bar.gop", 2, "main.main")
+			_gop_err = errors.NewFrame(_gop_err, "open(\"foo.txt\")", "/foo/bar.xgo", 2, "main.main")
 			panic(_gop_err)
 		}
 		return

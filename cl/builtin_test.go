@@ -295,7 +295,9 @@ func TestFileClassType(t *testing.T) {
 	}
 	tests := []*testData{
 		{false, false, false, "abc.gop", "", false, false},
+		{false, false, false, "abc.xgo", "", false, false},
 		{false, false, false, "abc_test.gop", "", true, false},
+		{false, false, false, "abc_test.xgo", "", true, false},
 
 		{true, true, false, "abc.gox", "abc", false, true},
 		{true, true, false, "Abc.gox", "Abc", false, true},
@@ -582,10 +584,16 @@ func TestGetGoFile(t *testing.T) {
 	if f := genGoFile("a_test.gop", false); f != testingGoFile {
 		t.Fatal("TestGetGoFile:", f)
 	}
+	if f := genGoFile("a_test.xgo", false); f != testingGoFile {
+		t.Fatal("TestGetGoFile:", f)
+	}
 	if f := genGoFile("a_test.gox", true); f != testingGoFile {
 		t.Fatal("TestGetGoFile:", f)
 	}
 	if f := genGoFile("a.gop", false); f != defaultGoFile {
+		t.Fatal("TestGetGoFile:", f)
+	}
+	if f := genGoFile("a.xgo", false); f != defaultGoFile {
 		t.Fatal("TestGetGoFile:", f)
 	}
 }

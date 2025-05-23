@@ -93,7 +93,7 @@ var (
 
 func gopTestRunGo(dir string) {
 	home, _ := os.UserHomeDir()
-	targetDir := home + "/.gop/run/"
+	targetDir := home + "/.xgo/run/"
 	os.MkdirAll(targetDir, 0777)
 	filepath.Walk(dir, func(file string, fi os.FileInfo, err error) error {
 		name := fi.Name()

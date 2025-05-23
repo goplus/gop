@@ -131,11 +131,11 @@ Different from the function call style of most languages, XGo recommends command
 println "Hello world"
 ```
 
-Save this snippet into a file named `hello.gop`. Now do: `xgo run hello.gop`.
+Save this snippet into a file named `hello.xgo`. Now do: `xgo run hello.xgo`.
 
 Congratulations - you just wrote and executed your first XGo program!
 
-You can compile a program without execution with `xgo build hello.gop`.
+You can compile a program without execution with `xgo build hello.xgo`.
 See `xgo help` for all supported commands.
 
 [`println`](#println) is one of the few [built-in functions](#builtin-functions).
@@ -154,7 +154,7 @@ See https://tutorial.xgo.dev/hello-world for more details.
 
 ## Running a project folder with several files
 
-Suppose you have a folder with several .gop files in it, and you want 
+Suppose you have a folder with several .xgo files in it, and you want 
 to compile them all into one program. Just do: `xgo run .`.
 
 Passing parameters also works, so you can do:
@@ -766,7 +766,7 @@ add("10", "abc"): 0 strconv.Atoi: parsing "abc": invalid syntax
 
 ===> errors stack:
 main.add("10", "abc")
-    /Users/xsw/tutorial/15-ErrWrap/err_wrap.gop:6 strconv.Atoi(y)?
+    /Users/xsw/tutorial/15-ErrWrap/err_wrap.xgo:6 strconv.Atoi(y)?
 
 addSafe("10", "abc"): 10
 ```
@@ -1073,7 +1073,7 @@ func p(a interface{}) {
 }
 ```
 
-And we have a XGo source file named `b.gop`:
+And we have a XGo source file named `b.xgo`:
 
 ```go
 func sayMix() {
@@ -1103,7 +1103,7 @@ The `xgo` command can run in watch mode so that everytime a XGo file is changed 
 xgo watch [-gentest] [dir]
 ```
 
-By default `xgo watch` does not convert test files (normally ending with `_test.gop`). You can specify `-gentest` flag to force converting all XGo files.
+By default `xgo watch` does not convert test files (normally ending with `_test.xgo`). You can specify `-gentest` flag to force converting all XGo files.
 
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 

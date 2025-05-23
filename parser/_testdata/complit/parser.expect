@@ -1,6 +1,6 @@
 package main
 
-file complit.gop
+file complit.xgo
 noEntrypoint
 ast.FuncDecl:
   Name:

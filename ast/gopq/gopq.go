@@ -85,14 +85,12 @@ func FromFSFile(
 	return NodeSet{Data: &oneNode{astFile{file}}}, nil
 }
 
-// FromDir calls ParseFile for all files with names ending in ".gop" in the
-// directory specified by path and returns a map of package name -> package
-// AST with all the packages found.
+// FromDir calls ParseFile for all XGo files in the directory specified by path
+// and returns a map of package name -> package AST with all the packages found.
 //
-// If filter != nil, only the files with fs.FileInfo entries passing through
-// the filter (and ending in ".gop") are considered. The mode bits are passed
-// to ParseFile unchanged. Position information is recorded in fset, which
-// must not be nil.
+// If filter != nil, only the XGo files with fs.FileInfo entries passing through
+// the filter are considered. The mode bits are passed to ParseFile unchanged.
+// Position information is recorded in fset, which must not be nil.
 //
 // If the directory couldn't be read, a nil map and the respective error are
 // returned. If a parse error occurred, a non-nil but incomplete map and the
@@ -108,14 +106,12 @@ func FromDir(
 	return NodeSet{Data: &oneNode{astPackages(pkgs)}}, nil
 }
 
-// FromFSDir calls ParseFile for all files with names ending in ".gop" in the
-// directory specified by path and returns a map of package name -> package
-// AST with all the packages found.
+// FromFSDir calls ParseFile for all XGo files in the directory specified by path
+// and returns a map of package name -> package AST with all the packages found.
 //
-// If filter != nil, only the files with fs.FileInfo entries passing through
-// the filter (and ending in ".gop") are considered. The mode bits are passed
-// to ParseFile unchanged. Position information is recorded in fset, which
-// must not be nil.
+// If filter != nil, only the XGo files with fs.FileInfo entries passing through
+// the filter are considered. The mode bits are passed to ParseFile unchanged.
+// Position information is recorded in fset, which must not be nil.
 //
 // If the directory couldn't be read, a nil map and the respective error are
 // returned. If a parse error occurred, a non-nil but incomplete map and the

@@ -60,14 +60,14 @@ var testStdCode = `package bar; import "io"
 
 func TestStd(t *testing.T) {
 	fset := token.NewFileSet()
-	pkgs, err := Parse(fset, "/foo/bar.gop", testStdCode, ParseComments)
+	pkgs, err := Parse(fset, "/foo/bar.xgo", testStdCode, ParseComments)
 	if err != nil || len(pkgs) != 1 {
 		t.Fatal("Parse failed:", err, len(pkgs))
 	}
 	bar := pkgs["bar"]
 	parsertest.Expect(t, bar, `package bar
 
-file bar.gop
+file bar.xgo
 noEntrypoint
 ast.GenDecl:
   Tok: import

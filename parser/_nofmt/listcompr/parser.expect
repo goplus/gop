@@ -1,6 +1,6 @@
 package main
 
-file listcompr.gop
+file listcompr.xgo
 noEntrypoint
 ast.FuncDecl:
   Name:

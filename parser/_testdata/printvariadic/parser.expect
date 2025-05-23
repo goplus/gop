@@ -1,6 +1,6 @@
 package main
 
-file printv.gop
+file printv.xgo
 noEntrypoint
 ast.FuncDecl:
   Name:

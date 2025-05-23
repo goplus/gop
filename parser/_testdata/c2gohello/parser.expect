@@ -1,6 +1,6 @@
 package main
 
-file hello.gop
+file hello.xgo
 noEntrypoint
 ast.GenDecl:
   Tok: import

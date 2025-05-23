@@ -27,7 +27,7 @@ import (
 func isGopFile(file string) bool {
 	if len(file) > 4 {
 		switch file[len(file)-4:] {
-		case ".gop", ".gox", ".gsh", ".spx", ".yap":
+		case ".xgo", ".gop", ".gox", ".gsh", ".spx", ".yap":
 			return true
 		}
 	}

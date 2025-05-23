@@ -1,6 +1,6 @@
 package main
 
-file errwrap2.gop
+file errwrap2.xgo
 ast.FuncDecl:
   Name:
     ast.Ident:

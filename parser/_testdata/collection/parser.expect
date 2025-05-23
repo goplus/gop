@@ -1,6 +1,6 @@
 package main
 
-file collection.gop
+file collection.xgo
 ast.GenDecl:
   Tok: import
   Specs:

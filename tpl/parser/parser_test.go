@@ -39,7 +39,7 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 	t.Helper()
 	log.Println("Parsing", pkgDir)
 	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, pkgDir+"/in.gop", nil, &parser.Config{
+	f, err := parser.ParseFile(fset, pkgDir+"/in.xgo", nil, &parser.Config{
 		ParseRetProc: func(file *token.File, src []byte, offset int) (ast.Node, scanner.ErrorList) {
 			return gopp.ParseExprEx(file, src, offset, 0)
 		},

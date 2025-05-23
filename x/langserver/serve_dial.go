@@ -96,14 +96,14 @@ func ServeAndDial(conf *ServeAndDialConfig, gopCmd string, args ...string) Clien
 	if err != nil {
 		onErr(err)
 	}
-	gopDir := home + "/.gop/"
+	gopDir := home + "/.xgo/"
 	err = os.MkdirAll(gopDir, 0755)
 	if err != nil {
 		onErr(err)
 	}
 
 	// logFile is where the LangServer application log saves to.
-	// default is ~/.gop/serve-{pid}.log
+	// default is ~/.xgo/serve-{pid}.log
 	logFile := logFileOf(gopDir, os.Getpid())
 
 	// clean too old logfiles, and kill old LangServer processes

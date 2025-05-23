@@ -1,6 +1,6 @@
 package main
 
-file rational.gop
+file rational.xgo
 noEntrypoint
 ast.FuncDecl:
   Name:

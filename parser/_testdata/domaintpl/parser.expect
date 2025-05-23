@@ -1,6 +1,6 @@
 package main
 
-file tpl.gop
+file tpl.xgo
 noEntrypoint
 ast.FuncDecl:
   Name:

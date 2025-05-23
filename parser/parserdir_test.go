@@ -129,7 +129,7 @@ func testExprFrom(t *testing.T, pkgDir, sel string, exclude Mode) {
 	t.Helper()
 	log.Println("Parsing", pkgDir)
 	fset := token.NewFileSet()
-	fname := pkgDir + "/in.gop"
+	fname := pkgDir + "/in.xgo"
 	src, err := os.ReadFile(fname)
 	if err != nil {
 		t.Fatal("os.ReadFile:", err)
@@ -214,13 +214,13 @@ func doTestParseEntry(t *testing.T, parseEntry func(fset *token.FileSet, filenam
 		t.Fatal("os.ReadFile:", err)
 	}
 	conf := Config{}
-	t.Run(".gop file", func(t *testing.T) {
-		f, err := parseEntry(fset, "./functype.gop", src, conf)
+	t.Run(".xgo file", func(t *testing.T) {
+		f, err := parseEntry(fset, "./functype.xgo", src, conf)
 		if err != nil {
 			t.Fatal("ParseEntry failed:", err)
 		}
 		if f.IsClass || f.IsProj || f.IsNormalGox {
-			t.Fatal("ParseEntry functype.gop:", f.IsClass, f.IsProj, f.IsNormalGox)
+			t.Fatal("ParseEntry functype.xgo:", f.IsClass, f.IsProj, f.IsNormalGox)
 		}
 	})
 	t.Run(".gox file", func(t *testing.T) {
@@ -290,22 +290,22 @@ func TestSaveAbsFile(t *testing.T) {
 	}
 	conf := Config{}
 	conf.Mode = SaveAbsFile
-	t.Run(".gop file", func(t *testing.T) {
-		f, err := ParseEntry(fset, "./functype.gop", src, conf)
+	t.Run(".xgo file", func(t *testing.T) {
+		f, err := ParseEntry(fset, "./functype.xgo", src, conf)
 		if err != nil {
 			t.Fatal("ParseEntry failed:", err)
 		}
 		if f.IsClass || f.IsProj || f.IsNormalGox {
-			t.Fatal("ParseEntry functype.gop:", f.IsClass, f.IsProj, f.IsNormalGox)
+			t.Fatal("ParseEntry functype.xgo:", f.IsClass, f.IsProj, f.IsNormalGox)
 		}
 	})
-	t.Run(".gop file", func(t *testing.T) {
-		f, err := ParseFile(fset, "./functype.gop", src, conf.Mode)
+	t.Run(".xgo file", func(t *testing.T) {
+		f, err := ParseFile(fset, "./functype.xgo", src, conf.Mode)
 		if err != nil {
 			t.Fatal("ParseEntry failed:", err)
 		}
 		if f.IsClass || f.IsProj || f.IsNormalGox {
-			t.Fatal("ParseEntry functype.gop:", f.IsClass, f.IsProj, f.IsNormalGox)
+			t.Fatal("ParseEntry functype.xgo:", f.IsClass, f.IsProj, f.IsNormalGox)
 		}
 	})
 	t.Run("dir", func(t *testing.T) {
@@ -348,10 +348,10 @@ func TestErrParse(t *testing.T) {
 		t.Fatal("ParseFSDir test.go: no error?")
 	}
 
-	fs = memfs.SingleFile("/foo", "test.gop", `package foo bar`)
+	fs = memfs.SingleFile("/foo", "test.xgo", `package foo bar`)
 	_, err = ParseFSDir(fset, fs, "/foo", Config{})
 	if err == nil {
-		t.Fatal("ParseFSDir test.gop: no error?")
+		t.Fatal("ParseFSDir test.xgo: no error?")
 	}
 
 	fs = memfs.New(map[string][]string{"/foo": {"test.go"}}, map[string]string{})

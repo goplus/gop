@@ -100,14 +100,13 @@ func ParseEntry(fset *token.FileSet, filename string, src any, conf Config) (f *
 	return ParseFSEntry(fset, fsx.Local, filename, src, conf)
 }
 
-// ParseFSDir calls ParseFile for all files with names ending in ".gop" in the
-// directory specified by path and returns a map of package name -> package
-// AST with all the packages found.
+// ParseFSDir calls ParseFile for all XGo files in the directory specified by
+// path and returns a map of package name -> package AST with all the packages
+// found.
 //
-// If filter != nil, only the files with fs.FileInfo entries passing through
-// the filter (and ending in ".gop") are considered. The mode bits are passed
-// to ParseFile unchanged. Position information is recorded in fset, which
-// must not be nil.
+// If filter != nil, only the XGo files with fs.FileInfo entries passing through
+// the filter are considered. The mode bits are passed to ParseFile unchanged.
+// Position information is recorded in fset, which must not be nil.
 //
 // If the directory couldn't be read, a nil map and the respective error are
 // returned. If a parse error occurred, a non-nil but incomplete map and the
@@ -133,7 +132,7 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, dir string, conf Config) (pk
 		ext := path.Ext(fname)
 		var isProj, isClass, isNormalGox, useGoParser bool
 		switch ext {
-		case ".gop":
+		case ".xgo", ".gop":
 		case ".go":
 			if strings.HasPrefix(fname, "gop_autogen") {
 				continue
@@ -197,7 +196,7 @@ func ParseFSEntry(fset *token.FileSet, fs FileSystem, filename string, src any, 
 	ext := path.Ext(fname)
 	var isProj, isClass, isNormalGox bool
 	switch ext {
-	case ".gop", ".go":
+	case ".xgo", ".gop", ".go":
 	case ".gox":
 		isNormalGox = true
 		fallthrough

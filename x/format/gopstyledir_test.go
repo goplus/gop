@@ -54,7 +54,7 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 		return
 	}
 	log.Println("Formatting", pkgDir)
-	file := pkgDir + "/index.gop"
+	file := pkgDir + "/index.xgo"
 	src, err := os.ReadFile(file)
 	if err != nil {
 		t.Fatal(err)

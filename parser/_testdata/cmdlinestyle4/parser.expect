@@ -1,6 +1,6 @@
 package main
 
-file cmd4.gop
+file cmd4.xgo
 noEntrypoint
 ast.FuncDecl:
   Name:

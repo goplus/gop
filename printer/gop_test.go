@@ -176,7 +176,7 @@ func TestFromTestdata(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		if !info.IsDir() && filepath.Ext(path) == ".gop" {
+		if !info.IsDir() && filepath.Ext(path) == ".xgo" {
 			testFrom(t, path, sel, 0)
 		}
 		return nil
@@ -196,7 +196,7 @@ func TestFromParse(t *testing.T) {
 		}
 		name := info.Name()
 		ext := filepath.Ext(name)
-		if !info.IsDir() && (ext == ".gop" || ext == ".gox") {
+		if !info.IsDir() && (ext == ".xgo" || ext == ".gox") {
 			testFrom(t, path, sel, 0)
 		}
 		return nil

@@ -1,6 +1,6 @@
 package main
 
-file slice.gop
+file slice.xgo
 noEntrypoint
 ast.FuncDecl:
   Name:

@@ -51,7 +51,7 @@ parenExpr = "(" expr ")"
 exprlist = expr % ","
 
 namelist = IDENT % ","
-`, "cl/_testgop/domaintpl/in.gop", 1, 4, "file", func(self interface{}) interface{} {
+`, "cl/_testgop/domaintpl/in.xgo", 1, 4, "file", func(self interface{}) interface{} {
 		return self
 	}, "stmts", func(self []interface{}) interface{} {
 		return func() (_gop_ret []interface{}) {

@@ -1,6 +1,6 @@
 package main
 
-file string_lit.gop
+file string_lit.xgo
 noEntrypoint
 ast.FuncDecl:
   Name:
