@@ -6,7 +6,7 @@
 <h1>The XGo Programming Language</h1>
 
 
-[xgo.dev](https://xgo.dev) | [Docs](doc/docs.md) | [XGo vs. Go](doc/goplus-vs-go.md) | [Tutorials](https://tutorial.goplus.org/) | [Playground](https://play.goplus.org) | [XGo REPL (iXGo)](https://repl.goplus.org/) | [Contributing & compiler design](doc/contributing.md)
+[xgo.dev](https://xgo.dev) | [Docs](doc/docs.md) | [XGo vs. Go](doc/goplus-vs-go.md) | [Tutorials](https://tutorial.xgo.dev) | [Playground](https://play.xgo.dev) | [XGo REPL (iXGo)](https://repl.xgo.dev) | [Contributing & compiler design](doc/contributing.md)
 </div>
 
 <div align="center">
@@ -73,7 +73,7 @@ To emphasize our preference for command style, we introduce `echo` as an alias f
 echo "Hello world"
 ```
 
-For more discussion on coding style, see https://tutorial.goplus.org/hello-world.
+For more discussion on coding style, see https://tutorial.xgo.dev/hello-world.
 
 Code style is just the first step. We have made many efforts to make the code more intuitive and closer to natural language expression. These include:
 

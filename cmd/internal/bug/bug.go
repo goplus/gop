@@ -75,7 +75,7 @@ const bugFooter = `### What did you do?
 <!--
 If possible, provide a recipe for reproducing the error.
 A complete runnable program is good.
-A link on play.goplus.org is best.
+A link on play.xgo.dev is best.
 -->
 
 
