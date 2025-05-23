@@ -20,7 +20,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/token"
 )
 
 // SortImports sorts runs of consecutive import lines in import blocks in f.

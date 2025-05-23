@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/goplus/gop/x/jsonrpc2/internal/stack"
+	"github.com/goplus/xgo/x/jsonrpc2/internal/stack"
 )
 
 // this is only needed to support pre 1.14 when testing.TB did not have Cleanup

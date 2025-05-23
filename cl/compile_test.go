@@ -22,8 +22,8 @@ import (
 	"testing"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cl/cltest"
+	"github.com/goplus/xgo/cl"
+	"github.com/goplus/xgo/cl/cltest"
 )
 
 const (
@@ -1223,7 +1223,7 @@ type BigInt struct {
 }
 
 func TestAutoProperty(t *testing.T) {
-	gopClTest(t, `import "github.com/goplus/gop/ast/goptest"
+	gopClTest(t, `import "github.com/goplus/xgo/ast/goptest"
 
 func foo(script string) {
 	doc := goptest.New(script)!
@@ -1235,8 +1235,8 @@ func foo(script string) {
 
 import (
 	"fmt"
-	"github.com/goplus/gop/ast/gopq"
-	"github.com/goplus/gop/ast/goptest"
+	"github.com/goplus/xgo/ast/gopq"
+	"github.com/goplus/xgo/ast/goptest"
 	"github.com/qiniu/x/errors"
 )
 
@@ -1269,8 +1269,8 @@ func foo(script string) {
 
 import (
 	"fmt"
-	"github.com/goplus/gop/ast/gopq"
-	"github.com/goplus/gop/ast/goptest"
+	"github.com/goplus/xgo/ast/gopq"
+	"github.com/goplus/xgo/ast/goptest"
 	"github.com/qiniu/x/errors"
 )
 
@@ -2760,7 +2760,7 @@ func TestLocalImport(t *testing.T) {
 var a = spx.TestIntValue
 `, `package main
 
-import "github.com/goplus/gop/cl/internal/spx"
+import "github.com/goplus/xgo/cl/internal/spx"
 
 var a = spx.TestIntValue
 `)
@@ -3522,7 +3522,7 @@ func TestImportGopPkg(t *testing.T) {
 	defer autogen.Unlock()
 
 	removeAutogenFiles()
-	gopClTest(t, `import "github.com/goplus/gop/cl/internal/gop-in-go/foo"
+	gopClTest(t, `import "github.com/goplus/xgo/cl/internal/gop-in-go/foo"
 
 rmap := foo.ReverseMap(map[string]int{"Hi": 1, "Hello": 2})
 println(rmap)
@@ -3530,7 +3530,7 @@ println(rmap)
 
 import (
 	"fmt"
-	"github.com/goplus/gop/cl/internal/gop-in-go/foo"
+	"github.com/goplus/xgo/cl/internal/gop-in-go/foo"
 )
 
 func main() {

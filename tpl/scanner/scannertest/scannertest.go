@@ -20,14 +20,14 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/goplus/gop/tpl/scanner"
-	"github.com/goplus/gop/tpl/token"
+	"github.com/goplus/xgo/tpl/scanner"
+	"github.com/goplus/xgo/tpl/token"
 
 	goscanner "go/scanner"
 	gotoken "go/token"
 
-	gopscanner "github.com/goplus/gop/scanner"
-	goptoken "github.com/goplus/gop/token"
+	gopscanner "github.com/goplus/xgo/scanner"
+	goptoken "github.com/goplus/xgo/token"
 )
 
 // -----------------------------------------------------------------------------

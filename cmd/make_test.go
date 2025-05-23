@@ -14,7 +14,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/goplus/gop/env"
+	"github.com/goplus/xgo/env"
 )
 
 const (

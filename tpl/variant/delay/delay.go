@@ -17,8 +17,8 @@
 package delay
 
 import (
-	"github.com/goplus/gop/tpl/token"
-	"github.com/goplus/gop/tpl/variant"
+	"github.com/goplus/xgo/tpl/token"
+	"github.com/goplus/xgo/tpl/variant"
 )
 
 // -----------------------------------------------------------------------------

@@ -23,10 +23,10 @@ import (
 
 	"github.com/goplus/gogen"
 	"github.com/goplus/gogen/packages"
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/token"
 	"github.com/goplus/mod/modfile"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/parser"
+	"github.com/goplus/xgo/token"
 )
 
 var (
@@ -564,7 +564,7 @@ func lookupClass(ext string) (c *modfile.Project, ok bool) {
 		return &modfile.Project{
 			Ext: ".t2gmx", Class: "Game",
 			Works:    []*modfile.Class{{Ext: ".t2spx", Class: "Sprite"}},
-			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
+			PkgPaths: []string{"github.com/goplus/xgo/cl/internal/spx2"}}, true
 	}
 	return
 }
@@ -575,7 +575,7 @@ func lookupClassErr(ext string) (c *modfile.Project, ok bool) {
 		return &modfile.Project{
 			Ext: ".t2gmx", Class: "Game",
 			Works:    []*modfile.Class{{Ext: ".t2spx", Class: "Sprite"}},
-			PkgPaths: []string{"github.com/goplus/gop/cl/internal/libc"}}, true
+			PkgPaths: []string{"github.com/goplus/xgo/cl/internal/libc"}}, true
 	}
 	return
 }

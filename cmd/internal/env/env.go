@@ -25,11 +25,11 @@ import (
 	"os/exec"
 	"sort"
 
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/env"
-	"github.com/goplus/gop/x/gocmd"
 	"github.com/goplus/mod"
 	"github.com/goplus/mod/modcache"
+	"github.com/goplus/xgo/cmd/internal/base"
+	"github.com/goplus/xgo/env"
+	"github.com/goplus/xgo/x/gocmd"
 )
 
 // Cmd - gop env

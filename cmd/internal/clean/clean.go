@@ -23,7 +23,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/xgo/cmd/internal/base"
 )
 
 const (

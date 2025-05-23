@@ -19,7 +19,7 @@ package time
 import (
 	"time"
 
-	"github.com/goplus/gop/tpl/variant"
+	"github.com/goplus/xgo/tpl/variant"
 )
 
 // -----------------------------------------------------------------------------

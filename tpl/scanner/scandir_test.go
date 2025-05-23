@@ -25,7 +25,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/goplus/gop/tpl/scanner/scannertest"
+	"github.com/goplus/xgo/tpl/scanner/scannertest"
 	"github.com/qiniu/x/test"
 )
 

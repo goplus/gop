@@ -25,10 +25,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/goplus/gop/cl/outline"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/mod/gopmod"
+	"github.com/goplus/xgo/cl/outline"
+	"github.com/goplus/xgo/parser"
+	"github.com/goplus/xgo/x/gopenv"
 	"github.com/qiniu/x/errors"
 )
 

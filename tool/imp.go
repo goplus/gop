@@ -127,7 +127,7 @@ func (p *Importer) PkgHash(pkgPath string, self bool) string {
 }
 
 const (
-	gopMod = "github.com/goplus/gop"
+	gopMod = "github.com/goplus/xgo"
 	xMod   = "github.com/qiniu/x"
 )
 
@@ -136,7 +136,7 @@ func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 	if strings.HasPrefix(pkgPath, gopMod) {
 		if suffix := pkgPath[len(gopMod):]; suffix == "" || suffix[0] == '/' {
 			gopRoot := p.gop.Root
-			if suffix == "/cl/internal/gop-in-go/foo" { // for test github.com/goplus/gop/cl
+			if suffix == "/cl/internal/gop-in-go/foo" { // for test github.com/goplus/xgo/cl
 				if err = p.genGoExtern(gopRoot+suffix, false); err != nil {
 					return
 				}

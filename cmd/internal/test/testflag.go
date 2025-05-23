@@ -1,7 +1,7 @@
 package test
 
 import (
-	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/xgo/cmd/internal/base"
 )
 
 type boolFlag interface {

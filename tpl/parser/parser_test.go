@@ -24,12 +24,12 @@ import (
 	"strings"
 	"testing"
 
-	gopp "github.com/goplus/gop/parser"
-	"github.com/goplus/gop/tpl/ast"
-	"github.com/goplus/gop/tpl/parser"
-	"github.com/goplus/gop/tpl/parser/parsertest"
-	"github.com/goplus/gop/tpl/scanner"
-	"github.com/goplus/gop/tpl/token"
+	gopp "github.com/goplus/xgo/parser"
+	"github.com/goplus/xgo/tpl/ast"
+	"github.com/goplus/xgo/tpl/parser"
+	"github.com/goplus/xgo/tpl/parser/parsertest"
+	"github.com/goplus/xgo/tpl/scanner"
+	"github.com/goplus/xgo/tpl/token"
 )
 
 func testFrom(t *testing.T, pkgDir, sel string) {

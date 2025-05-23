@@ -30,8 +30,8 @@ import (
 
 	urlpkg "net/url"
 
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/env"
+	"github.com/goplus/xgo/cmd/internal/base"
+	"github.com/goplus/xgo/env"
 )
 
 // -----------------------------------------------------------------------------
@@ -58,7 +58,7 @@ func runCmd(_ *base.Command, args []string) {
 	buf.WriteString(bugFooter)
 
 	body := buf.String()
-	url := "https://github.com/goplus/gop/issues/new?body=" + urlpkg.QueryEscape(body)
+	url := "https://github.com/goplus/xgo/issues/new?body=" + urlpkg.QueryEscape(body)
 	if !open(url) {
 		fmt.Print("Please file a new issue at golang.org/issue/new using this template:\n\n")
 		fmt.Print(body)

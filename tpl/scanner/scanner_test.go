@@ -19,8 +19,8 @@ package scanner
 import (
 	"testing"
 
-	"github.com/goplus/gop/tpl/token"
-	"github.com/goplus/gop/tpl/types"
+	"github.com/goplus/xgo/tpl/token"
+	"github.com/goplus/xgo/tpl/types"
 )
 
 type Token = types.Token

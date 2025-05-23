@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/goplus/gop/cl/internal/spx3"
+
+	"github.com/goplus/xgo/cl/internal/spx3"
 )
 
 type Kai struct {

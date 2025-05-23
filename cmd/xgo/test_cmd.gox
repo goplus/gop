@@ -14,7 +14,7 @@
  */
 
 import (
-	self "github.com/goplus/gop/cmd/internal/test"
+	self "github.com/goplus/xgo/cmd/internal/test"
 )
 
 use "test [flags] [packages]"

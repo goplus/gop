@@ -19,7 +19,7 @@ package token
 import (
 	"go/token"
 
-	"github.com/goplus/gop/token/internal/tokenutil"
+	"github.com/goplus/xgo/token/internal/tokenutil"
 )
 
 // Pos is a compact encoding of a source position within a file set.

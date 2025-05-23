@@ -17,7 +17,7 @@
 package spx
 
 const (
-	GopPackage = "github.com/goplus/gop/cl/internal/spx/pkg"
+	GopPackage = "github.com/goplus/xgo/cl/internal/spx/pkg"
 	Gop_sched  = "Sched,SchedNow"
 )
 

@@ -7,8 +7,8 @@ package typesutil_test
 import (
 	"testing"
 
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/x/typesutil"
+	"github.com/goplus/xgo/parser"
+	"github.com/goplus/xgo/x/typesutil"
 )
 
 type testEntry struct {

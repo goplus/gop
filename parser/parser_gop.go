@@ -25,10 +25,10 @@ import (
 	goast "go/ast"
 	goparser "go/parser"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/parser/fsx"
-	"github.com/goplus/gop/parser/iox"
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/parser/fsx"
+	"github.com/goplus/xgo/parser/iox"
+	"github.com/goplus/xgo/token"
 )
 
 const (

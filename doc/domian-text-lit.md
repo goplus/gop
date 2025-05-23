@@ -3,7 +3,7 @@ Domain Text Literal
 
 The journey of **Domain Text Literals** in XGo began with a proposal in early 2024 when a community member suggested adding JSX syntax support to XGo:
 
-* https://github.com/goplus/gop/issues/1770
+* https://github.com/goplus/xgo/issues/1770
 
 While JSX has gained widespread adoption in frontend development, particularly in React-based applications, the immediate benefits of building JSX syntax directly into XGo weren't immediately clear, causing the proposal to be temporarily shelved.
 

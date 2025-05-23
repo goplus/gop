@@ -22,10 +22,10 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/env"
 	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modload"
+	"github.com/goplus/xgo/cmd/internal/base"
+	"github.com/goplus/xgo/env"
 )
 
 // gop mod init

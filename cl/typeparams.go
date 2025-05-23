@@ -19,9 +19,9 @@ package cl
 import (
 	"go/types"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/cl/internal/typesalias"
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/cl/internal/typesalias"
+	"github.com/goplus/xgo/token"
 )
 
 func toTermList(ctx *blockCtx, expr ast.Expr) []*types.Term {

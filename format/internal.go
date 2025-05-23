@@ -24,10 +24,10 @@ package format
 import (
 	"bytes"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/printer"
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/parser"
+	"github.com/goplus/xgo/printer"
+	"github.com/goplus/xgo/token"
 )
 
 // parse parses src, which was read from the named file,

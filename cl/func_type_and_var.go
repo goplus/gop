@@ -24,8 +24,8 @@ import (
 	"strconv"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/token"
 )
 
 // -----------------------------------------------------------------------------

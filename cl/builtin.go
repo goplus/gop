@@ -21,7 +21,7 @@ import (
 	"go/types"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop/cl/internal/typesalias"
+	"github.com/goplus/xgo/cl/internal/typesalias"
 )
 
 // -----------------------------------------------------------------------------

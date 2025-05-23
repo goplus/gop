@@ -4,7 +4,7 @@ Thank you for your interest in contributing to the XGo project! Your efforts
 help us build and improve this powerful language.
 
 Please be aware that participation in the XGo project requires adherence to our
-established [code of conduct](https://github.com/goplus/gop/blob/main/CODE_OF_CONDUCT.md). Your involvement signifies your agreement to comply
+established [code of conduct](https://github.com/goplus/xgo/blob/main/CODE_OF_CONDUCT.md). Your involvement signifies your agreement to comply
 with the guidelines set forth within these terms. We appreciate your cooperation
 in fostering a respectful and inclusive environment for all contributors.
 
@@ -31,7 +31,7 @@ language and tool goals, and confirms design validity before coding.
 ## Making a code contribution
 
 Let's say you want to fix a typo in the `README.md` file of the
-`https://github.com/goplus/gop.git` repository, changing "Github" to "GitHub",
+`https://github.com/goplus/xgo.git` repository, changing "Github" to "GitHub",
 and you wish to merge this contribution into the `main` branch of the upstream
 repository.
 
@@ -41,7 +41,7 @@ First, you need to fork the upstream repository to your own username (or an
 organization you own) by following [this guide](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo). Then you can start making your
 contributions.
 
-Let's say you've forked `https://github.com/goplus/gop.git` to
+Let's say you've forked `https://github.com/goplus/xgo.git` to
 `https://github.com/YOUR_USERNAME/gop.git`.
 
 ### Step 2: Clone the forked repository

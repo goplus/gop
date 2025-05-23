@@ -1,4 +1,4 @@
-import "github.com/goplus/gop/cl/internal/huh"
+import "github.com/goplus/xgo/cl/internal/huh"
 
 form := huh`> "1", 2
 <form id="test">

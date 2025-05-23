@@ -1,7 +1,7 @@
 import (
     "time"
 
-    "github.com/goplus/gop/cl/internal/unit"
+    "github.com/goplus/xgo/cl/internal/unit"
 )
 
 func Wait(time.Duration) {}

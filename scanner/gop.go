@@ -20,7 +20,7 @@ import (
 	"go/scanner"
 	"io"
 
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/token"
 	"github.com/qiniu/x/byteutil"
 )
 

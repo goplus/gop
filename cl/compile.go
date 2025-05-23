@@ -27,11 +27,11 @@ import (
 	"strings"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/ast/fromgo"
-	"github.com/goplus/gop/cl/internal/typesalias"
-	"github.com/goplus/gop/token"
 	"github.com/goplus/mod/modfile"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/ast/fromgo"
+	"github.com/goplus/xgo/cl/internal/typesalias"
+	"github.com/goplus/xgo/token"
 	"github.com/qiniu/x/errors"
 )
 

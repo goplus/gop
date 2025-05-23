@@ -23,8 +23,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/goplus/gop/scanner"
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/scanner"
+	"github.com/goplus/xgo/token"
 )
 
 type pkgBuilder struct {

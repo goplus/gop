@@ -264,11 +264,11 @@ func getGopBuildFlags() string {
 	if gopRootFinal := os.Getenv("GOPROOT_FINAL"); gopRootFinal != "" {
 		defaultGopRoot = gopRootFinal
 	}
-	buildFlags := fmt.Sprintf("-X \"github.com/goplus/gop/env.defaultGopRoot=%s\"", defaultGopRoot)
-	buildFlags += fmt.Sprintf(" -X \"github.com/goplus/gop/env.buildDate=%s\"", getBuildDateTime())
+	buildFlags := fmt.Sprintf("-X \"github.com/goplus/xgo/env.defaultGopRoot=%s\"", defaultGopRoot)
+	buildFlags += fmt.Sprintf(" -X \"github.com/goplus/xgo/env.buildDate=%s\"", getBuildDateTime())
 
 	version := findGopVersion()
-	buildFlags += fmt.Sprintf(" -X \"github.com/goplus/gop/env.buildVersion=%s\"", version)
+	buildFlags += fmt.Sprintf(" -X \"github.com/goplus/xgo/env.buildVersion=%s\"", version)
 
 	return buildFlags
 }

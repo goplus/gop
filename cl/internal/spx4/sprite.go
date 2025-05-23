@@ -17,7 +17,7 @@
 package spx4
 
 import (
-	"github.com/goplus/gop/cl/internal/spx/pkg"
+	"github.com/goplus/xgo/cl/internal/spx/pkg"
 )
 
 type Sprite struct {

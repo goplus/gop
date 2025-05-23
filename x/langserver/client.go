@@ -19,7 +19,7 @@ package langserver
 import (
 	"context"
 
-	"github.com/goplus/gop/x/jsonrpc2"
+	"github.com/goplus/xgo/x/jsonrpc2"
 )
 
 // -----------------------------------------------------------------------------

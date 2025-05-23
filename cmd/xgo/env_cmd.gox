@@ -14,7 +14,7 @@
  */
 
 import (
-	self "github.com/goplus/gop/cmd/internal/env"
+	self "github.com/goplus/xgo/cmd/internal/env"
 )
 
 use "env [flags] [var ...]"

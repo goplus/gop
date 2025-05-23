@@ -28,9 +28,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/goplus/gop/tool"
-	"github.com/goplus/gop/x/gocmd"
-	"github.com/goplus/gop/x/gopenv"
+	"github.com/goplus/xgo/tool"
+	"github.com/goplus/xgo/x/gocmd"
+	"github.com/goplus/xgo/x/gopenv"
 )
 
 func fileIsDirty(srcMod time.Time, destFile string) bool {

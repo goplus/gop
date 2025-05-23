@@ -14,7 +14,7 @@
  */
 
 import (
-	self "github.com/goplus/gop/cmd/internal/gengo"
+	self "github.com/goplus/xgo/cmd/internal/gengo"
 )
 
 use "go [flags] [packages|files]"

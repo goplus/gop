@@ -20,10 +20,10 @@ package serve
 import (
 	"context"
 
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/x/jsonrpc2"
-	"github.com/goplus/gop/x/jsonrpc2/stdio"
-	"github.com/goplus/gop/x/langserver"
+	"github.com/goplus/xgo/cmd/internal/base"
+	"github.com/goplus/xgo/x/jsonrpc2"
+	"github.com/goplus/xgo/x/jsonrpc2/stdio"
+	"github.com/goplus/xgo/x/langserver"
 	"github.com/qiniu/x/log"
 )
 

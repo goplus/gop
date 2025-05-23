@@ -21,8 +21,8 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/mod/env"
+	"github.com/goplus/xgo/x/gopenv"
 )
 
 type GopEnv = env.Gop
@@ -68,9 +68,9 @@ func runCmd(cmd *exec.Cmd) (err error) {
 // -----------------------------------------------------------------------------
 
 const (
-	ldFlagVersion   = "-X \"github.com/goplus/gop/env.buildVersion=%s\""
-	ldFlagBuildDate = "-X \"github.com/goplus/gop/env.buildDate=%s\""
-	ldFlagGopRoot   = "-X \"github.com/goplus/gop/env.defaultGopRoot=%s\""
+	ldFlagVersion   = "-X \"github.com/goplus/xgo/env.buildVersion=%s\""
+	ldFlagBuildDate = "-X \"github.com/goplus/xgo/env.buildDate=%s\""
+	ldFlagGopRoot   = "-X \"github.com/goplus/xgo/env.defaultGopRoot=%s\""
 )
 
 const (

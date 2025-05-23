@@ -32,17 +32,17 @@ import (
 	goparser "go/parser"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/parser/fsx"
-	"github.com/goplus/gop/parser/fsx/memfs"
-	"github.com/goplus/gop/scanner"
-	"github.com/goplus/gop/token"
-	"github.com/goplus/gop/tool"
 	"github.com/goplus/mod"
 	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modfile"
+	"github.com/goplus/xgo/cl"
+	"github.com/goplus/xgo/parser"
+	"github.com/goplus/xgo/parser/fsx"
+	"github.com/goplus/xgo/parser/fsx/memfs"
+	"github.com/goplus/xgo/scanner"
+	"github.com/goplus/xgo/token"
+	"github.com/goplus/xgo/tool"
 	"github.com/qiniu/x/test"
 )
 
@@ -77,30 +77,30 @@ func LookupClass(ext string) (c *modfile.Project, ok bool) {
 		return &modfile.Project{
 			Ext: ".tgmx", Class: "*MyGame",
 			Works:    []*modfile.Class{{Ext: ".tspx", Class: "Sprite"}},
-			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx", "math"}}, true
+			PkgPaths: []string{"github.com/goplus/xgo/cl/internal/spx", "math"}}, true
 	case ".t2gmx", ".t2spx":
 		return &modfile.Project{
 			Ext: ".t2gmx", Class: "Game",
 			Works: []*modfile.Class{
 				{Ext: ".t2spx", Class: "Sprite"},
 			},
-			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
+			PkgPaths: []string{"github.com/goplus/xgo/cl/internal/spx2"}}, true
 	case ".t4gmx", ".t4spx":
 		return &modfile.Project{
 			Ext: ".t4gmx", Class: "*MyGame",
 			Works:    []*modfile.Class{{Ext: ".t4spx", Class: "Sprite"}},
-			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx4", "math"}}, true
+			PkgPaths: []string{"github.com/goplus/xgo/cl/internal/spx4", "math"}}, true
 	case "_spx.gox":
 		return &modfile.Project{
 			Ext: "_spx.gox", Class: "Game",
 			Works:    []*modfile.Class{{Ext: "_spx.gox", Class: "Sprite"}},
-			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx3", "math"},
-			Import:   []*modfile.Import{{Path: "github.com/goplus/gop/cl/internal/spx3/jwt"}}}, true
+			PkgPaths: []string{"github.com/goplus/xgo/cl/internal/spx3", "math"},
+			Import:   []*modfile.Import{{Path: "github.com/goplus/xgo/cl/internal/spx3/jwt"}}}, true
 	case "_xtest.gox":
 		return &modfile.Project{
 			Ext: "_xtest.gox", Class: "App",
 			Works:    []*modfile.Class{{Ext: "_xtest.gox", Class: "Case"}},
-			PkgPaths: []string{"github.com/goplus/gop/test", "testing"}}, true
+			PkgPaths: []string{"github.com/goplus/xgo/test", "testing"}}, true
 	case "_mcp.gox", "_tool.gox", "_prompt.gox":
 		return &modfile.Project{
 			Ext: "_mcp.gox", Class: "Game",
@@ -109,7 +109,7 @@ func LookupClass(ext string) (c *modfile.Project, ok bool) {
 				{Ext: "_prompt.gox", Class: "Prompt", Proto: "PromptProto", Embedded: true},
 				{Ext: "_res.gox", Class: "Resource", Proto: "ResourceProto"},
 			},
-			PkgPaths: []string{"github.com/goplus/gop/cl/internal/mcp"}}, true
+			PkgPaths: []string{"github.com/goplus/xgo/cl/internal/mcp"}}, true
 	}
 	return
 }
@@ -161,7 +161,7 @@ func DoFS(
 		t.Fatal("ParseFSDir:", err)
 	}
 	bar := pkgs[pkgname]
-	pkg, err := cl.NewPackage("github.com/goplus/gop/cl", bar, conf)
+	pkg, err := cl.NewPackage("github.com/goplus/xgo/cl", bar, conf)
 	if err != nil {
 		t.Fatal("NewPackage:", err)
 	}

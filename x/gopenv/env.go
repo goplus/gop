@@ -17,8 +17,8 @@
 package gopenv
 
 import (
-	"github.com/goplus/gop/env"
 	modenv "github.com/goplus/mod/env"
+	"github.com/goplus/xgo/env"
 )
 
 func Get() *modenv.Gop {

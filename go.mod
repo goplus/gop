@@ -1,4 +1,4 @@
-module github.com/goplus/gop
+module github.com/goplus/xgo
 
 go 1.18
 

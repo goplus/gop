@@ -19,9 +19,9 @@ package cl_test
 import (
 	"testing"
 
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cl/cltest"
-	"github.com/goplus/gop/parser/fsx/memfs"
+	"github.com/goplus/xgo/cl"
+	"github.com/goplus/xgo/cl/cltest"
+	"github.com/goplus/xgo/parser/fsx/memfs"
 )
 
 func gopSpxTest(t *testing.T, gmx, spxcode, expected string) {
@@ -77,7 +77,7 @@ println "hi"
 
 	gopSpxErrorTestEx(t, `Game.t4gmx:6:2: userScore redeclared
 	Game.t4gmx:5:2 other declaration of userScore
-Kai.t4spx:1:1: cannot use  (type *Kai) as type github.com/goplus/gop/cl/internal/spx4.Sprite in argument to `, `
+Kai.t4spx:1:1: cannot use  (type *Kai) as type github.com/goplus/xgo/cl/internal/spx4.Sprite in argument to `, `
 import "bytes"
 var (
 	Kai Kai
@@ -90,7 +90,7 @@ println "hi"
 
 	gopSpxErrorTestMap(t, `Kai.t4spx:4:2: userScore redeclared
 	Kai.t4spx:3:2 other declaration of userScore
-Greem.t4spx:1:1: cannot use  (type *Greem) as type github.com/goplus/gop/cl/internal/spx4.Sprite in argument to `, map[string][]string{
+Greem.t4spx:1:1: cannot use  (type *Greem) as type github.com/goplus/xgo/cl/internal/spx4.Sprite in argument to `, map[string][]string{
 		"/foo": {"Game.t4gmx", "Kai.t4spx", "Greem.t4spx"},
 	}, map[string]string{
 		"/foo/Game.t4gmx": `println "hi"`,
@@ -131,7 +131,7 @@ func onInit() {
 
 import (
 	"fmt"
-	"github.com/goplus/gop/cl/internal/spx"
+	"github.com/goplus/xgo/cl/internal/spx"
 )
 
 const Foo = 1
@@ -170,7 +170,7 @@ echo ${PATH}, $id
 
 import (
 	"fmt"
-	"github.com/goplus/gop/cl/internal/spx"
+	"github.com/goplus/xgo/cl/internal/spx"
 )
 
 type bar struct {
@@ -202,7 +202,7 @@ echo "${PATH}"
 
 import (
 	"fmt"
-	"github.com/goplus/gop/cl/internal/spx"
+	"github.com/goplus/xgo/cl/internal/spx"
 	"strconv"
 )
 
@@ -237,7 +237,7 @@ capout => { ls }
 capout => { ls "-l" }
 `, ``, `package main
 
-import "github.com/goplus/gop/cl/internal/spx"
+import "github.com/goplus/xgo/cl/internal/spx"
 
 type bar struct {
 	spx.Sprite
@@ -287,7 +287,7 @@ func onInit() {
 `, `package main
 
 import (
-	"github.com/goplus/gop/cl/internal/spx"
+	"github.com/goplus/xgo/cl/internal/spx"
 	"math"
 )
 
@@ -348,7 +348,7 @@ func onCloned() {
 }
 `, `package main
 
-import "github.com/goplus/gop/cl/internal/spx"
+import "github.com/goplus/xgo/cl/internal/spx"
 
 type Game struct {
 	*spx.MyGame
@@ -399,7 +399,7 @@ println "Hi"
 
 import (
 	"fmt"
-	"github.com/goplus/gop/cl/internal/spx"
+	"github.com/goplus/xgo/cl/internal/spx"
 )
 
 type Kai struct {
@@ -439,7 +439,7 @@ func onMsg(msg string) {
 
 import (
 	"fmt"
-	"github.com/goplus/gop/cl/internal/spx2"
+	"github.com/goplus/xgo/cl/internal/spx2"
 )
 
 type Game struct {
@@ -475,7 +475,7 @@ func TestSpxMainEntry(t *testing.T) {
 `, `
 `, `package main
 
-import "github.com/goplus/gop/cl/internal/spx2"
+import "github.com/goplus/xgo/cl/internal/spx2"
 
 type Game struct {
 	spx2.Game
@@ -503,7 +503,7 @@ var (
 `, `
 `, `package main
 
-import "github.com/goplus/gop/cl/internal/spx2"
+import "github.com/goplus/xgo/cl/internal/spx2"
 
 type Game struct {
 	spx2.Game
@@ -543,7 +543,7 @@ func onMsg(msg string) {
 
 import (
 	"fmt"
-	"github.com/goplus/gop/cl/internal/spx2"
+	"github.com/goplus/xgo/cl/internal/spx2"
 )
 
 type Game struct {
@@ -586,7 +586,7 @@ func onMsg(msg string) {
 }
 `, `package main
 
-import "github.com/goplus/gop/cl/internal/spx"
+import "github.com/goplus/xgo/cl/internal/spx"
 
 type Game struct {
 	*spx.MyGame
@@ -652,7 +652,7 @@ func onCloned() {
 }
 `, `package main
 
-import "github.com/goplus/gop/cl/internal/spx"
+import "github.com/goplus/xgo/cl/internal/spx"
 
 type info struct {
 	x int
@@ -710,7 +710,7 @@ func onMsg(msg string) {
 }
 `, `package main
 
-import "github.com/goplus/gop/cl/internal/spx"
+import "github.com/goplus/xgo/cl/internal/spx"
 
 type Game struct {
 	*spx.MyGame
@@ -747,7 +747,7 @@ func onMsg(msg string) {
 
 import (
 	"fmt"
-	"github.com/goplus/gop/cl/internal/spx"
+	"github.com/goplus/xgo/cl/internal/spx"
 )
 
 type Game struct {
@@ -799,7 +799,7 @@ func onMsg(msg string) {
 
 import (
 	"fmt"
-	"github.com/goplus/gop/cl/internal/spx"
+	"github.com/goplus/xgo/cl/internal/spx"
 )
 
 type Game struct {
@@ -889,7 +889,7 @@ onKey2 "hello", key => {
 }
 `, `package main
 
-import "github.com/goplus/gop/cl/internal/spx"
+import "github.com/goplus/xgo/cl/internal/spx"
 
 type Mesh struct {
 }
@@ -960,7 +960,7 @@ t.run "a test", t => {
 
 import (
 	"fmt"
-	"github.com/goplus/gop/test"
+	"github.com/goplus/xgo/test"
 	"testing"
 )
 
@@ -997,7 +997,7 @@ t.log "Hi"
 `, `package main
 
 import (
-	"github.com/goplus/gop/test"
+	"github.com/goplus/xgo/test"
 	"testing"
 )
 

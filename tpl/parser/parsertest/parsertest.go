@@ -24,8 +24,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/goplus/gop/tpl/ast"
-	"github.com/goplus/gop/tpl/token"
+	"github.com/goplus/xgo/tpl/ast"
+	"github.com/goplus/xgo/tpl/token"
 	"github.com/qiniu/x/test"
 )
 

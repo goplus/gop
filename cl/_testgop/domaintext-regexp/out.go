@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/goplus/gop/tpl/encoding/regexp"
+
+	"github.com/goplus/xgo/tpl/encoding/regexp"
 )
 
 func main() {

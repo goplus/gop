@@ -23,8 +23,8 @@ import (
 	goast "go/ast"
 	gotoken "go/token"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/token"
 )
 
 // ----------------------------------------------------------------------------
@@ -72,7 +72,7 @@ func (p Deps) xgoPkgPath(s string, withXgoStd bool) {
 		if !withXgoStd {
 			return
 		}
-		s = "github.com/goplus/gop/" + s[4:]
+		s = "github.com/goplus/xgo/" + s[4:]
 	} else if strings.HasPrefix(s, "C") {
 		if len(s) == 1 {
 			s = "github.com/goplus/libc"

@@ -11,8 +11,8 @@ builds:
     main: ./cmd/gop
     binary: bin/gop
     ldflags:
-      - -X github.com/goplus/gop/env.buildVersion=v{{.Version}}
-      - -X github.com/goplus/gop/env.buildDate={{.Date}}
+      - -X github.com/goplus/xgo/env.buildVersion=v{{.Version}}
+      - -X github.com/goplus/xgo/env.buildDate={{.Date}}
     env:
       - CGO_ENABLED=0
     goos:
@@ -102,10 +102,10 @@ docker_manifests:
 
 winget:
   - name: goplus
-    homepage: "https://goplus.org/"
+    homepage: "https://xgo.dev/"
     publisher: goplus
-    publisher_url: https://github.com/goplus/gop
-    publisher_support_url: "https://github.com/goplus/gop/issues/new"
+    publisher_url: https://github.com/goplus/xgo
+    publisher_support_url: "https://github.com/goplus/xgo/issues/new"
     package_identifier: goplus.gop
     path: "manifests/g/goplus/gop/{{.Version}}"
     tags:
@@ -151,7 +151,7 @@ winget:
 nfpms:
   - package_name: gop
     vendor: goplus
-    homepage: https://goplus.org/
+    homepage: https://xgo.dev/
     maintainer: Li Jie <cpunion@gmail.com>
     license: Apache-2.0
     description: |

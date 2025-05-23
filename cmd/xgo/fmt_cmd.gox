@@ -14,7 +14,7 @@
  */
 
 import (
-	self "github.com/goplus/gop/cmd/internal/gopfmt"
+	self "github.com/goplus/xgo/cmd/internal/gopfmt"
 )
 
 use "fmt [flags] path ..."

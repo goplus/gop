@@ -17,7 +17,7 @@
 package variant
 
 import (
-	"github.com/goplus/gop/tpl/token"
+	"github.com/goplus/xgo/tpl/token"
 )
 
 // -----------------------------------------------------------------------------

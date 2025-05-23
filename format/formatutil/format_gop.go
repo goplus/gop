@@ -17,9 +17,9 @@
 package formatutil
 
 import (
-	"github.com/goplus/gop/format"
-	"github.com/goplus/gop/scanner"
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/format"
+	"github.com/goplus/xgo/scanner"
+	"github.com/goplus/xgo/token"
 )
 
 // RearrangeFuncs rearranges functions in src.

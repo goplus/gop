@@ -17,7 +17,7 @@
 package types
 
 import (
-	"github.com/goplus/gop/tpl/token"
+	"github.com/goplus/xgo/tpl/token"
 )
 
 // A Token is a lexical unit returned by Scan.

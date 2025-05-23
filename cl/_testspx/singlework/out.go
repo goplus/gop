@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/goplus/gop/cl/internal/spx3"
-	"github.com/goplus/gop/cl/internal/spx3/jwt"
+
+	"github.com/goplus/xgo/cl/internal/spx3"
+	"github.com/goplus/xgo/cl/internal/spx3/jwt"
 )
 
 type Kai struct {

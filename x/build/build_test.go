@@ -27,9 +27,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/parser/fsx"
-	"github.com/goplus/gop/x/build"
+	"github.com/goplus/xgo/cl"
+	"github.com/goplus/xgo/parser/fsx"
+	"github.com/goplus/xgo/x/build"
 )
 
 var (
@@ -43,7 +43,7 @@ func init() {
 	}
 	build.RegisterClassFileType(".tspx", "MyGame", []*build.Class{
 		{Ext: ".tspx", Class: "Sprite"},
-	}, "github.com/goplus/gop/cl/internal/spx")
+	}, "github.com/goplus/xgo/cl/internal/spx")
 	build.RegisterClassFileType("_yap.gox", "App", nil, "github.com/goplus/yap")
 }
 
@@ -375,7 +375,7 @@ func TestSpx(t *testing.T) {
 
 import (
 	"fmt"
-	"github.com/goplus/gop/cl/internal/spx"
+	"github.com/goplus/xgo/cl/internal/spx"
 )
 
 type MyGame struct {
@@ -396,7 +396,7 @@ func main() {
 
 import (
 	"fmt"
-	"github.com/goplus/gop/cl/internal/spx"
+	"github.com/goplus/xgo/cl/internal/spx"
 )
 
 type Cat struct {

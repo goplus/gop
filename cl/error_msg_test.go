@@ -22,7 +22,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/goplus/gop/cl/cltest"
+	"github.com/goplus/xgo/cl/cltest"
 )
 
 func codeErrorTest(t *testing.T, msg, src string) {
@@ -948,11 +948,11 @@ import (
 )
 `)
 
-	codeErrorTest(t, `bar.xgo:3:2: no required module provides package github.com/goplus/gop/fmt2; to add it:
-	go get github.com/goplus/gop/fmt2
+	codeErrorTest(t, `bar.xgo:3:2: no required module provides package github.com/goplus/xgo/fmt2; to add it:
+	go get github.com/goplus/xgo/fmt2
 `, `
 import (
-	"github.com/goplus/gop/fmt2"
+	"github.com/goplus/xgo/fmt2"
 )
 `)
 }

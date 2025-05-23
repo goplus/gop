@@ -24,11 +24,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/goplus/gop/parser"
 	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modfetch"
+	"github.com/goplus/xgo/parser"
 
-	astmod "github.com/goplus/gop/ast/mod"
+	astmod "github.com/goplus/xgo/ast/mod"
 )
 
 // -----------------------------------------------------------------------------

@@ -19,7 +19,7 @@ package ast
 import (
 	"sort"
 
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/token"
 )
 
 // ----------------------------------------------------------------------------

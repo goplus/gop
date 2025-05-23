@@ -21,9 +21,9 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/goplus/gop/tpl/ast"
-	"github.com/goplus/gop/tpl/matcher"
-	"github.com/goplus/gop/tpl/token"
+	"github.com/goplus/xgo/tpl/ast"
+	"github.com/goplus/xgo/tpl/matcher"
+	"github.com/goplus/xgo/tpl/token"
 	"github.com/qiniu/x/errors"
 )
 

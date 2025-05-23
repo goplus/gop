@@ -24,14 +24,14 @@ import (
 	"strings"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/token"
-	"github.com/goplus/gop/x/gocmd"
-	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/mod/env"
 	"github.com/goplus/mod/gopmod"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/cl"
+	"github.com/goplus/xgo/parser"
+	"github.com/goplus/xgo/token"
+	"github.com/goplus/xgo/x/gocmd"
+	"github.com/goplus/xgo/x/gopenv"
 	"github.com/qiniu/x/errors"
 )
 
