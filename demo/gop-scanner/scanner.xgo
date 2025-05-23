@@ -1,4 +1,4 @@
-import "gop/scanner"
+import "xgo/scanner"
 
 s := scanner.new("10 + 3.2", nil, 0)
 _, _, lit1 := s.scan()

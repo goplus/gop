@@ -33,9 +33,9 @@ type Deps struct {
 	HandlePkg func(pkgPath string)
 }
 
-func (p Deps) Load(pkg *ast.Package, withGopStd bool) {
+func (p Deps) Load(pkg *ast.Package, withXgoStd bool) {
 	for _, f := range pkg.Files {
-		p.LoadFile(f, withGopStd)
+		p.LoadFile(f, withXgoStd)
 	}
 	for _, f := range pkg.GoFiles {
 		p.LoadGoFile(f)
@@ -56,20 +56,20 @@ func (p Deps) LoadGoFile(f *goast.File) {
 	}
 }
 
-func (p Deps) LoadFile(f *ast.File, withGopStd bool) {
+func (p Deps) LoadFile(f *ast.File, withXgoStd bool) {
 	for _, imp := range f.Imports {
 		path := imp.Path
 		if path.Kind == token.STRING {
 			if s, err := strconv.Unquote(path.Value); err == nil {
-				p.gopPkgPath(s, withGopStd)
+				p.xgoPkgPath(s, withXgoStd)
 			}
 		}
 	}
 }
 
-func (p Deps) gopPkgPath(s string, withGopStd bool) {
-	if strings.HasPrefix(s, "gop/") {
-		if !withGopStd {
+func (p Deps) xgoPkgPath(s string, withXgoStd bool) {
+	if strings.HasPrefix(s, "xgo/") || strings.HasPrefix(s, "gop/") {
+		if !withXgoStd {
 			return
 		}
 		s = "github.com/goplus/gop/" + s[4:]

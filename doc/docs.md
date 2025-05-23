@@ -1032,7 +1032,7 @@ println -a
 Let's see an example written in XGo:
 
 ```go
-import "gop/ast/goptest"
+import "xgo/ast/goptest"
 
 doc := goptest.New(`... XGo code ...`)!
 
@@ -1044,7 +1044,7 @@ In many languages, there is a concept named `property` who has `get` and `set` m
 Suppose we have `get property`, the above example will be:
 
 ```go
-import "gop/ast/goptest"
+import "xgo/ast/goptest"
 
 doc := goptest.New(`... XGo code ...`)!
 

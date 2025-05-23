@@ -28,9 +28,9 @@ const (
 	pathLibcpp = "github.com/goplus/lib/cpp"
 )
 
-func simplifyGopPackage(pkgPath string) string {
-	if strings.HasPrefix(pkgPath, "gop/") {
-		return "github.com/goplus/" + pkgPath
+func simplifyXgoPackage(pkgPath string) string {
+	if strings.HasPrefix(pkgPath, "xgo/") || strings.HasPrefix(pkgPath, "gop/") {
+		return "github.com/goplus/gop/" + pkgPath[4:]
 	}
 	return pkgPath
 }
@@ -51,7 +51,7 @@ func simplifyPkgPath(pkgPath string) string {
 		if strings.HasPrefix(pkgPath, "cpp/") {
 			return pathLibcpp + pkgPath[3:]
 		}
-		return simplifyGopPackage(pkgPath)
+		return simplifyXgoPackage(pkgPath)
 	}
 }
 
