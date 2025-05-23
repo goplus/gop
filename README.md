@@ -21,6 +21,7 @@
 [![Coverage Status](https://codecov.io/gh/goplus/gop/branch/main/graph/badge.svg)](https://codecov.io/gh/goplus/gop)
 [![GitHub release](https://img.shields.io/github/v/tag/goplus/gop.svg?label=release)](https://github.com/goplus/gop/releases)
 [![Discord](https://img.shields.io/badge/Discord-online-success.svg?logo=discord&logoColor=white)](https://discord.com/invite/mYjWCJDcAr)
+[![Gurubase](https://img.shields.io/badge/Gurubase-Ask%20Go%2B%20Guru-006BFF)](https://gurubase.io/g/goplus)
 
 </div>
 
