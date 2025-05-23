@@ -1,5 +1,5 @@
 name: Feature request
-description: Propose a change to Go+
+description: Propose a change to XGo
 
 body:
   - type: markdown

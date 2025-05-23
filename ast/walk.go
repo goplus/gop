@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ func Walk(v Visitor, node Node) {
 		// nothing to do
 
 	case *BasicLit:
-		if n.Extra != nil { // Go+ extended
+		if n.Extra != nil { // XGo extended
 			for _, part := range n.Extra.Parts {
 				if e, ok := part.(Expr); ok {
 					Walk(v, e)
@@ -385,7 +385,7 @@ func Walk(v Visitor, node Node) {
 			Walk(v, f)
 		}
 
-	// Go+ extended expr and stmt
+	// XGo extended expr and stmt
 	case *SliceLit:
 		walkList(v, n.Elts)
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2023 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ type Package struct {
 	docs gogen.ObjectDocs
 }
 
-// NewPackage creates a Go/Go+ outline package.
+// NewPackage creates a Go/XGo outline package.
 func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (_ Package, err error) {
 	ret, err := cl.NewPackage(pkgPath, pkg, &cl.Config{
 		Fset:           conf.Fset,

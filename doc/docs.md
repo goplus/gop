@@ -1,4 +1,4 @@
-Go+ Quick Start
+XGo Quick Start
 ======
 
 Our vision is to **enable everyone to create production-level applications**.
@@ -12,7 +12,7 @@ Our vision is to **enable everyone to create production-level applications**.
 
 * Derived from Go and easy to build large projects from its good engineering foundation
 
-The Go+ programming language is designed for engineering, STEM education, and data science.
+The XGo programming language is designed for engineering, STEM education, and data science.
 
 * **For engineering**: working in the simplest language that can be mastered by children.
 * **For STEM education**: studying an engineering language that can be used for work in the future.
@@ -66,16 +66,15 @@ all.bat
 Actually, `all.bash` and `all.bat` will use `go run cmd/make.go` underneath.
 
 
-## Running in Go+ playground
+## Running in XGo playground
 
-If you don't want install Go+, you can write your Go+ programs in Go+ playground. This is the fastest way to experience Go+.
+If you don't want install XGo, you can write your XGo programs in XGo playground. This is the fastest way to experience XGo.
 
-* Go+ playground based on Docker: https://play.goplus.org/
-* Go+ playground based on GopherJS: https://jsplay.goplus.org/
+* XGo playground: https://play.xgo.dev/
 
-And you can share your Go+ code with your friends.
+And you can share your XGo code with your friends.
 Here is my `Hello world` program:
-* https://play.goplus.org/p/AAh_gQAKAZR.
+* https://play.xgo.dev/?p=AAh_gQAKAZR.
 
 
 ## Table of Contents
@@ -87,7 +86,7 @@ Here is my `Hello world` program:
 * [Running a project folder](#running-a-project-folder-with-several-files)
 * [Comments](#comments)
 * [Variables](#variables)
-* [Go+ types](#go-types)
+* [XGo types](#xgo-types)
     * [Strings](#strings)
     * [Numbers](#numbers)
     * [Slices](#slices)
@@ -109,9 +108,9 @@ Here is my `Hello world` program:
 
 </td><td valign=top>
 
-* [Go/Go+ hybrid programming](#gogo-hybrid-programming)
-    * [Run Go+ in watch mode](#run-go-in-watch-mode)
-* [Calling C from Go+](#calling-c-from-go)
+* [Go/XGo hybrid programming](#goxgo-hybrid-programming)
+    * [Run XGo in watch mode](#run-xgo-in-watch-mode)
+* [Calling C from XGo](#calling-c-from-xgo)
 * [Data processing](#data-processing)
     * [Rational numbers](#rational-numbers)
     * [List comprehension](#list-comprehension)
@@ -126,18 +125,18 @@ Here is my `Hello world` program:
 
 ## Hello World
 
-Different from the function call style of most languages, Go+ recommends command style code:
+Different from the function call style of most languages, XGo recommends command style code:
 
 ```go
 println "Hello world"
 ```
 
-Save this snippet into a file named `hello.gop`. Now do: `gop run hello.gop`.
+Save this snippet into a file named `hello.gop`. Now do: `xgo run hello.gop`.
 
-Congratulations - you just wrote and executed your first Go+ program!
+Congratulations - you just wrote and executed your first XGo program!
 
-You can compile a program without execution with `gop build hello.gop`.
-See `gop help` for all supported commands.
+You can compile a program without execution with `xgo build hello.gop`.
+See `xgo help` for all supported commands.
 
 [`println`](#println) is one of the few [built-in functions](#builtin-functions).
 It prints the value passed to it to standard output.
@@ -148,7 +147,7 @@ To emphasize our preference for command style, we introduce `echo` as an alias f
 echo "Hello world"
 ```
 
-See https://tutorial.goplus.org/hello-world for more details.
+See https://tutorial.xgo.dev/hello-world for more details.
 
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
@@ -156,10 +155,10 @@ See https://tutorial.goplus.org/hello-world for more details.
 ## Running a project folder with several files
 
 Suppose you have a folder with several .gop files in it, and you want 
-to compile them all into one program. Just do: `gop run .`.
+to compile them all into one program. Just do: `xgo run .`.
 
 Passing parameters also works, so you can do:
-`gop run . --yourparams some_other_stuff`.
+`xgo run . --yourparams some_other_stuff`.
 
 Your program can then use the CLI parameters like this:
 
@@ -216,7 +215,7 @@ age = 21
 ```
 
 This code will not compile, because the variable `age` is not declared.
-All variables need to be declared in Go+.
+All variables need to be declared in XGo.
 
 ```go
 age := 21
@@ -234,7 +233,7 @@ println a, b // 1, 0
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
 
-## Go+ Types
+## XGo Types
 
 ### Primitive types
 
@@ -314,7 +313,7 @@ s += "world"
 println s // Hello world
 ```
 
-Most Go+ operators must have values of the same type on both sides. You cannot concatenate an
+Most XGo operators must have values of the same type on both sides. You cannot concatenate an
 integer to a string:
 
 ```go failcompile
@@ -383,7 +382,7 @@ c := 0o173
 All of these will be assigned the same value, 123. They will all have type
 `int`, no matter what notation you used.
 
-Go+ also supports writing numbers with `_` as separator:
+XGo also supports writing numbers with `_` as separator:
 
 ```go
 num := 1_000_000 // same as 1000000
@@ -414,7 +413,7 @@ f1 := 123e-2 // 1.23
 f2 := 456e+2 // 45600
 ```
 
-Go+ has built-in support for [rational numbers](#rational-numbers):
+XGo has built-in support for [rational numbers](#rational-numbers):
 
 ```go
 a := 1r << 200  // suffix `r` means `rational`
@@ -475,7 +474,7 @@ a := []float64([1, 2, 3]) // []float64
 ```go
 a := {"Hello": 1, "xsw": 3}     // map[string]int
 b := {"Hello": 1, "xsw": 3.4}   // map[string]float64
-c := {"Hello": 1, "xsw": "Go+"} // map[string]any
+c := {"Hello": 1, "xsw": "XGo"} // map[string]any
 d := {}                         // map[string]any
 ```
 
@@ -483,7 +482,7 @@ If a key is not found, a zero value is returned by default:
 
 ```go
 a := {"Hello": 1, "xsw": 3}
-c := {"Hello": 1, "xsw": "Go+"}
+c := {"Hello": 1, "xsw": "XGo"}
 println a["bad_key"] // 0
 println c["bad_key"] // <nil>
 ```
@@ -535,7 +534,7 @@ println x // Hello, world!!!
 
 ### If..else
 
-In Go+, `if` statements are pretty straightforward and similar to most other languages.
+In XGo, `if` statements are pretty straightforward and similar to most other languages.
 Unlike other C-like languages,
 there are no parentheses surrounding the condition and the braces are always required.
 
@@ -556,9 +555,9 @@ if a < b {
 
 ### For loop
 
-Go+ has only one looping keyword: `for`, with several forms.
+XGo has only one looping keyword: `for`, with several forms.
 
-#### `for`/`<-`
+#### `for..in`
 
 This is the most common form. You can use it with a slice, map, numeric range or custom iterators.
 
@@ -566,22 +565,22 @@ For information about creating a custom iterators, see [Custom iterators](#custo
 
 ##### Slice `for`
 
-The `for value <- arr` form is used for going through elements of a slice.
+The `for value in arr` form is used for going through elements of a slice.
 
 ```go
 numbers := [1, 3, 5, 7, 11, 13, 17]
 sum := 0
-for x <- numbers {
+for x in numbers {
     sum += x
 }
 println sum // 57
 ```
 
-If an index is required, an alternative form `for index, value <- arr` can be used.
+If an index is required, an alternative form `for index, value in arr` can be used.
 
 ```go
 names := ["Sam", "Peter"]
-for i, name <- names {
+for i, name in names {
     println i, name
     // 0 Sam
     // 1 Peter
@@ -595,17 +594,17 @@ for i, name <- names {
 
 ```go
 m := {"one": 1, "two": 2}
-for key, val <- m {
+for key, val in m {
     println key, val
     // one 1
     // two 2
 }
-for key, _ <- m {
+for key, _ in m {
     println key
     // one
     // two
 }
-for val <- m {
+for val in m {
     println val
     // 1
     // 2
@@ -728,7 +727,7 @@ The condition can be omitted, resulting in an infinite loop. You can use `break`
 
 ### Error handling
 
-We reinvent the error handling specification in Go+. We call them `ErrWrap expressions`:
+We reinvent the error handling specification in XGo. We call them `ErrWrap expressions`:
 
 ```go
 expr! // panic if err
@@ -987,7 +986,7 @@ type Result struct {
 }
 
 func foo() *Result {
-    return {Text: "Hi, Go+"} // return &Result{Text: "Hi, Go+"}
+    return {Text: "Hi, XGo"} // return &Result{Text: "Hi, XGo"}
 }
 ```
 
@@ -1030,12 +1029,12 @@ println -a
 
 ### Auto property
 
-Let's see an example written in Go+:
+Let's see an example written in XGo:
 
 ```go
 import "gop/ast/goptest"
 
-doc := goptest.New(`... Go+ code ...`)!
+doc := goptest.New(`... XGo code ...`)!
 
 println doc.Any().FuncDecl().Name()
 ```
@@ -1047,19 +1046,19 @@ Suppose we have `get property`, the above example will be:
 ```go
 import "gop/ast/goptest"
 
-doc := goptest.New(`... Go+ code ...`)!
+doc := goptest.New(`... XGo code ...`)!
 
 println doc.any.funcDecl.name
 ```
 
-In Go+, we introduce a concept named `auto property`. It is a `get property`, but is implemented automatically. If we have a method named `Bar()`, then we will have a `get property` named `bar` at the same time.
+In XGo, we introduce a concept named `auto property`. It is a `get property`, but is implemented automatically. If we have a method named `Bar()`, then we will have a `get property` named `bar` at the same time.
 
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
 
-## Go/Go+ hybrid programming
+## Go/XGo hybrid programming
 
-This is an example to show how to mix Go/Go+ code in the same package.
+This is an example to show how to mix Go/XGo code in the same package.
 
 In this example, we have a Go source file named `a.go`:
 
@@ -1074,44 +1073,44 @@ func p(a interface{}) {
 }
 ```
 
-And we have a Go+ source file named `b.gop`:
+And we have a XGo source file named `b.gop`:
 
 ```go
 func sayMix() {
-    println "Mix Go and Go+"
+    println "Mix Go and XGo"
 }
 
 p "world"
 ```
 
-You can see that Go calls a Go+ function named `sayMix`, and Go+ calls a Go function named `p`. As you are used to in Go programming, this kind of circular reference is allowed.
+You can see that Go calls a XGo function named `sayMix`, and XGo calls a Go function named `p`. As you are used to in Go programming, this kind of circular reference is allowed.
 
-Run `gop run .` to see the output of this example:
+Run `xgo run .` to see the output of this example:
 
 ```
-Mix Go and Go+
+Mix Go and XGo
 Hello, world
 ```
 
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
 
-### Run Go+ in watch mode
+### Run XGo in watch mode
 
-The `gop` command can run in watch mode so that everytime a Go+ file is changed it is transpiled to a Go file:
+The `xgo` command can run in watch mode so that everytime a XGo file is changed it is transpiled to a Go file:
 
 ```
-gop watch [-gentest] [dir]
+xgo watch [-gentest] [dir]
 ```
 
-By default `gop watch` does not convert test files (normally ending with `_test.gop`). You can specify `-gentest` flag to force converting all Go+ files.
+By default `xgo watch` does not convert test files (normally ending with `_test.gop`). You can specify `-gentest` flag to force converting all XGo files.
 
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
 
-## Calling C from Go+
+## Calling C from XGo
 
-Here is [an example to show how Go+ interacts with C](https://github.com/goplus/gop/tree/main/demo/_llgo/hellollgo).
+Here is [an example to show how XGo interacts with C](https://github.com/goplus/gop/tree/main/demo/_llgo/hellollgo).
 
 ```go
 import "c"
@@ -1120,7 +1119,7 @@ c.printf c"Hello, llgo!\n"
 c.fprintf c.Stderr, c"Hi, %6.1f\n", 3.14
 ```
 
-Here `import "c"` is used to import libc. In this example we call two C standard functions `printf` and `fprintf`, passing a C variable `stderr` and two C strings in the form of `c"xxx"` (a Go+ syntax to represent C-style strings).
+Here `import "c"` is used to import libc. In this example we call two C standard functions `printf` and `fprintf`, passing a C variable `stderr` and two C strings in the form of `c"xxx"` (a XGo syntax to represent C-style strings).
 
 To run this demo, you need to set the `GOP_GOCMD` environment variable first.
 
@@ -1142,7 +1141,7 @@ Hi,    3.1
 
 ### Rational numbers
 
-We introduce rational numbers as primitive Go+ types. We use suffix `r` to denote rational literals. For example, `1r << 200` means a big int whose value is equal to 2<sup>200</sup>.
+We introduce rational numbers as primitive XGo types. We use suffix `r` to denote rational literals. For example, `1r << 200` means a big int whose value is equal to 2<sup>200</sup>.
 
 ```go
 a := 1r << 200
@@ -1186,7 +1185,7 @@ d := [[a, b] for a <- arr if a < b for b <- arr if b > 2]
 
 x := {x: i for i, x <- [1, 3, 5, 7, 11]}
 y := {x: i for i, x <- [1, 3, 5, 7, 11] if i%2 == 1}
-z := {v: k for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "Go+"} if k > 3}
+z := {v: k for k, v <- {1: "Hello", 3: "Hi", 5: "xsw", 7: "XGo"} if k > 3}
 ```
 
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
@@ -1231,25 +1230,25 @@ hasFailed := {for x <- students if x.score < 60}     // is any student failed?
 
 ## Unix shebang
 
-You can use Go+ programs as shell scripts now. For example:
+You can use XGo programs as shell scripts now. For example:
 
 ```go
-#!/usr/bin/env -S gop run
+#!/usr/bin/env -S xgo run
 
-println "Hello, Go+"
+echo "Hello, XGo"
 
-println 1r << 129
-println 1/3r + 2/7r*2
+echo 1r << 129
+echo 1/3r + 2/7r*2
 
 arr := [1, 3, 5, 7, 11, 13, 17, 19]
-println arr
-println [x*x for x <- arr, x > 3]
+echo arr
+echo [x*x for x <- arr, x > 3]
 
-m := {"Hi": 1, "Go+": 2}
-println m
-println {v: k for k, v <- m}
-println [k for k, _ <- m]
-println [v for v <- m]
+m := {"Hi": 1, "XGo": 2}
+echo m
+echo {v: k for k, v <- m}
+echo [k for k, _ <- m]
+echo [v for v <- m]
 ```
 
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
@@ -1259,7 +1258,7 @@ println [v for v <- m]
 
 All Go features will be supported (including partially support `cgo`, see [below](#bytecode-vs-go-code)).
 
-**All Go packages (even these packages use `cgo`) can be imported by Go+.**
+**All Go packages (even these packages use `cgo`) can be imported by XGo.**
 
 ```coffee
 import (
@@ -1271,11 +1270,11 @@ x := strings.NewReplacer("?", "!").Replace("hello, world???")
 fmt.Println "x:", x
 ```
 
-**And all Go+ packages can also be imported in Go programs. What you need to do is just using `gop` command instead of `go`.**
+**And all XGo packages can also be imported in Go programs. What you need to do is just using `gop` command instead of `go`.**
 
 First, let's make a directory named `14-Using-goplus-in-Go`.
 
-Then write a Go+ package named [foo](https://github.com/goplus/tutorial/tree/main/14-Using-goplus-in-Go/foo) in it:
+Then write a XGo package named [foo](https://github.com/goplus/tutorial/tree/main/14-Using-goplus-in-Go/foo) in it:
 
 ```go
 package foo
@@ -1305,7 +1304,7 @@ func main() {
 How to build this example? You can use:
 
 ```bash
-gop install -v ./...
+xgo install -v ./...
 ```
 
 Go [github.com/goplus/tutorial/14-Using-goplus-in-Go](https://github.com/goplus/tutorial/tree/main/14-Using-goplus-in-Go) to get the source code.
@@ -1315,24 +1314,24 @@ Go [github.com/goplus/tutorial/14-Using-goplus-in-Go](https://github.com/goplus/
 
 ## Bytecode vs. Go code
 
-Go+ supports bytecode backend and Go code generation.
+XGo supports bytecode backend and Go code generation.
 
-When we use `gop` command, it generates Go code to covert Go+ package into Go packages.
+When we use `xgo` command, it generates Go code to covert XGo package into Go packages.
 
 ```bash
-gop run     # Run a Go+ program
-gop install # Build Go+ files and install target to GOBIN
-gop build   # Build Go+ files
-gop test    # Test Go+ packages
-gop fmt     # Format Go+ packages
-gop clean   # Clean all Go+ auto generated files
-gop go      # Convert Go+ packages into Go packages
+xgo run     # Run a XGo program
+xgo install # Build XGo files and install target to GOBIN
+xgo build   # Build XGo files
+xgo test    # Test XGo packages
+xgo fmt     # Format XGo packages
+xgo clean   # Clean all XGo auto generated files
+xgo go      # Convert XGo packages into Go packages
 ```
 
 When we use [`igop`](https://github.com/goplus/igop) command, it generates bytecode to execute.
 
 ```bash
-igop  # Run a Go+ program
+igop  # Run a XGo program
 ```
 
-In bytecode mode, Go+ doesn't support `cgo`. However, in Go-code-generation mode, Go+ fully supports `cgo`.
+In bytecode mode, XGo doesn't support `cgo`. However, in Go-code-generation mode, XGo fully supports `cgo`.

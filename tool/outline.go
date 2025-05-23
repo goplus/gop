@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2023 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ func Outline(dir string, conf *Config) (out outline.Package, err error) {
 			err = fmt.Errorf("%w: %s, %s", ErrMultiPackges, name, out.Pkg().Name())
 			return
 		}
-		if len(pkg.Files)+len(pkg.GoFiles) == 0 { // no Go/Go+ source files
+		if len(pkg.Files)+len(pkg.GoFiles) == 0 { // no Go/XGo source files
 			break
 		}
 		relPart, _ := filepath.Rel(mod.Root(), dir)

@@ -9,7 +9,7 @@ type Result struct {
 
 func foo(conf *Config) *Result {
 	println("conf:", *conf)
-	return {Text: "Hello, Go+"}
+	return {Text: "Hello, XGo"}
 }
 
 ret := foo({Dir: "/foo/bar", Level: 1})

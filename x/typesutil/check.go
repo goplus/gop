@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2023 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ type Config struct {
 	// If WorkingDir is not set, os.Getwd() is used.
 	WorkingDir string
 
-	// Mod represents a Go+ module (optional).
+	// Mod represents a XGo module (optional).
 	Mod *gopmod.Module
 
 	// If IgnoreFuncBodies is set, skip compiling function bodies (optional).

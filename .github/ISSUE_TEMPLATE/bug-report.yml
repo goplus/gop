@@ -34,7 +34,7 @@ body:
         $ gop run ./sample.gop
         // output
         ```
-      placeholder: $ gop run ./sample.gop
+      placeholder: $ xgo run ./sample.gop
       render: console
     validations:
       required: true

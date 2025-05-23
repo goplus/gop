@@ -1,5 +1,5 @@
 func sayMix() {
-	println "Mix Go and Go+"
+	println "Mix Go and XGo"
 }
 
 p "world"

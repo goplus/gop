@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2022 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,12 +48,12 @@ const (
 
 // -----------------------------------------------------------------------------
 
-// GenGo generates gop_autogen.go for a Go+ package directory.
+// GenGo generates gop_autogen.go for a XGo package directory.
 func GenGo(dir string, conf *Config, genTestPkg bool) (string, bool, error) {
 	return GenGoEx(dir, conf, genTestPkg, 0)
 }
 
-// GenGoEx generates gop_autogen.go for a Go+ package directory.
+// GenGoEx generates gop_autogen.go for a XGo package directory.
 func GenGoEx(dir string, conf *Config, genTestPkg bool, flags GenFlags) (string, bool, error) {
 	recursively := strings.HasSuffix(dir, "/...")
 	if recursively {
@@ -168,7 +168,7 @@ func genGoSingleFile(file string, conf *Config, flags GenFlags) (err error) {
 func genGoIn(dir string, conf *Config, genTestPkg bool, flags GenFlags, gen ...*bool) (err error) {
 	out, test, err := LoadDir(dir, conf, genTestPkg, (flags&GenFlagPrompt) != 0)
 	if err != nil {
-		if NotFound(err) { // no Go+ source files
+		if NotFound(err) { // no XGo source files
 			return nil
 		}
 		return errors.NewWith(err, `LoadDir(dir, conf, genTestPkg)`, -5, "tool.LoadDir", dir, conf, genTestPkg)
@@ -211,7 +211,7 @@ const (
 	modReadonly = 0555
 )
 
-// GenGoPkgPath generates gop_autogen.go for a Go+ package.
+// GenGoPkgPath generates gop_autogen.go for a XGo package.
 func GenGoPkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (localDir string, recursively bool, err error) {
 	return GenGoPkgPathEx(workDir, pkgPath, conf, allowExtern, 0)
 }
@@ -229,7 +229,7 @@ func remotePkgPath(pkgPath string, conf *Config, recursively bool, flags GenFlag
 	return
 }
 
-// GenGoPkgPathEx generates gop_autogen.go for a Go+ package.
+// GenGoPkgPathEx generates gop_autogen.go for a XGo package.
 func GenGoPkgPathEx(workDir, pkgPath string, conf *Config, allowExtern bool, flags GenFlags) (localDir string, recursively bool, err error) {
 	recursively = strings.HasSuffix(pkgPath, "/...")
 	if recursively {
@@ -271,7 +271,7 @@ func remotePkgPathDo(pkgPath string, doSth func(pkgDir, modDir string), onErr fu
 
 // -----------------------------------------------------------------------------
 
-// GenGoFiles generates gop_autogen.go for specified Go+ files.
+// GenGoFiles generates gop_autogen.go for specified XGo files.
 func GenGoFiles(autogen string, files []string, conf *Config) (outFiles []string, err error) {
 	if conf == nil {
 		conf = new(Config)

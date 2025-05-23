@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -312,7 +312,7 @@ func init() {
 func TestSlogan(t *testing.T) {
 	gopClTest(t, `
 fields := ["engineering", "STEM education", "data science"]
-println "The Go+ Language for", fields.join(", ")
+println "The XGo Language for", fields.join(", ")
 `, `package main
 
 import (
@@ -322,7 +322,7 @@ import (
 
 func main() {
 	fields := []string{"engineering", "STEM education", "data science"}
-	fmt.Println("The Go+ Language for", strings.Join(fields, ", "))
+	fmt.Println("The XGo Language for", strings.Join(fields, ", "))
 }
 `)
 }
@@ -1739,16 +1739,16 @@ func main() {
 func TestCompositeLit(t *testing.T) {
 	gopClTest(t, `
 x := []float64{1, 3.4, 5}
-y := map[string]int{"Hello": 1, "Go+": 5}
+y := map[string]int{"Hello": 1, "XGo": 5}
 z := [...]int{1, 3, 5}
-a := {"Hello": 1, "Go+": 5.1}
+a := {"Hello": 1, "XGo": 5.1}
 `, `package main
 
 func main() {
 	x := []float64{1, 3.4, 5}
-	y := map[string]int{"Hello": 1, "Go+": 5}
+	y := map[string]int{"Hello": 1, "XGo": 5}
 	z := [...]int{1, 3, 5}
-	a := map[string]float64{"Hello": 1, "Go+": 5.1}
+	a := map[string]float64{"Hello": 1, "XGo": 5.1}
 }
 `)
 }
@@ -2016,14 +2016,14 @@ func main() {
 func TestDeferGo(t *testing.T) {
 	gopClTest(t, `
 go println("Hi")
-defer println("Go+")
+defer println("XGo")
 `, `package main
 
 import "fmt"
 
 func main() {
 	go fmt.Println("Hi")
-	defer fmt.Println("Go+")
+	defer fmt.Println("XGo")
 }
 `)
 }
@@ -2252,7 +2252,7 @@ type foo struct {
 }
 
 func newFoo() *foo {
-	return &foo{key: [3, 7], val: ["Hi", "Go+"]}
+	return &foo{key: [3, 7], val: ["Hi", "XGo"]}
 }
 
 func (p *foo) Gop_Enum() *fooIter {
@@ -2286,7 +2286,7 @@ func (p *foo) Gop_Enum() *fooIter {
 	return &fooIter{data: p}
 }
 func newFoo() *foo {
-	return &foo{key: []int{3, 7}, val: []string{"Hi", "Go+"}}
+	return &foo{key: []int{3, 7}, val: []string{"Hi", "XGo"}}
 }
 func main() {
 	for _gop_it := newFoo().Gop_Enum(); ; {
@@ -2349,13 +2349,13 @@ func main() {
 
 func TestMapComprehensionCond(t *testing.T) {
 	gopClTest(t, `
-z := {v: k for k, v <- {"Hello": 1, "Hi": 3, "xsw": 5, "Go+": 7}, v > 3}
+z := {v: k for k, v <- {"Hello": 1, "Hi": 3, "xsw": 5, "XGo": 7}, v > 3}
 `, `package main
 
 func main() {
 	z := func() (_gop_ret map[int]string) {
 		_gop_ret = map[int]string{}
-		for k, v := range map[string]int{"Hello": 1, "Hi": 3, "xsw": 5, "Go+": 7} {
+		for k, v := range map[string]int{"Hello": 1, "Hi": 3, "xsw": 5, "XGo": 7} {
 			if v > 3 {
 				_gop_ret[v] = k
 			}
@@ -2368,13 +2368,13 @@ func main() {
 
 func TestMapComprehensionCond2(t *testing.T) {
 	gopClTest(t, `
-z := {t: k for k, v <- {"Hello": 1, "Hi": 3, "xsw": 5, "Go+": 7}, t := v; t > 3}
+z := {t: k for k, v <- {"Hello": 1, "Hi": 3, "xsw": 5, "XGo": 7}, t := v; t > 3}
 `, `package main
 
 func main() {
 	z := func() (_gop_ret map[int]string) {
 		_gop_ret = map[int]string{}
-		for k, v := range map[string]int{"Hello": 1, "Hi": 3, "xsw": 5, "Go+": 7} {
+		for k, v := range map[string]int{"Hello": 1, "Hi": 3, "xsw": 5, "XGo": 7} {
 			if t := v; t > 3 {
 				_gop_ret[t] = k
 			}
@@ -2511,7 +2511,7 @@ a := [1, 3, 5, 7, 9]
 b := a[:3]
 c := a[1:]
 d := a[1:2:3]
-e := "Hello, Go+"[7:]
+e := "Hello, XGo"[7:]
 `, `package main
 
 func main() {
@@ -2519,22 +2519,22 @@ func main() {
 	b := a[:3]
 	c := a[1:]
 	d := a[1:2:3]
-	e := "Hello, Go+"[7:]
+	e := "Hello, XGo"[7:]
 }
 `)
 }
 
 func TestIndexGetTwoValue(t *testing.T) {
 	gopClTest(t, `
-a := {"Hello": 1, "Hi": 3, "xsw": 5, "Go+": 7}
+a := {"Hello": 1, "Hi": 3, "xsw": 5, "XGo": 7}
 x, ok := a["Hi"]
-y := a["Go+"]
+y := a["XGo"]
 `, `package main
 
 func main() {
-	a := map[string]int{"Hello": 1, "Hi": 3, "xsw": 5, "Go+": 7}
+	a := map[string]int{"Hello": 1, "Hi": 3, "xsw": 5, "XGo": 7}
 	x, ok := a["Hi"]
-	y := a["Go+"]
+	y := a["XGo"]
 }
 `)
 }
@@ -2792,14 +2792,14 @@ func main() {
 
 func TestAnonymousImport(t *testing.T) {
 	gopClTest(t, `println("Hello")
-printf("Hello Go+\n")
+printf("Hello XGo\n")
 `, `package main
 
 import "fmt"
 
 func main() {
 	fmt.Println("Hello")
-	fmt.Printf("Hello Go+\n")
+	fmt.Printf("Hello XGo\n")
 }
 `)
 }
@@ -3338,7 +3338,7 @@ func TestFuncAsParam(t *testing.T) {
 	gopClTest(t, `import "fmt"
 
 func bar(foo func(string, ...interface{}) (int, error)) {
-	foo("Hello, %v!\n", "Go+")
+	foo("Hello, %v!\n", "XGo")
 }
 
 bar(fmt.Printf)
@@ -3347,7 +3347,7 @@ bar(fmt.Printf)
 import "fmt"
 
 func bar(foo func(string, ...interface{}) (int, error)) {
-	foo("Hello, %v!\n", "Go+")
+	foo("Hello, %v!\n", "XGo")
 }
 func main() {
 	bar(fmt.Printf)
@@ -3371,12 +3371,12 @@ func printf(format string, args ...interface{}) (n int, err error) {
 }
 
 func bar(foo func(string, ...interface{}) (int, error)) {
-	foo("Hello, %v!\n", "Go+")
+	foo("Hello, %v!\n", "XGo")
 }
 
 bar(printf)
 fmt.Println(foo("Hello, world???"))
-fmt.Println(printf("Hello, %v\n", "Go+"))
+fmt.Println(printf("Hello, %v\n", "XGo"))
 `, `package main
 
 import (
@@ -3392,12 +3392,12 @@ func printf(format string, args ...interface{}) (n int, err error) {
 	return
 }
 func bar(foo func(string, ...interface{}) (int, error)) {
-	foo("Hello, %v!\n", "Go+")
+	foo("Hello, %v!\n", "XGo")
 }
 func main() {
 	bar(printf)
 	fmt.Println(foo("Hello, world???"))
-	fmt.Println(printf("Hello, %v\n", "Go+"))
+	fmt.Println(printf("Hello, %v\n", "XGo"))
 }
 `)
 }

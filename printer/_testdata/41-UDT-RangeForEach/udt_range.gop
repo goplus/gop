@@ -3,7 +3,7 @@ type foo struct {
 
 func (p *foo) Gop_Enum(proc func(key int, val string)) {
 	proc(3, "Hi")
-	proc(7, "Go+")
+	proc(7, "XGo")
 }
 
 for k, v in new(foo) {

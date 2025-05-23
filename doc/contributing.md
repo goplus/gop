@@ -1,21 +1,21 @@
 # Contributing Guidelines
 
-Thank you for your interest in contributing to the Go+ project! Your efforts
+Thank you for your interest in contributing to the XGo project! Your efforts
 help us build and improve this powerful language.
 
-Please be aware that participation in the Go+ project requires adherence to our
+Please be aware that participation in the XGo project requires adherence to our
 established [code of conduct](https://github.com/goplus/gop/blob/main/CODE_OF_CONDUCT.md). Your involvement signifies your agreement to comply
 with the guidelines set forth within these terms. We appreciate your cooperation
 in fostering a respectful and inclusive environment for all contributors.
 
 To ensure a smooth contribution process, this guide outlines the steps and best
-practices for contributing to Go+. It's assumed that you have a foundational
-knowledge of Go+ and are comfortable using Git and GitHub for version control
+practices for contributing to XGo. It's assumed that you have a foundational
+knowledge of XGo and are comfortable using Git and GitHub for version control
 and collaboration.
 
 ## Before contributing code
 
-The Go+ project welcomes code contributions. However, to ensure coordination,
+The XGo project welcomes code contributions. However, to ensure coordination,
 please discuss any significant changes beforehand. It's recommended to signal
 your intent to contribute via the issue tracker, either by filing a new issue or
 claiming an existing one.
@@ -140,7 +140,7 @@ git push origin -d typo
 
 ## Commit messages
 
-Commit messages in Go+ adhere to specific conventions outlined in this section.
+Commit messages in XGo adhere to specific conventions outlined in this section.
 
 A well-crafted commit message looks like this:
 
@@ -173,10 +173,10 @@ Signed-off-by: John Doe <john@example.com>
 The first line of a commit message typically serves as a concise one-line
 summary, beginning with the primary component it impacts (e.g., a specific
 package). This summary should ideally be brief, with many Git interfaces
-favoring a limit of approximately 72 characters. While Go+ is not strict on the
+favoring a limit of approximately 72 characters. While XGo is not strict on the
 length limit, it's a good guideline to follow.
 
-Think of the summary as finishing the sentence "This commit modifies Go+ to
+Think of the summary as finishing the sentence "This commit modifies XGo to
 _____." As such, it does not begin with a capital letter, form a complete
 sentence, or diverge from succinctly stating the commit's effect.
 

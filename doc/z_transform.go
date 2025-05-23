@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2024 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -246,7 +246,7 @@ func transformConsts(ctx *transformCtx, in []*doc.Value) {
 	}
 }
 
-// Transform converts a Go doc package to a Go+ doc package.
+// Transform converts a Go doc package to a XGo doc package.
 func Transform(in *doc.Package) *doc.Package {
 	if isGopPackage(in) {
 		ctx := newCtx(in)

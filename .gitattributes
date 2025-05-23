@@ -1,6 +1,7 @@
 *.expect text eol=lf
 *.golden text eol=lf
 
+*.xgo text eol=lf
 *.gop text eol=lf
 *.go text eol=lf
 *.gox text eol=lf

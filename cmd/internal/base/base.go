@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ type Command struct {
 // Gop command
 var Gop = &Command{
 	UsageLine: "gop",
-	Short:     `Gop is a tool for managing Go+ source code.`,
+	Short:     `Gop is a tool for managing XGo source code.`,
 	// Commands initialized in package main
 }
 

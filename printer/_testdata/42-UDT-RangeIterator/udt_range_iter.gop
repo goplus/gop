@@ -17,7 +17,7 @@ type foo struct {
 }
 
 func newFoo() *foo {
-	return &foo{key: [3, 7], val: ["Hi", "Go+"]}
+	return &foo{key: [3, 7], val: ["Hi", "XGo"]}
 }
 
 func (p *foo) Gop_Enum() *fooIter {

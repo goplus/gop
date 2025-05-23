@@ -28,4 +28,4 @@ println("g-x:", g())
 println("h-x:", h())
 
 defer println(println("Hello, defer"))
-println("Hello, Go+")
+println("Hello, XGo")
