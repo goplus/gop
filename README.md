@@ -1,7 +1,7 @@
 <div align="center">
 <p></p>
 <p>
-    <img width="80" src="https://goplus.org/favicon.svg">
+    <img width="80" src="https://xgo.dev/favicon.svg">
 </p>
 <h1>The XGo Programming Language</h1>
 
@@ -23,6 +23,12 @@
 [![Discord](https://img.shields.io/badge/Discord-online-success.svg?logo=discord&logoColor=white)](https://discord.com/invite/mYjWCJDcAr)
 
 </div>
+
+XGo is the first AI-native language that integrates software engineering into a unified whole.
+
+```
+XGo := C * Go * Python * JavaScript + Scratch
+```
 
 Our vision is to **enable everyone to become a builder of the world**.
 
@@ -49,7 +55,7 @@ For more details, see [Quick Start](doc/docs.md).
 * Approaching natural language expression and intuitive (see [How XGo simplifies Go's expressions](#how-xgo-simplifies-gos-expressions)).
 * Smallest but Turing-complete syntax set in best practices (see [The XGo Mini Specification](doc/spec-mini.md)).
 * Fully compatible with [Go](https://github.com/golang/go) and can mix Go/XGo code in the same package (see [The XGo Full Specification](doc/spec.md) and [Go/XGo Hybrid Programming](doc/docs.md#gogo-hybrid-programming)).
-* Integrating with the C ecosystem including Python and providing limitless possibilities based on [LLGo](https://github.com/goplus/llgo) (see [Importing C/C++ and Python libraries](#importing-cc-and-python-libraries)).
+* Integrating with the C ecosystem including Python/JavaScript and providing limitless possibilities based on [LLGo](https://github.com/goplus/llgo) (see [Importing C/C++ and Python libraries](#importing-cc-and-python-libraries)).
 * Does not support DSL (Domain-Specific Languages), but supports SDF (Specific Domain Friendliness) (see [XGo Classfiles](#xgo-classfiles) and [Domain Text Literal](doc/domian-text-lit.md)).
 
 
