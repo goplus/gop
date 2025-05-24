@@ -61,7 +61,7 @@ func getGopRoot() string {
 	pwd, _ := os.Getwd()
 
 	pathsToCheck := []Path{
-		{path: "cmd/gop", isDir: true},
+		{path: "cmd/xgo", isDir: true},
 		{path: "builtin", isDir: true},
 		{path: "go.mod", isDir: false},
 		{path: "go.sum", isDir: false},
