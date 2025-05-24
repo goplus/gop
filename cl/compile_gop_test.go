@@ -1066,7 +1066,7 @@ for line <- open("foo.txt")! {
 import (
 	"fmt"
 	"github.com/qiniu/x/errors"
-	"github.com/qiniu/x/gop/osx"
+	"github.com/qiniu/x/osx"
 	"os"
 )
 

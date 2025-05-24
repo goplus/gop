@@ -987,7 +987,7 @@ func test() {
 }
 
 func TestErrInt128(t *testing.T) {
-	codeErrorTest(t, `bar.xgo:2:16: cannot use 1<<127 (type untyped int) as type github.com/qiniu/x/gop/ng.Int128 in assignment`, `
+	codeErrorTest(t, `bar.xgo:2:16: cannot use 1<<127 (type untyped int) as type github.com/qiniu/x/xgo/ng.Int128 in assignment`, `
 var a int128 = 1<<127
 `)
 	codeErrorTest(t, `bar.xgo:2:13: cannot convert 1<<127 (untyped int constant 170141183460469231731687303715884105728) to type Int128`, `
@@ -1003,13 +1003,13 @@ a := int128(b)
 }
 
 func TestErrUint128(t *testing.T) {
-	codeErrorTest(t, `bar.xgo:2:17: cannot use 1<<128 (type untyped int) as type github.com/qiniu/x/gop/ng.Uint128 in assignment`, `
+	codeErrorTest(t, `bar.xgo:2:17: cannot use 1<<128 (type untyped int) as type github.com/qiniu/x/xgo/ng.Uint128 in assignment`, `
 var a uint128 = 1<<128
 `)
 	codeErrorTest(t, `bar.xgo:2:14: cannot convert 1<<128 (untyped int constant 340282366920938463463374607431768211456) to type Uint128`, `
 a := uint128(1<<128)
 `)
-	codeErrorTest(t, `bar.xgo:2:17: cannot use -1 (type untyped int) as type github.com/qiniu/x/gop/ng.Uint128 in assignment`, `
+	codeErrorTest(t, `bar.xgo:2:17: cannot use -1 (type untyped int) as type github.com/qiniu/x/xgo/ng.Uint128 in assignment`, `
 var a uint128 = -1
 `)
 	codeErrorTest(t, `bar.xgo:2:14: cannot convert -1 (untyped int constant -1) to type Uint128`, `
