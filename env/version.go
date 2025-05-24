@@ -53,7 +53,7 @@ func initEnvByGop() {
 		if ret, err := gopEnv(); err == nil {
 			parts := strings.SplitN(strings.TrimRight(ret, "\n"), "\n", 3)
 			if len(parts) == 3 {
-				buildVersion, buildDate, defaultGopRoot = parts[0], parts[1], parts[2]
+				buildVersion, buildDate, defaultXGoRoot = parts[0], parts[1], parts[2]
 			}
 		}
 	}

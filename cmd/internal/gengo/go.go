@@ -27,7 +27,7 @@ import (
 	"github.com/goplus/xgo/cl"
 	"github.com/goplus/xgo/cmd/internal/base"
 	"github.com/goplus/xgo/tool"
-	"github.com/goplus/xgo/x/gopprojs"
+	"github.com/goplus/xgo/x/xgoprojs"
 	"github.com/qiniu/x/errors"
 )
 
@@ -61,9 +61,9 @@ func runCmd(cmd *base.Command, args []string) {
 		pattern = []string{"."}
 	}
 
-	projs, err := gopprojs.ParseAll(pattern...)
+	projs, err := xgoprojs.ParseAll(pattern...)
 	if err != nil {
-		log.Panicln("gopprojs.ParseAll:", err)
+		log.Panicln("xgoprojs.ParseAll:", err)
 	}
 
 	if *flagVerbose {
@@ -90,11 +90,11 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 	for _, proj := range projs {
 		switch v := proj.(type) {
-		case *gopprojs.DirProj:
+		case *xgoprojs.DirProj:
 			_, _, err = tool.GenGoEx(v.Dir, conf, true, flags)
-		case *gopprojs.PkgPathProj:
+		case *xgoprojs.PkgPathProj:
 			_, _, err = tool.GenGoPkgPathEx("", v.Path, conf, true, flags)
-		case *gopprojs.FilesProj:
+		case *xgoprojs.FilesProj:
 			_, err = tool.GenGoFiles("", v.Files, conf)
 		default:
 			log.Panicln("`gop go` doesn't support", reflect.TypeOf(v))

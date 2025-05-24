@@ -22,7 +22,7 @@ import (
 	"os/exec"
 
 	"github.com/goplus/mod/env"
-	"github.com/goplus/xgo/x/gopenv"
+	"github.com/goplus/xgo/x/xgoenv"
 )
 
 type XGoEnv = env.XGo
@@ -70,7 +70,7 @@ func runCmd(cmd *exec.Cmd) (err error) {
 const (
 	ldFlagVersion   = "-X \"github.com/goplus/xgo/env.buildVersion=%s\""
 	ldFlagBuildDate = "-X \"github.com/goplus/xgo/env.buildDate=%s\""
-	ldFlagGopRoot   = "-X \"github.com/goplus/xgo/env.defaultGopRoot=%s\""
+	ldFlagGopRoot   = "-X \"github.com/goplus/xgo/env.defaultXGoRoot=%s\""
 )
 
 const (
@@ -83,7 +83,7 @@ func loadFlags(env *XGoEnv) string {
 
 func appendLdflags(exargs []string, env *XGoEnv) []string {
 	if env == nil {
-		env = gopenv.Get()
+		env = xgoenv.Get()
 	}
 	return append(exargs, "-ldflags", loadFlags(env))
 }

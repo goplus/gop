@@ -68,15 +68,15 @@ func writeDummyFile(path string) {
 func cleanup() {
 	os.Setenv("XGOROOT", "")
 	os.Setenv(envHOME, "")
-	defaultGopRoot = ""
+	defaultXGoRoot = ""
 }
 
 func TestBasic(t *testing.T) {
-	defaultGopRoot = ".."
+	defaultXGoRoot = ".."
 	if XGOROOT() == "" {
 		t.Fatal("TestBasic failed")
 	}
-	defaultGopRoot = ""
+	defaultXGoRoot = ""
 }
 
 func TestFindGoModFileInGoModDir(t *testing.T) {
@@ -182,29 +182,29 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 		findGoModFile(src)
 	})
 
-	t.Run("set defaultGopRoot to a valid xgoroot path", func(tt *testing.T) {
+	t.Run("set defaultXGoRoot to a valid xgoroot path", func(tt *testing.T) {
 		tt.Cleanup(cleanupAll)
 		_, src, xgoRoot := makeTestDir(tt)
 
-		defaultGopRoot = xgoRoot
+		defaultXGoRoot = xgoRoot
 		modfile, noCacheFile, err := findGoModFile(src)
 
 		if err != nil || modfile != filepath.Join(xgoRoot, "go.mod") || !noCacheFile {
-			tt.Fatal("should found go.mod in the dir of defaultGopRoot, got:", modfile, noCacheFile, err)
+			tt.Fatal("should found go.mod in the dir of defaultXGoRoot, got:", modfile, noCacheFile, err)
 		}
 	})
 
-	t.Run("set defaultGopRoot to an invalid path", func(tt *testing.T) {
+	t.Run("set defaultXGoRoot to an invalid path", func(tt *testing.T) {
 		tt.Cleanup(cleanupAll)
 		root, src, _ := makeTestDir(tt)
 		invalidXgoRoot := filepath.Join(root, "invalid_xgoroot")
 
-		defaultGopRoot = invalidXgoRoot
+		defaultXGoRoot = invalidXgoRoot
 		{
 			modfile, noCacheFile, err := findGoModFile(src)
 
 			if err == nil || noCacheFile || modfile != "" {
-				tt.Fatal("should not found go.mod when defaultGopRoot isn't exists, got:", modfile, noCacheFile, err)
+				tt.Fatal("should not found go.mod when defaultXGoRoot isn't exists, got:", modfile, noCacheFile, err)
 			}
 		}
 
@@ -213,7 +213,7 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 			modfile, noCacheFile, err := findGoModFile(src)
 
 			if err == nil || noCacheFile || modfile != "" {
-				tt.Fatal("should not found go.mod when defaultGopRoot isn't an valid gop root dir, got:", modfile, noCacheFile, err)
+				tt.Fatal("should not found go.mod when defaultXGoRoot isn't an valid gop root dir, got:", modfile, noCacheFile, err)
 			}
 		}
 	})
@@ -269,11 +269,11 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 			}
 		})
 
-		tt.Run("set defaultGopRoot to a valid xgo root dir", func(tt *testing.T) {
+		tt.Run("set defaultXGoRoot to a valid xgo root dir", func(tt *testing.T) {
 			newXgoRoot := filepath.Join(root, "new_xgo_root")
 			makeValidXgoRoot(newXgoRoot)
 
-			defaultGopRoot = newXgoRoot
+			defaultXGoRoot = newXgoRoot
 			modfile, noCacheFile, err := findGoModFile(src)
 
 			if err != nil || !noCacheFile || modfile != filepath.Join(newXgoRoot, "go.mod") {

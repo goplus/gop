@@ -30,8 +30,8 @@ import (
 	"github.com/goplus/xgo/cl/outline"
 	"github.com/goplus/xgo/cmd/internal/base"
 	"github.com/goplus/xgo/tool"
-	"github.com/goplus/xgo/x/gopenv"
-	"github.com/goplus/xgo/x/gopprojs"
+	"github.com/goplus/xgo/x/xgoenv"
+	"github.com/goplus/xgo/x/xgoprojs"
 )
 
 // -----------------------------------------------------------------------------
@@ -64,9 +64,9 @@ func runCmd(cmd *base.Command, args []string) {
 		pattern = []string{"."}
 	}
 
-	proj, _, err := gopprojs.ParseOne(pattern...)
+	proj, _, err := xgoprojs.ParseOne(pattern...)
 	if err != nil {
-		log.Panicln("gopprojs.ParseOne:", err)
+		log.Panicln("xgoprojs.ParseOne:", err)
 	}
 
 	if *debug {
@@ -75,20 +75,20 @@ func runCmd(cmd *base.Command, args []string) {
 		cl.SetDisableRecover(true)
 	}
 
-	xgo := gopenv.Get()
+	xgo := xgoenv.Get()
 	conf := &tool.Config{XGo: xgo}
 	outlinePkg(proj, conf)
 }
 
-func outlinePkg(proj gopprojs.Proj, conf *tool.Config) {
+func outlinePkg(proj xgoprojs.Proj, conf *tool.Config) {
 	var obj string
 	var out outline.Package
 	var err error
 	switch v := proj.(type) {
-	case *gopprojs.DirProj:
+	case *xgoprojs.DirProj:
 		obj = v.Dir
 		out, err = tool.Outline(obj, conf)
-	case *gopprojs.PkgPathProj:
+	case *xgoprojs.PkgPathProj:
 		obj = v.Path
 		out, err = tool.OutlinePkgPath("", obj, conf, true)
 	default:

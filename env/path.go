@@ -25,7 +25,7 @@ import (
 
 var (
 	// This is set by the linker.
-	defaultGopRoot string
+	defaultXGoRoot string
 )
 
 // XGOROOT returns the root of the XGo tree. It uses the GOPROOT environment variable,
@@ -62,9 +62,9 @@ func findXgoRoot() (string, error) {
 		}
 	}
 
-	// check defaultGopRoot, if it is valid, use it
-	if defaultGopRoot != "" && isValidXgoRoot(defaultGopRoot) {
-		return defaultGopRoot, nil
+	// check defaultXGoRoot, if it is valid, use it
+	if defaultXGoRoot != "" && isValidXgoRoot(defaultXGoRoot) {
+		return defaultXGoRoot, nil
 	}
 
 	// Compatible with old XGOROOT

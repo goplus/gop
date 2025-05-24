@@ -29,7 +29,7 @@ import (
 	"github.com/goplus/xgo/cmd/internal/base"
 	"github.com/goplus/xgo/tool"
 	"github.com/goplus/xgo/x/gocmd"
-	"github.com/goplus/xgo/x/gopprojs"
+	"github.com/goplus/xgo/x/xgoprojs"
 )
 
 // gop build
@@ -66,7 +66,7 @@ func runCmd(cmd *base.Command, args []string) {
 		args = []string{"."}
 	}
 
-	proj, args, err := gopprojs.ParseOne(args...)
+	proj, args, err := xgoprojs.ParseOne(args...)
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -92,18 +92,18 @@ func runCmd(cmd *base.Command, args []string) {
 	build(proj, conf, confCmd)
 }
 
-func build(proj gopprojs.Proj, conf *tool.Config, build *gocmd.BuildConfig) {
+func build(proj xgoprojs.Proj, conf *tool.Config, build *gocmd.BuildConfig) {
 	const flags = tool.GenFlagPrompt
 	var obj string
 	var err error
 	switch v := proj.(type) {
-	case *gopprojs.DirProj:
+	case *xgoprojs.DirProj:
 		obj = v.Dir
 		err = tool.BuildDir(obj, conf, build, flags)
-	case *gopprojs.PkgPathProj:
+	case *xgoprojs.PkgPathProj:
 		obj = v.Path
 		err = tool.BuildPkgPath("", v.Path, conf, build, flags)
-	case *gopprojs.FilesProj:
+	case *xgoprojs.FilesProj:
 		err = tool.BuildFiles(v.Files, conf, build)
 	default:
 		log.Panicln("`gop build` doesn't support", reflect.TypeOf(v))

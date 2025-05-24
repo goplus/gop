@@ -21,7 +21,6 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"go/build"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -30,7 +29,7 @@ import (
 
 	"github.com/goplus/xgo/tool"
 	"github.com/goplus/xgo/x/gocmd"
-	"github.com/goplus/xgo/x/gopenv"
+	"github.com/goplus/xgo/x/xgoenv"
 )
 
 func fileIsDirty(srcMod time.Time, destFile string) bool {
@@ -42,7 +41,7 @@ func fileIsDirty(srcMod time.Time, destFile string) bool {
 }
 
 func runGoFile(dir, file, fname string) {
-	xgo := gopenv.Get()
+	xgo := xgoenv.Get()
 	conf := &tool.Config{XGo: xgo}
 	confCmd := &gocmd.BuildConfig{XGo: xgo}
 	fi, err := os.Stat(file)
@@ -110,7 +109,7 @@ func gopTestRunGo(dir string) {
 		if ext != ".go" {
 			return nil
 		}
-		data, err := ioutil.ReadFile(file)
+		data, err := os.ReadFile(file)
 		if err != nil {
 			log.Panicln(err)
 		}
