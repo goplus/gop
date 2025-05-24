@@ -64,22 +64,22 @@ func runCmd(_ *base.Command, args []string) {
 		log.Fatalln("run go env failed:", err)
 	}
 
-	var gopEnv map[string]any
-	if err := json.Unmarshal(stdout.Bytes(), &gopEnv); err != nil {
+	var xgoEnv map[string]any
+	if err := json.Unmarshal(stdout.Bytes(), &xgoEnv); err != nil {
 		log.Fatal("decode json of go env failed:", err)
 	}
 
-	gopEnv["BUILDDATE"] = env.BuildDate()
-	gopEnv["GOPVERSION"] = env.Version()
-	gopEnv["GOPROOT"] = env.GOPROOT()
-	gopEnv["GOP_GOCMD"] = gocmd.Name()
-	gopEnv["GOMODCACHE"] = modcache.GOMODCACHE
-	gopEnv["GOPMOD"], _ = mod.GOPMOD("")
-	gopEnv["HOME"] = env.HOME()
+	xgoEnv["BUILDDATE"] = env.BuildDate()
+	xgoEnv["XGOVERSION"] = env.Version()
+	xgoEnv["XGOROOT"] = env.XGOROOT()
+	xgoEnv["XGO_GOCMD"] = gocmd.Name()
+	xgoEnv["GOMODCACHE"] = modcache.GOMODCACHE
+	xgoEnv["GOXMOD"], _ = mod.GOXMOD("")
+	xgoEnv["HOME"] = env.HOME()
 
 	vars := flag.Args()
 
-	outputEnvVars(gopEnv, vars, *envJson)
+	outputEnvVars(xgoEnv, vars, *envJson)
 }
 
 func outputEnvVars(gopEnv map[string]any, vars []string, outputJson bool) {

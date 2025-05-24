@@ -17,9 +17,9 @@ import (
 
 	"github.com/goplus/gogen"
 	"github.com/goplus/mod/env"
-	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modfile"
 	"github.com/goplus/mod/modload"
+	"github.com/goplus/mod/xgomod"
 	"github.com/goplus/xgo/ast"
 	"github.com/goplus/xgo/cl/cltest"
 	"github.com/goplus/xgo/format"
@@ -34,11 +34,11 @@ var spxProject = &modfile.Project{
 	Works:    []*modfile.Class{{Ext: ".tspx", Class: "Sprite"}},
 	PkgPaths: []string{"github.com/goplus/xgo/cl/internal/spx", "math"}}
 
-var spxMod *gopmod.Module
+var spxMod *xgomod.Module
 var gotypesalias bool
 
 func init() {
-	spxMod = gopmod.New(modload.Default)
+	spxMod = xgomod.New(modload.Default)
 	spxMod.Opt.Projects = append(spxMod.Opt.Projects, spxProject)
 	spxMod.ImportClasses()
 	gotypesalias = cltest.EnableTypesalias()
@@ -65,7 +65,7 @@ func spxParserConf() parser.Config {
 	}
 }
 
-func parseMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string, goname string, gosrc string, parserConf parser.Config, updateGoTypesOverload bool) (*types.Package, *typesutil.Info, *types.Info, error) {
+func parseMixedSource(mod *xgomod.Module, fset *token.FileSet, name, src string, goname string, gosrc string, parserConf parser.Config, updateGoTypesOverload bool) (*types.Package, *typesutil.Info, *types.Info, error) {
 	f, err := parser.ParseEntry(fset, name, src, parserConf)
 	if err != nil {
 		return nil, nil, nil, err
@@ -80,7 +80,7 @@ func parseMixedSource(mod *gopmod.Module, fset *token.FileSet, name, src string,
 	}
 
 	conf := &types.Config{}
-	conf.Importer = tool.NewImporter(nil, &env.Gop{Root: "../..", Version: "1.0"}, fset)
+	conf.Importer = tool.NewImporter(nil, &env.XGo{Root: "../..", Version: "1.0"}, fset)
 	chkOpts := &typesutil.Config{
 		Types:                 types.NewPackage("main", f.Name.Name),
 		Fset:                  fset,
@@ -118,12 +118,12 @@ func parseSource(fset *token.FileSet, filename string, src any, mode parser.Mode
 
 	pkg := types.NewPackage("", f.Name.Name)
 	conf := &types.Config{}
-	Gop := &env.Gop{Version: "1.0"}
-	conf.Importer = tool.NewImporter(nil, Gop, fset)
+	xgo := &env.XGo{Version: "1.0"}
+	conf.Importer = tool.NewImporter(nil, xgo, fset)
 	chkOpts := &typesutil.Config{
 		Types: pkg,
 		Fset:  fset,
-		Mod:   gopmod.Default,
+		Mod:   xgomod.Default,
 	}
 	info := &typesutil.Info{
 		Types:      make(map[ast.Expr]types.TypeAndValue),
@@ -162,14 +162,14 @@ func parseGoSource(fset *token.FileSet, filename string, src any, mode goparser.
 }
 
 func testGopInfo(t *testing.T, src string, gosrc string, expect string) {
-	testGopInfoEx(t, gopmod.Default, "main.xgo", src, "main.go", gosrc, expect, parser.Config{})
+	testGopInfoEx(t, xgomod.Default, "main.xgo", src, "main.go", gosrc, expect, parser.Config{})
 }
 
 func testSpxInfo(t *testing.T, name string, src string, expect string) {
 	testGopInfoEx(t, spxMod, name, src, "main.go", "", expect, spxParserConf())
 }
 
-func testGopInfoEx(t *testing.T, mod *gopmod.Module, name string, src string, goname string, gosrc string, expect string, parseConf parser.Config) {
+func testGopInfoEx(t *testing.T, mod *xgomod.Module, name string, src string, goname string, gosrc string, expect string, parseConf parser.Config) {
 	fset := token.NewFileSet()
 	_, info, _, err := parseMixedSource(mod, fset, name, src, goname, gosrc, parseConf, false)
 	if err != nil {
@@ -2125,7 +2125,7 @@ func _() {
 
 func TestMixedPackage(t *testing.T) {
 	fset := token.NewFileSet()
-	pkg, _, _, err := parseMixedSource(gopmod.Default, fset, "main.xgo", `
+	pkg, _, _, err := parseMixedSource(xgomod.Default, fset, "main.xgo", `
 Test
 Test 100
 var n N

@@ -1,7 +1,7 @@
 package builtin
 
 import (
-	"github.com/qiniu/x/gop/osx"
+	"github.com/qiniu/x/osx"
 	"io"
 	"os"
 	"reflect"

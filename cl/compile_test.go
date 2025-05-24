@@ -37,7 +37,7 @@ var (
 )
 
 func init() {
-	cltest.Gop.Root = gopRootDir
+	cltest.XGo.Root = gopRootDir
 	conf := cltest.Conf
 	gblConfLine = &cl.Config{
 		Fset:          conf.Fset,

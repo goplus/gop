@@ -87,7 +87,7 @@ func runCmd(cmd *base.Command, args []string) {
 	defer conf.UpdateCache()
 
 	if !conf.Mod.HasModfile() { // if no go.mod, check GopDeps
-		conf.GopDeps = new(int)
+		conf.XGoDeps = new(int)
 	}
 	confCmd := conf.NewGoCmdConf()
 	confCmd.Flags = pass.Args

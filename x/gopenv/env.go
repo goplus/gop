@@ -21,10 +21,10 @@ import (
 	"github.com/goplus/xgo/env"
 )
 
-func Get() *modenv.Gop {
-	return &modenv.Gop{
+func Get() *modenv.XGo {
+	return &modenv.XGo{
 		Version:   env.Version(),
 		BuildDate: env.BuildDate(),
-		Root:      env.GOPROOT(),
+		Root:      env.XGOROOT(),
 	}
 }

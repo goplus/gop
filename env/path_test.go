@@ -27,9 +27,9 @@ import (
 func findGoModFile(dir string) (modfile string, noCacheFile bool, err error) {
 	modfile, err = mod.GOMOD(dir)
 	if err != nil {
-		gopRoot, err := findGopRoot()
+		xgoRoot, err := findXgoRoot()
 		if err == nil {
-			modfile = filepath.Join(gopRoot, "go.mod")
+			modfile = filepath.Join(xgoRoot, "go.mod")
 			return modfile, true, nil
 		}
 	}
@@ -41,39 +41,39 @@ func findGoModFile(dir string) (modfile string, noCacheFile bool, err error) {
 //
 //	  src/
 //		   subdir/
-//	  valid_goproot/
+//	  valid_xgoroot/
 //		   go.mod
 //		   go.sum
-//	    cmd/gop/
-func makeTestDir(t *testing.T) (root string, src string, gopRoot string) {
+//	    cmd/xgo/
+func makeTestDir(t *testing.T) (root string, src string, xgoRoot string) {
 	root, _ = filepath.EvalSymlinks(t.TempDir())
 	src = filepath.Join(root, "src")
-	gopRoot = filepath.Join(root, "valid_goproot")
-	makeValidGopRoot(gopRoot)
+	xgoRoot = filepath.Join(root, "valid_xgoroot")
+	makeValidXgoRoot(xgoRoot)
 	os.Mkdir(src, 0755)
 	return
 }
 
-func makeValidGopRoot(root string) {
+func makeValidXgoRoot(root string) {
 	os.Mkdir(root, 0755)
-	os.MkdirAll(filepath.Join(root, "cmd/gop"), 0755)
-	os.WriteFile(filepath.Join(root, "go.mod"), []byte(""), 0644)
-	os.WriteFile(filepath.Join(root, "go.sum"), []byte(""), 0644)
+	os.MkdirAll(filepath.Join(root, "cmd/xgo"), 0755)
+	os.WriteFile(filepath.Join(root, "go.mod"), nil, 0644)
+	os.WriteFile(filepath.Join(root, "go.sum"), nil, 0644)
 }
 
 func writeDummyFile(path string) {
-	os.WriteFile(path, []byte(""), 0644)
+	os.WriteFile(path, nil, 0644)
 }
 
 func cleanup() {
-	os.Setenv("GOPROOT", "")
+	os.Setenv("XGOROOT", "")
 	os.Setenv(envHOME, "")
 	defaultGopRoot = ""
 }
 
 func TestBasic(t *testing.T) {
 	defaultGopRoot = ".."
-	if GOPROOT() == "" {
+	if XGOROOT() == "" {
 		t.Fatal("TestBasic failed")
 	}
 	defaultGopRoot = ""
@@ -143,33 +143,33 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 	}
 	cleanupAll()
 
-	t.Run("without gop root", func(tt *testing.T) {
+	t.Run("without xgo root", func(tt *testing.T) {
 		tt.Cleanup(cleanupAll)
 		root, _, _ := makeTestDir(tt)
 
 		modfile, noCacheFile, err := findGoModFile(root)
 
 		if err == nil || noCacheFile || modfile != "" {
-			tt.Fatal("should not found go.mod without gop root, got:", modfile, noCacheFile, err)
+			tt.Fatal("should not found go.mod without xgo root, got:", modfile, noCacheFile, err)
 		}
 	})
 
-	t.Run("set GOPROOT to a valid goproot path", func(tt *testing.T) {
+	t.Run("set XGOROOT to a valid xgoroot path", func(tt *testing.T) {
 		tt.Cleanup(cleanupAll)
-		_, src, gopRoot := makeTestDir(tt)
+		_, src, xgoRoot := makeTestDir(tt)
 
-		os.Setenv("GOPROOT", gopRoot)
+		os.Setenv("XGOROOT", xgoRoot)
 		modfile, noCacheFile, err := findGoModFile(src)
 
-		if err != nil || modfile != filepath.Join(gopRoot, "go.mod") || !noCacheFile {
-			tt.Fatal("should found mod file in GOPROOT, got:", modfile, noCacheFile, err)
+		if err != nil || modfile != filepath.Join(xgoRoot, "go.mod") || !noCacheFile {
+			tt.Fatal("should found mod file in XGOROOT, got:", modfile, noCacheFile, err)
 		}
 	})
 
-	t.Run("set GOPROOT to an invalid goproot path", func(tt *testing.T) {
+	t.Run("set XGOROOT to an invalid xgoroot path", func(tt *testing.T) {
 		tt.Cleanup(cleanupAll)
 		root, src, _ := makeTestDir(tt)
-		invalidGopRoot := filepath.Join(root, "invalid_goproot")
+		invalidXgoRoot := filepath.Join(root, "invalid_xgoroot")
 
 		defer func() {
 			r := recover()
@@ -178,18 +178,18 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 			}
 		}()
 
-		os.Setenv("GOPROOT", invalidGopRoot)
+		os.Setenv("XGOROOT", invalidXgoRoot)
 		findGoModFile(src)
 	})
 
-	t.Run("set defaultGopRoot to a valid goproot path", func(tt *testing.T) {
+	t.Run("set defaultGopRoot to a valid xgoroot path", func(tt *testing.T) {
 		tt.Cleanup(cleanupAll)
-		_, src, gopRoot := makeTestDir(tt)
+		_, src, xgoRoot := makeTestDir(tt)
 
-		defaultGopRoot = gopRoot
+		defaultGopRoot = xgoRoot
 		modfile, noCacheFile, err := findGoModFile(src)
 
-		if err != nil || modfile != filepath.Join(gopRoot, "go.mod") || !noCacheFile {
+		if err != nil || modfile != filepath.Join(xgoRoot, "go.mod") || !noCacheFile {
 			tt.Fatal("should found go.mod in the dir of defaultGopRoot, got:", modfile, noCacheFile, err)
 		}
 	})
@@ -197,9 +197,9 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 	t.Run("set defaultGopRoot to an invalid path", func(tt *testing.T) {
 		tt.Cleanup(cleanupAll)
 		root, src, _ := makeTestDir(tt)
-		invalidGopRoot := filepath.Join(root, "invalid_goproot")
+		invalidXgoRoot := filepath.Join(root, "invalid_xgoroot")
 
-		defaultGopRoot = invalidGopRoot
+		defaultGopRoot = invalidXgoRoot
 		{
 			modfile, noCacheFile, err := findGoModFile(src)
 
@@ -209,7 +209,7 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 		}
 
 		{
-			os.Mkdir(invalidGopRoot, 0755)
+			os.Mkdir(invalidXgoRoot, 0755)
 			modfile, noCacheFile, err := findGoModFile(src)
 
 			if err == nil || noCacheFile || modfile != "" {
@@ -218,7 +218,7 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 		}
 	})
 
-	t.Run("use $HOME/gop or $HOME/goplus", func(tt *testing.T) {
+	t.Run("use $HOME/xgo", func(tt *testing.T) {
 		tt.Cleanup(cleanupAll)
 		root, src, _ := makeTestDir(tt)
 		home := filepath.Join(root, "home")
@@ -226,23 +226,12 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 		os.Setenv(envHOME, home)
 
 		{
-			gopRoot := filepath.Join(home, "goplus")
-			makeValidGopRoot(gopRoot)
+			xgoRoot := filepath.Join(home, "xgo")
+			makeValidXgoRoot(xgoRoot)
 
 			modfile, noCacheFile, err := findGoModFile(src)
 
-			if err != nil || !noCacheFile || modfile != filepath.Join(gopRoot, "go.mod") {
-				tt.Fatal("should found go.mod in $HOME/goplus, but got:", modfile, noCacheFile, err)
-			}
-		}
-
-		{
-			gopRoot := filepath.Join(home, "gop")
-			makeValidGopRoot(gopRoot)
-
-			modfile, noCacheFile, err := findGoModFile(src)
-
-			if err != nil || !noCacheFile || modfile != filepath.Join(gopRoot, "go.mod") {
+			if err != nil || !noCacheFile || modfile != filepath.Join(xgoRoot, "go.mod") {
 				tt.Fatal("should found go.mod in $HOME/gop, but got:", modfile, noCacheFile, err)
 			}
 		}
@@ -250,8 +239,8 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 
 	t.Run("check if parent dir of the executable is valid gop root", func(tt *testing.T) {
 		tt.Cleanup(cleanupAll)
-		_, src, gopRoot := makeTestDir(tt)
-		bin := filepath.Join(gopRoot, "bin")
+		_, src, xgoRoot := makeTestDir(tt)
+		bin := filepath.Join(xgoRoot, "bin")
 		exePath := filepath.Join(bin, "run")
 		os.Mkdir(bin, 0755)
 		writeDummyFile(exePath)
@@ -263,81 +252,38 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 
 		modfile, noCacheFile, err := findGoModFile(src)
 
-		if err != nil || !noCacheFile || modfile != filepath.Join(gopRoot, "go.mod") {
-			tt.Fatal("should found go.mod in gopRoot, but got:", modfile, noCacheFile, err)
+		if err != nil || !noCacheFile || modfile != filepath.Join(xgoRoot, "go.mod") {
+			tt.Fatal("should found go.mod in xgoRoot, but got:", modfile, noCacheFile, err)
 		}
 	})
 
-	t.Run("test gop root priority", func(tt *testing.T) {
+	t.Run("test xgo root priority", func(tt *testing.T) {
 		tt.Cleanup(cleanupAll)
 		root, src, _ := makeTestDir(tt)
 
-		tt.Run("without gop root", func(tt *testing.T) {
+		tt.Run("without xgo root", func(tt *testing.T) {
 			modfile, noCacheFile, err := findGoModFile(src)
 
 			if err == nil || noCacheFile || modfile != "" {
-				tt.Fatal("should not found go.mod without gop root, got:", modfile, noCacheFile, err)
+				tt.Fatal("should not found go.mod without xgo root, got:", modfile, noCacheFile, err)
 			}
 		})
 
-		tt.Run("set HOME but hasn't $HOME/gop/ and $HOME/goplus/", func(tt *testing.T) {
-			os.Setenv(envHOME, root)
+		tt.Run("set defaultGopRoot to a valid xgo root dir", func(tt *testing.T) {
+			newXgoRoot := filepath.Join(root, "new_xgo_root")
+			makeValidXgoRoot(newXgoRoot)
 
+			defaultGopRoot = newXgoRoot
 			modfile, noCacheFile, err := findGoModFile(src)
 
-			if err == nil || noCacheFile || modfile != "" {
-				tt.Fatal("should not found go.mod without gop root, got:", modfile, noCacheFile, err)
+			if err != nil || !noCacheFile || modfile != filepath.Join(newXgoRoot, "go.mod") {
+				tt.Fatal("should found go.mod in new_xgo_root/, but got:", modfile, noCacheFile, err)
 			}
 		})
 
-		tt.Run("set HOME, and has valid $HOME/goplus/", func(tt *testing.T) {
-			gopRoot := filepath.Join(root, "goplus")
-			makeValidGopRoot(gopRoot)
-
-			modfile, noCacheFile, err := findGoModFile(src)
-
-			if err != nil || !noCacheFile || modfile != filepath.Join(gopRoot, "go.mod") {
-				tt.Fatal("should found go.mod in $HOME/goplus, but got:", modfile, noCacheFile, err)
-			}
-		})
-
-		tt.Run("set HOME, and has valid $HOME/gop/", func(tt *testing.T) {
-			gopRoot := filepath.Join(root, "gop")
-			makeValidGopRoot(gopRoot)
-
-			modfile, noCacheFile, err := findGoModFile(src)
-
-			if err != nil || !noCacheFile || modfile != filepath.Join(gopRoot, "go.mod") {
-				tt.Fatal("should found go.mod in $HOME/gop, but got:", modfile, noCacheFile, err)
-			}
-		})
-
-		tt.Run("set defaultGopRoot to an invalid gop root dir", func(tt *testing.T) {
-			gopRoot := filepath.Join(root, "gop")
-
-			defaultGopRoot = filepath.Join(root, "invalid_goproot")
-			modfile, noCacheFile, err := findGoModFile(src)
-
-			if err != nil || !noCacheFile || modfile != filepath.Join(gopRoot, "go.mod") {
-				tt.Fatal("should found go.mod in $HOME/gop, but got:", modfile, noCacheFile, err)
-			}
-		})
-
-		tt.Run("set defaultGopRoot to a valid gop root dir", func(tt *testing.T) {
-			newGopRoot := filepath.Join(root, "new_gop_root")
-			makeValidGopRoot(newGopRoot)
-
-			defaultGopRoot = newGopRoot
-			modfile, noCacheFile, err := findGoModFile(src)
-
-			if err != nil || !noCacheFile || modfile != filepath.Join(newGopRoot, "go.mod") {
-				tt.Fatal("should found go.mod in new_gop_root/, but got:", modfile, noCacheFile, err)
-			}
-		})
-
-		tt.Run("the executable's parent dir is a valid gop root dir", func(tt *testing.T) {
+		tt.Run("the executable's parent dir is a valid xgo root dir", func(tt *testing.T) {
 			newGopRoot2 := filepath.Join(root, "new_gop_root2")
-			makeValidGopRoot(newGopRoot2)
+			makeValidXgoRoot(newGopRoot2)
 			bin := filepath.Join(newGopRoot2, "bin")
 			exePath := filepath.Join(bin, "run")
 			os.Mkdir(bin, 0755)
@@ -354,7 +300,7 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 			}
 		})
 
-		tt.Run("set GOPROOT to an invalid gop root dir", func(tt *testing.T) {
+		tt.Run("set XGOROOT to an invalid xgo root dir", func(tt *testing.T) {
 			newGopRoot3 := filepath.Join(root, "new_gop_root3")
 
 			defer func() {
@@ -364,15 +310,15 @@ func TestFindGoModFileInGopRoot(t *testing.T) {
 				}
 			}()
 
-			os.Setenv("GOPROOT", newGopRoot3)
+			os.Setenv("XGOROOT", newGopRoot3)
 			findGoModFile(src)
 		})
 
-		tt.Run("set GOPROOT to a valid gop root dir", func(tt *testing.T) {
+		tt.Run("set XGOROOT to a valid xgo root dir", func(tt *testing.T) {
 			newGopRoot4 := filepath.Join(root, "new_gop_root4")
-			makeValidGopRoot(newGopRoot4)
+			makeValidXgoRoot(newGopRoot4)
 
-			os.Setenv("GOPROOT", newGopRoot4)
+			os.Setenv("XGOROOT", newGopRoot4)
 			modfile, noCacheFile, err := findGoModFile(src)
 
 			if err != nil || !noCacheFile || modfile != filepath.Join(newGopRoot4, "go.mod") {

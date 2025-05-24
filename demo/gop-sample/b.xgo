@@ -1,9 +1,0 @@
-package main
-
-import (
-	ab "github.com/goplus/xgo/demo/gop-sample/cpkag/b"
-)
-
-a()
-Ab()
-ab.Ab()

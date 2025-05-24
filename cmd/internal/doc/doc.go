@@ -75,8 +75,8 @@ func runCmd(cmd *base.Command, args []string) {
 		cl.SetDisableRecover(true)
 	}
 
-	gopEnv := gopenv.Get()
-	conf := &tool.Config{Gop: gopEnv}
+	xgo := gopenv.Get()
+	conf := &tool.Config{XGo: xgo}
 	outlinePkg(proj, conf)
 }
 

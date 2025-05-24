@@ -7,8 +7,8 @@ require (
 	github.com/goplus/cobra v1.9.12 //gop:class
 	github.com/goplus/gogen v1.18.1
 	github.com/goplus/lib v0.2.0
-	github.com/goplus/mod v0.16.1
-	github.com/qiniu/x v1.14.6
+	github.com/goplus/mod v0.17.0
+	github.com/qiniu/x v1.15.0
 )
 
 require (

@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/goplus/mod/gopmod"
+	"github.com/goplus/mod/xgomod"
 	"github.com/goplus/xgo/ast"
 	"github.com/goplus/xgo/parser"
 	"github.com/goplus/xgo/token"
@@ -69,7 +69,7 @@ func checkInfo(fset *token.FileSet, files []*ast.File, gofiles []*goast.File) (*
 	chkOpts := &typesutil.Config{
 		Types: types.NewPackage("main", "main"),
 		Fset:  fset,
-		Mod:   gopmod.Default,
+		Mod:   xgomod.Default,
 	}
 	info := &typesutil.Info{
 		Types:      make(map[ast.Expr]types.TypeAndValue),

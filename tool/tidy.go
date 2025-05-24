@@ -21,12 +21,12 @@ import (
 	"os/exec"
 
 	"github.com/goplus/mod/env"
-	"github.com/goplus/mod/gopmod"
+	"github.com/goplus/mod/xgomod"
 	"github.com/qiniu/x/errors"
 )
 
-func Tidy(dir string, gop *env.Gop) (err error) {
-	modObj, err := gopmod.Load(dir)
+func Tidy(dir string, xgo *env.XGo) (err error) {
+	modObj, err := xgomod.Load(dir)
 	if err != nil {
 		return errors.NewWith(err, `gopmod.Load(dir, mod.GopModOnly)`, -2, "gopmod.Load", dir)
 	}
@@ -60,7 +60,7 @@ func Tidy(dir string, gop *env.Gop) (err error) {
 			return errors.NewWith(err, `modObj.Save()`, -2, "(*gopmod.Module).Save")
 		}
 	*/
-	conf := &Config{Gop: gop}
+	conf := &Config{XGo: xgo}
 	err = genGoDir(modRoot, conf, true, true, 0)
 	if err != nil {
 		return errors.NewWith(err, `genGoDir(modRoot, conf, true, true)`, -2, "tool.genGoDir", modRoot, conf, true, true)

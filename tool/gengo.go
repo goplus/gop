@@ -24,9 +24,9 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modcache"
 	"github.com/goplus/mod/modfetch"
+	"github.com/goplus/mod/xgomod"
 	"github.com/qiniu/x/errors"
 )
 
@@ -238,7 +238,7 @@ func GenGoPkgPathEx(workDir, pkgPath string, conf *Config, allowExtern bool, fla
 		return remotePkgPath(pkgPath, conf, false, flags)
 	}
 
-	mod, err := gopmod.Load(workDir)
+	mod, err := xgomod.Load(workDir)
 	if NotFound(err) && allowExtern {
 		return remotePkgPath(pkgPath, conf, recursively, flags)
 	} else if err != nil {
@@ -250,7 +250,7 @@ func GenGoPkgPathEx(workDir, pkgPath string, conf *Config, allowExtern bool, fla
 		return
 	}
 	localDir = pkg.Dir
-	if pkg.Type == gopmod.PkgtExtern {
+	if pkg.Type == xgomod.PkgtExtern {
 		os.Chmod(localDir, modWritable)
 		defer os.Chmod(localDir, modReadonly)
 	}

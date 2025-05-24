@@ -42,9 +42,9 @@ func fileIsDirty(srcMod time.Time, destFile string) bool {
 }
 
 func runGoFile(dir, file, fname string) {
-	gopEnv := gopenv.Get()
-	conf := &tool.Config{Gop: gopEnv}
-	confCmd := &gocmd.BuildConfig{Gop: gopEnv}
+	xgo := gopenv.Get()
+	conf := &tool.Config{XGo: xgo}
+	confCmd := &gocmd.BuildConfig{XGo: xgo}
 	fi, err := os.Stat(file)
 	if err != nil {
 		log.Panicln(err)

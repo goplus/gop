@@ -34,9 +34,9 @@ import (
 	"github.com/goplus/gogen/packages"
 	"github.com/goplus/gogen/packages/cache"
 	"github.com/goplus/mod/env"
-	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modfetch"
 	"github.com/goplus/mod/modfile"
+	"github.com/goplus/mod/xgomod"
 )
 
 // -----------------------------------------------------------------------------
@@ -44,29 +44,29 @@ import (
 // Importer represents a XGo importer.
 type Importer struct {
 	impFrom *packages.Importer
-	mod     *gopmod.Module
-	gop     *env.Gop
+	mod     *xgomod.Module
+	xgo     *env.XGo
 	fset    *token.FileSet
 
 	Flags GenFlags // can change this for loading XGo modules
 }
 
 // NewImporter creates a XGo Importer.
-func NewImporter(mod *gopmod.Module, gop *env.Gop, fset *token.FileSet) *Importer {
+func NewImporter(mod *xgomod.Module, xgo *env.XGo, fset *token.FileSet) *Importer {
 	const (
 		defaultFlags = GenFlagPrompt | GenFlagPrintError
 	)
 	if mod == nil || !mod.HasModfile() {
-		if modGop, e := gopmod.LoadFrom(filepath.Join(gop.Root, "go.mod"), ""); e == nil {
+		if modGop, e := xgomod.LoadFrom(filepath.Join(xgo.Root, "go.mod"), ""); e == nil {
 			modGop.ImportClasses()
 			mod = modGop
 		} else {
-			mod = gopmod.Default
+			mod = xgomod.Default
 		}
 	}
 	dir := mod.Root()
 	impFrom := packages.NewImporter(fset, dir)
-	ret := &Importer{mod: mod, gop: gop, impFrom: impFrom, fset: fset, Flags: defaultFlags}
+	ret := &Importer{mod: mod, xgo: xgo, impFrom: impFrom, fset: fset, Flags: defaultFlags}
 	impFrom.SetCache(cache.New(ret.PkgHash))
 	return ret
 }
@@ -108,15 +108,15 @@ func (p *Importer) Cache() *cache.Impl {
 func (p *Importer) PkgHash(pkgPath string, self bool) string {
 	if pkg, e := p.mod.Lookup(pkgPath); e == nil {
 		switch pkg.Type {
-		case gopmod.PkgtStandard:
+		case xgomod.PkgtStandard:
 			return cache.HashSkip
-		case gopmod.PkgtExtern:
+		case xgomod.PkgtExtern:
 			if pkg.Real.Version != "" {
 				return pkg.Real.String()
 			}
 			fallthrough
-		case gopmod.PkgtModule:
-			return dirHash(p.mod, p.gop, pkg.Dir, self)
+		case xgomod.PkgtModule:
+			return dirHash(p.mod, p.xgo, pkg.Dir, self)
 		}
 	}
 	if isPkgInMod(pkgPath, gopMod) || isPkgInMod(pkgPath, xMod) {
@@ -135,7 +135,7 @@ const (
 func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 	if strings.HasPrefix(pkgPath, gopMod) {
 		if suffix := pkgPath[len(gopMod):]; suffix == "" || suffix[0] == '/' {
-			gopRoot := p.gop.Root
+			gopRoot := p.xgo.Root
 			if suffix == "/cl/internal/gop-in-go/foo" { // for test github.com/goplus/xgo/cl
 				if err = p.genGoExtern(gopRoot+suffix, false); err != nil {
 					return
@@ -145,7 +145,7 @@ func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 		}
 	}
 	if isPkgInMod(pkgPath, xMod) {
-		return p.impFrom.ImportFrom(pkgPath, p.gop.Root, 0)
+		return p.impFrom.ImportFrom(pkgPath, p.xgo.Root, 0)
 	}
 	if mod := p.mod; mod.HasModfile() {
 		ret, e := mod.Lookup(pkgPath)
@@ -153,7 +153,7 @@ func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 			return nil, e
 		}
 		switch ret.Type {
-		case gopmod.PkgtExtern:
+		case xgomod.PkgtExtern:
 			isExtern := ret.Real.Version != ""
 			if isExtern {
 				if _, err = modfetch.Get(ret.Real.String()); err != nil {
@@ -168,15 +168,15 @@ func (p *Importer) Import(pkgPath string) (pkg *types.Package, err error) {
 				os.WriteFile(goModfile, defaultGoMod(ret.ModPath), 0644)
 			}
 			return p.impFrom.ImportFrom(pkgPath, ret.ModDir, 0)
-		case gopmod.PkgtModule, gopmod.PkgtLocal:
+		case xgomod.PkgtModule, xgomod.PkgtLocal:
 			if pkgPath == p.mod.Path() {
 				break
 			}
 			if err = p.genGoExtern(ret.Dir, false); err != nil {
 				return
 			}
-		case gopmod.PkgtStandard:
-			return p.impFrom.ImportFrom(pkgPath, p.gop.Root, 0)
+		case xgomod.PkgtStandard:
+			return p.impFrom.ImportFrom(pkgPath, p.xgo.Root, 0)
 		}
 	}
 	return p.impFrom.Import(pkgPath)
@@ -190,7 +190,7 @@ func (p *Importer) genGoExtern(dir string, isExtern bool) (err error) {
 			defer os.Chmod(dir, modReadonly)
 		}
 		gen := false
-		err = genGoIn(dir, &Config{Gop: p.gop, Importer: p, Fset: p.fset}, false, p.Flags, &gen)
+		err = genGoIn(dir, &Config{XGo: p.xgo, Importer: p, Fset: p.fset}, false, p.Flags, &gen)
 		if err != nil {
 			return
 		}
@@ -220,11 +220,11 @@ go 1.16
 `)
 }
 
-func dirHash(mod *gopmod.Module, gop *env.Gop, dir string, self bool) string {
+func dirHash(mod *xgomod.Module, xgo *env.XGo, dir string, self bool) string {
 	h := sha256.New()
 	if self {
 		fmt.Fprintf(h, "go\t%s\n", runtime.Version())
-		fmt.Fprintf(h, "gop\t%s\n", gop.Version)
+		fmt.Fprintf(h, "xgo\t%s\n", xgo.Version)
 	}
 	if fis, err := os.ReadDir(dir); err == nil {
 		for _, fi := range fis {
@@ -243,7 +243,7 @@ func dirHash(mod *gopmod.Module, gop *env.Gop, dir string, self bool) string {
 	return base64.RawStdEncoding.EncodeToString(h.Sum(nil))
 }
 
-func canCl(mod *gopmod.Module, fname string) bool {
+func canCl(mod *xgomod.Module, fname string) bool {
 	switch path.Ext(fname) {
 	case ".go", ".xgo", ".gop", ".gox":
 		return true

@@ -4,9 +4,9 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
-	gopast "gop/ast"
-	"gop/ast/gopq"
-	"gop/parser"
+	xgoast "xgo/ast"
+	"xgo/ast/gopq"
+	"xgo/parser"
 	"os"
 )
 
@@ -27,7 +27,7 @@ func gen() []byte {
 	f.Decls <- &ast.GenDecl{
 		Tok: token.IMPORT,
 		Specs: []ast.Spec{
-			importSpec("github.com/qiniu/x/gop/osx"),
+			importSpec("github.com/qiniu/x/xgo/osx"),
 			importSpec("io"),
 			importSpec("os"),
 			importSpec("reflect"),
@@ -51,7 +51,7 @@ func genDecls(f *ast.File) {
 	}
 }
 
-func initBuiltinTIs(fn gopq.NodeSet, f *gopast.File) (tistr *builtinTI) {
+func initBuiltinTIs(fn gopq.NodeSet, f *xgoast.File) (tistr *builtinTI) {
 	ti := fn.body.any.assignStmt.rhs(0).x.compositeLit("BuiltinTI")
 	methods := ti.elt("methods").cache
 	for method in methods {

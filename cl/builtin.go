@@ -79,17 +79,17 @@ func initBuiltin(_ *gogen.Package, builtin *types.Package, os, fmt, ng, osx, bui
 }
 
 const (
-	osxPkgPath = "github.com/qiniu/x/gop/osx"
+	osxPkgPath = "github.com/qiniu/x/osx"
 )
 
 func (ctx *pkgCtx) newBuiltinDefault(pkg *gogen.Package, conf *gogen.Config) *types.Package {
 	builtin := types.NewPackage("", "")
-	fmt := pkg.TryImport("fmt")
+	fmt := pkg.Import("fmt")
 	os := pkg.TryImport("os")
 	reflect := pkg.TryImport("reflect")
 	osx := pkg.TryImport(osxPkgPath)
-	buil := pkg.TryImport("github.com/qiniu/x/gop")
-	ng := pkg.TryImport("github.com/qiniu/x/gop/ng")
+	buil := pkg.TryImport("github.com/qiniu/x/xgo")
+	ng := pkg.TryImport("github.com/qiniu/x/xgo/ng")
 	strx := pkg.TryImport("github.com/qiniu/x/stringutil")
 	stringslice := pkg.TryImport("github.com/qiniu/x/stringslice")
 	pkg.TryImport("strconv")

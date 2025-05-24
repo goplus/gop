@@ -24,7 +24,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/goplus/mod/gopmod"
+	"github.com/goplus/mod/xgomod"
 )
 
 // -----------------------------------------------------------------------------------------
@@ -70,9 +70,9 @@ func (p *Changes) doLookupMod(name string) *module {
 	if !ok {
 		mod = new(module)
 		mod.exts = make([]string, 0, 8)
-		m, e := gopmod.Load(p.root + name)
+		m, e := xgomod.Load(p.root + name)
 		if e == nil {
-			m.ImportClasses(func(c *gopmod.Project) {
+			m.ImportClasses(func(c *xgomod.Project) {
 				mod.exts = append(mod.exts, c.Ext)
 				for _, w := range c.Works {
 					if w.Ext != c.Ext {

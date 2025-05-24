@@ -34,8 +34,8 @@ import (
 	"github.com/goplus/gogen"
 	"github.com/goplus/mod"
 	"github.com/goplus/mod/env"
-	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modfile"
+	"github.com/goplus/mod/xgomod"
 	"github.com/goplus/xgo/cl"
 	"github.com/goplus/xgo/parser"
 	"github.com/goplus/xgo/parser/fsx"
@@ -47,18 +47,18 @@ import (
 )
 
 var (
-	GopRoot string
-	Gop     *env.Gop
+	XGoRoot string
+	XGo     *env.XGo
 	Conf    *cl.Config
 )
 
 func init() {
-	Gop = &env.Gop{Version: "1.0"}
+	XGo = &env.XGo{Version: "1.0"}
 	gogen.SetDebug(gogen.DbgFlagAll)
 	cl.SetDebug(cl.DbgFlagAll | cl.FlagNoMarkAutogen)
 	fset := token.NewFileSet()
-	imp := tool.NewImporter(nil, Gop, fset)
-	GopRoot, _, _ = mod.FindGoMod("")
+	imp := tool.NewImporter(nil, XGo, fset)
+	XGoRoot, _, _ = mod.FindGoMod("")
 	Conf = &cl.Config{
 		Fset:          fset,
 		Importer:      imp,
@@ -216,14 +216,14 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 	conf := Conf
 	goMod := pkgDir + "/go.mod"
 	if _, err := os.Stat(goMod); err == nil {
-		if mod, err := gopmod.Load(pkgDir); err == nil {
+		if mod, err := xgomod.Load(pkgDir); err == nil {
 			confCopy := *Conf
-			confCopy.Importer = tool.NewImporter(mod, Gop, conf.Fset)
+			confCopy.Importer = tool.NewImporter(mod, XGo, conf.Fset)
 			conf = &confCopy
 		}
 	} else {
 		confCopy := *Conf
-		confCopy.RelativeBase = GopRoot
+		confCopy.RelativeBase = XGoRoot
 		conf = &confCopy
 	}
 	DoFS(t, conf, fsx.Local, pkgDir, filter, "main", b)

@@ -25,7 +25,7 @@ import (
 
 	"github.com/goplus/gogen"
 	"github.com/goplus/mod/env"
-	"github.com/goplus/mod/gopmod"
+	"github.com/goplus/mod/xgomod"
 	"github.com/goplus/xgo/ast"
 	"github.com/goplus/xgo/cl"
 	"github.com/goplus/xgo/parser"
@@ -36,13 +36,13 @@ import (
 )
 
 var (
-	ErrNotFound      = gopmod.ErrNotFound
+	ErrNotFound      = xgomod.ErrNotFound
 	ErrIgnoreNotated = errors.New("notated error ignored")
 )
 
 // NotFound returns if cause err is ErrNotFound or not
 func NotFound(err error) bool {
-	return gopmod.IsNotFound(err)
+	return xgomod.IsNotFound(err)
 }
 
 // IgnoreNotated returns if cause err is ErrIgnoreNotated or not.
@@ -116,16 +116,16 @@ func isNotatedErr(err error, pkg *ast.Package, fset *token.FileSet) (notatedErr 
 
 // Config represents a configuration for loading XGo packages.
 type Config struct {
-	Gop      *env.Gop
+	XGo      *env.XGo
 	Fset     *token.FileSet
-	Mod      *gopmod.Module
+	Mod      *xgomod.Module
 	Importer *Importer
 
 	Filter func(fs.FileInfo) bool
 
 	// If not nil, it is used for returning result of checks XGo dependencies.
 	// see https://pkg.go.dev/github.com/goplus/gogen#File.CheckGopDeps
-	GopDeps *int
+	XGoDeps *int
 
 	// CacheFile specifies the file path of the cache.
 	CacheFile string
@@ -150,14 +150,14 @@ func NewDefaultConf(dir string, flags ConfFlags, tags ...string) (conf *Config, 
 	if err != nil {
 		return
 	}
-	gop := gopenv.Get()
+	xgo := gopenv.Get()
 	fset := token.NewFileSet()
-	imp := NewImporter(mod, gop, fset)
+	imp := NewImporter(mod, xgo, fset)
 	if len(tags) > 0 {
 		imp.SetTags(strings.Join(tags, ","))
 	}
 	conf = &Config{
-		Gop: gop, Fset: fset, Mod: mod, Importer: imp,
+		XGo: xgo, Fset: fset, Mod: mod, Importer: imp,
 		IgnoreNotatedError: flags&ConfFlagIgnoreNotatedError != 0,
 		DontUpdateGoMod:    flags&ConfFlagDontUpdateGoMod != 0,
 	}
@@ -178,7 +178,7 @@ func (conf *Config) NewGoCmdConf() *gocmd.Config {
 		}
 	}
 	return &gocmd.Config{
-		Gop: conf.Gop,
+		XGo: conf.XGo,
 	}
 }
 
@@ -194,18 +194,18 @@ func (conf *Config) UpdateCache(verbose ...bool) {
 }
 
 // LoadMod loads a XGo module from a specified directory.
-func LoadMod(dir string) (mod *gopmod.Module, err error) {
-	mod, err = gopmod.Load(dir)
-	if err != nil && !gopmod.IsNotFound(err) {
-		err = errors.NewWith(err, `gopmod.Load(dir, 0)`, -2, "gopmod.Load", dir, 0)
+func LoadMod(dir string) (mod *xgomod.Module, err error) {
+	mod, err = xgomod.Load(dir)
+	if err != nil && !xgomod.IsNotFound(err) {
+		err = errors.NewWith(err, `xgomod.Load(dir, 0)`, -2, "xgomod.Load", dir, 0)
 		return
 	}
 	if mod == nil {
-		mod = gopmod.Default
+		mod = xgomod.Default
 	}
 	err = mod.ImportClasses()
 	if err != nil {
-		err = errors.NewWith(err, `mod.ImportClasses()`, -2, "(*gopmod.Module).ImportClasses", mod)
+		err = errors.NewWith(err, `mod.ImportClasses()`, -2, "(*xgomod.Module).ImportClasses", mod)
 	}
 	return
 }
@@ -261,13 +261,13 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 		return nil, nil, ErrNotFound
 	}
 
-	gop := conf.Gop
-	if gop == nil {
-		gop = gopenv.Get()
+	xgo := conf.XGo
+	if xgo == nil {
+		xgo = gopenv.Get()
 	}
 	imp := conf.Importer
 	if imp == nil {
-		imp = NewImporter(mod, gop, fset)
+		imp = NewImporter(mod, xgo, fset)
 	}
 
 	var pkgTest *ast.Package
@@ -309,26 +309,26 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 	if genTestPkg && pkgTest != nil {
 		test, err = cl.NewPackage("", pkgTest, clConf)
 	}
-	afterLoad(mod, gop, out, test, conf)
+	afterLoad(mod, xgo, out, test, conf)
 	return
 }
 
-func afterLoad(mod *gopmod.Module, gop *env.Gop, out, test *gogen.Package, conf *Config) {
+func afterLoad(mod *xgomod.Module, xgo *env.XGo, out, test *gogen.Package, conf *Config) {
 	if mod.Path() == gopMod { // nothing to do for XGo itself
 		return
 	}
 	updateMod := !conf.DontUpdateGoMod && mod.HasModfile()
-	if updateMod || conf.GopDeps != nil {
+	if updateMod || conf.XGoDeps != nil {
 		flags := checkGopDeps(out)
-		if conf.GopDeps != nil { // for `gop run`
-			*conf.GopDeps = flags
+		if conf.XGoDeps != nil { // for `xgo run`
+			*conf.XGoDeps = flags
 		}
 		if updateMod {
 			if test != nil {
 				flags |= checkGopDeps(test)
 			}
 			if flags != 0 {
-				mod.SaveWithGopMod(gop, flags)
+				mod.SaveWithXGoMod(xgo, flags)
 			}
 		}
 	}
@@ -341,7 +341,7 @@ func checkGopDeps(pkg *gogen.Package) (flags int) {
 	return
 }
 
-func relativeBaseOf(mod *gopmod.Module) string {
+func relativeBaseOf(mod *xgomod.Module) string {
 	if mod.HasModfile() {
 		return mod.Root()
 	}
@@ -382,14 +382,14 @@ func LoadFiles(dir string, files []string, conf *Config) (out *gogen.Package, er
 		err = errors.NewWith(ErrMultiPackges, `len(pkgs) != 1`, -1, "!=", len(pkgs), 1)
 		return
 	}
-	gop := conf.Gop
-	if gop == nil {
-		gop = gopenv.Get()
+	xgo := conf.XGo
+	if xgo == nil {
+		xgo = gopenv.Get()
 	}
 	for _, pkg := range pkgs {
 		imp := conf.Importer
 		if imp == nil {
-			imp = NewImporter(mod, gop, fset)
+			imp = NewImporter(mod, xgo, fset)
 		}
 		clConf := &cl.Config{
 			Fset:         fset,
@@ -405,7 +405,7 @@ func LoadFiles(dir string, files []string, conf *Config) (out *gogen.Package, er
 		}
 		break
 	}
-	afterLoad(mod, gop, out, nil, conf)
+	afterLoad(mod, xgo, out, nil, conf)
 	return
 }
 
@@ -418,8 +418,8 @@ var (
 
 // -----------------------------------------------------------------------------
 
-// GetFileClassType get gop module file classType.
-func GetFileClassType(mod *gopmod.Module, file *ast.File, filename string) (classType string, isTest bool) {
+// GetFileClassType get xgo module file classType.
+func GetFileClassType(mod *xgomod.Module, file *ast.File, filename string) (classType string, isTest bool) {
 	return cl.GetFileClassType(file, filename, mod.LookupClass)
 }
 
