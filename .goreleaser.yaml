@@ -7,9 +7,9 @@ before:
     - go mod download
 
 builds:
-  - id: gop
-    main: ./cmd/gop
-    binary: bin/gop
+  - id: xgo
+    main: ./cmd/xgo
+    binary: bin/xgo
     ldflags:
       - -X github.com/goplus/xgo/env.buildVersion=v{{.Version}}
       - -X github.com/goplus/xgo/env.buildDate={{.Date}}
@@ -46,7 +46,7 @@ changelog:
 dockers:
   - goarch: "386"
     image_templates:
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-386
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/xgo" }}:{{ .Version }}-386
     use: buildx
     build_flag_templates:
       - --platform=linux/386
@@ -56,7 +56,7 @@ dockers:
       - ./
   - goarch: amd64
     image_templates:
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-amd64
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/xgo" }}:{{ .Version }}-amd64
     use: buildx
     build_flag_templates:
       - --platform=linux/amd64
@@ -66,7 +66,7 @@ dockers:
       - ./
   - goarch: arm64
     image_templates:
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-arm64
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/xgo" }}:{{ .Version }}-arm64
     use: buildx
     build_flag_templates:
       - --platform=linux/arm64
@@ -76,28 +76,28 @@ dockers:
       - ./
 
 docker_manifests:
-  - name_template: ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}
+  - name_template: ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/xgo" }}:{{ .Version }}
     image_templates:
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-386
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-amd64
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-arm64
-  - name_template: ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Major }}.{{ .Minor }}
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/xgo" }}:{{ .Version }}-386
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/xgo" }}:{{ .Version }}-amd64
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/xgo" }}:{{ .Version }}-arm64
+  - name_template: ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/xgo" }}:{{ .Major }}.{{ .Minor }}
     image_templates:
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-386
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-amd64
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-arm64
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/xgo" }}:{{ .Version }}-386
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/xgo" }}:{{ .Version }}-amd64
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/xgo" }}:{{ .Version }}-arm64
     skip_push: auto
-  - name_template: ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Major }}
+  - name_template: ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/xgo" }}:{{ .Major }}
     image_templates:
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-386
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-amd64
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-arm64
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/xgo" }}:{{ .Version }}-386
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/xgo" }}:{{ .Version }}-amd64
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/xgo" }}:{{ .Version }}-arm64
     skip_push: auto
-  - name_template: ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:latest
+  - name_template: ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/xgo" }}:latest
     image_templates:
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-386
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-amd64
-      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/gop" }}:{{ .Version }}-arm64
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/xgo" }}:{{ .Version }}-386
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/xgo" }}:{{ .Version }}-amd64
+      - ghcr.io/{{ envOrDefault "GITHUB_REPOSITORY" "goplus/xgo" }}:{{ .Version }}-arm64
     skip_push: auto
 
 winget:
@@ -106,8 +106,8 @@ winget:
     publisher: goplus
     publisher_url: https://github.com/goplus/xgo
     publisher_support_url: "https://github.com/goplus/xgo/issues/new"
-    package_identifier: goplus.gop
-    path: "manifests/g/goplus/gop/{{.Version}}"
+    package_identifier: goplus.xgo
+    path: "manifests/g/goplus/xgo/{{.Version}}"
     tags:
       - golang
       - go
@@ -129,7 +129,7 @@ winget:
     license: Apache-2.0
     skip_upload: auto
     release_notes: "{{.Changelog}}"
-    release_notes_url: "https://github.com/{{ .Env.GITHUB_REPOSITORY_OWNER }}/gop/releases/tag/v{{.Version}}"
+    release_notes_url: "https://github.com/{{ .Env.GITHUB_REPOSITORY_OWNER }}/xgo/releases/tag/v{{.Version}}"
     dependencies:
       - package_identifier: GoLang.Go
         minimum_version: 1.18.0
@@ -149,7 +149,7 @@ winget:
           branch: master
 
 nfpms:
-  - package_name: gop
+  - package_name: xgo
     vendor: goplus
     homepage: https://xgo.dev/
     maintainer: Li Jie <cpunion@gmail.com>
@@ -230,13 +230,13 @@ nfpms:
       - src: "x"
         dst: "/usr/lib/{{ .ProjectName }}/x"
       # symlinks to binaries
-      - src: "/usr/lib/{{ .ProjectName }}/bin/gop"
-        dst: /usr/bin/gop
+      - src: "/usr/lib/{{ .ProjectName }}/bin/xgo"
+        dst: /usr/bin/xgo
         type: symlink
 
 snapcrafts:
-  - id: gop
-    name: gop
+  - id: xgo
+    name: xgo
     title: The XGo Programming Language
     summary: The XGo Programming Language
     description: |
@@ -306,9 +306,9 @@ snapcrafts:
       - source: "x"
         destination: "x"
     apps:
-      gop:
-        command: "gop"
-        aliases: ["gop"]
+      xgo:
+        command: "xgo"
+        aliases: ["xgo"]
         environment:
           XGOROOT: "$SNAP"
 
