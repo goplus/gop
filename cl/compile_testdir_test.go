@@ -19,7 +19,7 @@ package cl_test
 import (
 	"testing"
 
-	"github.com/goplus/gop/cl/cltest"
+	"github.com/goplus/xgo/cl/cltest"
 )
 
 func TestTestspx(t *testing.T) {

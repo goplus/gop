@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/goplus/gop/tpl/encoding/json"
+
+	"github.com/goplus/xgo/tpl/encoding/json"
 )
 
 func main() {

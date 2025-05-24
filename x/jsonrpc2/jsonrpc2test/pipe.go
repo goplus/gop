@@ -25,7 +25,7 @@ import (
 	"io"
 	"net"
 
-	"github.com/goplus/gop/x/jsonrpc2"
+	"github.com/goplus/xgo/x/jsonrpc2"
 )
 
 // NetPipeListener returns a new Listener that listens using net.Pipe.

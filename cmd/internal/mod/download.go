@@ -17,8 +17,8 @@
 package mod
 
 import (
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/cmd/internal/gopget"
+	"github.com/goplus/xgo/cmd/internal/base"
+	"github.com/goplus/xgo/cmd/internal/gopget"
 )
 
 // gop mod download

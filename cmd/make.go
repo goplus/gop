@@ -61,7 +61,7 @@ func getGopRoot() string {
 	pwd, _ := os.Getwd()
 
 	pathsToCheck := []Path{
-		{path: "cmd/gop", isDir: true},
+		{path: "cmd/xgo", isDir: true},
 		{path: "builtin", isDir: true},
 		{path: "go.mod", isDir: false},
 		{path: "go.sum", isDir: false},
@@ -81,7 +81,7 @@ var initCommandExecuteEnv = os.Environ()
 var commandExecuteEnv = initCommandExecuteEnv
 
 // Always put `gop` command as the first item, as it will be referenced by below code.
-var gopBinFiles = []string{"gop", "gopfmt"}
+var gopBinFiles = []string{"gop", "xgo"}
 
 const (
 	inWindows = (runtime.GOOS == "windows")
@@ -264,11 +264,11 @@ func getGopBuildFlags() string {
 	if gopRootFinal := os.Getenv("GOPROOT_FINAL"); gopRootFinal != "" {
 		defaultGopRoot = gopRootFinal
 	}
-	buildFlags := fmt.Sprintf("-X \"github.com/goplus/gop/env.defaultGopRoot=%s\"", defaultGopRoot)
-	buildFlags += fmt.Sprintf(" -X \"github.com/goplus/gop/env.buildDate=%s\"", getBuildDateTime())
+	buildFlags := fmt.Sprintf("-X \"github.com/goplus/xgo/env.defaultGopRoot=%s\"", defaultGopRoot)
+	buildFlags += fmt.Sprintf(" -X \"github.com/goplus/xgo/env.buildDate=%s\"", getBuildDateTime())
 
 	version := findGopVersion()
-	buildFlags += fmt.Sprintf(" -X \"github.com/goplus/gop/env.buildVersion=%s\"", version)
+	buildFlags += fmt.Sprintf(" -X \"github.com/goplus/xgo/env.buildVersion=%s\"", version)
 
 	return buildFlags
 }

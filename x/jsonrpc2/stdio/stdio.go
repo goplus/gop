@@ -22,8 +22,8 @@ import (
 	"io"
 	"sync/atomic"
 
-	"github.com/goplus/gop/x/fakenet"
-	"github.com/goplus/gop/x/jsonrpc2"
+	"github.com/goplus/xgo/x/fakenet"
+	"github.com/goplus/xgo/x/jsonrpc2"
 )
 
 var (

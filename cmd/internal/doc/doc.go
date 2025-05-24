@@ -26,12 +26,12 @@ import (
 	"strings"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cl/outline"
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/tool"
-	"github.com/goplus/gop/x/gopenv"
-	"github.com/goplus/gop/x/gopprojs"
+	"github.com/goplus/xgo/cl"
+	"github.com/goplus/xgo/cl/outline"
+	"github.com/goplus/xgo/cmd/internal/base"
+	"github.com/goplus/xgo/tool"
+	"github.com/goplus/xgo/x/gopenv"
+	"github.com/goplus/xgo/x/gopprojs"
 )
 
 // -----------------------------------------------------------------------------
@@ -75,8 +75,8 @@ func runCmd(cmd *base.Command, args []string) {
 		cl.SetDisableRecover(true)
 	}
 
-	gopEnv := gopenv.Get()
-	conf := &tool.Config{Gop: gopEnv}
+	xgo := gopenv.Get()
+	conf := &tool.Config{XGo: xgo}
 	outlinePkg(proj, conf)
 }
 

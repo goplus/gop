@@ -1,6 +1,6 @@
 package main
 
-import "github.com/goplus/gop/tpl"
+import "github.com/goplus/xgo/tpl"
 
 func main() {
 	tpl.NewEx(`

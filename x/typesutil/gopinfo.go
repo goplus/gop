@@ -20,8 +20,8 @@ import (
 	"go/types"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/cl"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/cl"
 	"github.com/qiniu/x/log"
 )
 

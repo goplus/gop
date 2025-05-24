@@ -14,7 +14,7 @@
  */
 
 import (
-	self "github.com/goplus/gop/cmd/internal/doc"
+	self "github.com/goplus/xgo/cmd/internal/doc"
 )
 
 use "doc [flags] [pkgPath]"

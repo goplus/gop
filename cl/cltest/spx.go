@@ -25,12 +25,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/parser/fsx"
-	"github.com/goplus/gop/parser/fsx/memfs"
-	"github.com/goplus/gop/scanner"
 	"github.com/goplus/mod/modfile"
+	"github.com/goplus/xgo/cl"
+	"github.com/goplus/xgo/parser"
+	"github.com/goplus/xgo/parser/fsx"
+	"github.com/goplus/xgo/parser/fsx/memfs"
+	"github.com/goplus/xgo/scanner"
 	"github.com/qiniu/x/test"
 )
 

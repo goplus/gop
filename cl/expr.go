@@ -29,10 +29,10 @@ import (
 	"syscall"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/printer"
-	"github.com/goplus/gop/token"
-	tpl "github.com/goplus/gop/tpl/ast"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/printer"
+	"github.com/goplus/xgo/token"
+	tpl "github.com/goplus/xgo/tpl/ast"
 )
 
 /*-----------------------------------------------------------------------------
@@ -1147,11 +1147,11 @@ func compileStringLitEx(ctx *blockCtx, cb *gogen.CodeBuilder, lit *ast.BasicLit)
 }
 
 const (
-	tplPkgPath = "github.com/goplus/gop/tpl"
+	tplPkgPath = "github.com/goplus/xgo/tpl"
 )
 
 // A DomainTextLit node represents a domain-specific text literal.
-// https://github.com/goplus/gop/issues/2143
+// https://github.com/goplus/xgo/issues/2143
 //
 //	domainTag`...`
 //	domainTag`> arg1, arg2, ...

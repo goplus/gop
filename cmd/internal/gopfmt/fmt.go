@@ -26,15 +26,15 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/format"
-	"github.com/goplus/gop/tool"
+	"github.com/goplus/xgo/cmd/internal/base"
+	"github.com/goplus/xgo/format"
+	"github.com/goplus/xgo/tool"
 
 	goformat "go/format"
 	"go/parser"
 	"go/token"
 
-	xformat "github.com/goplus/gop/x/format"
+	xformat "github.com/goplus/xgo/x/format"
 )
 
 // Cmd - gop fmt

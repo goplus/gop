@@ -14,7 +14,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/goplus/gop/env"
+	"github.com/goplus/xgo/env"
 )
 
 const (
@@ -23,7 +23,7 @@ const (
 
 var script = "all.bash"
 var gopRoot = ""
-var gopBinFiles = []string{"gop", "gopfmt"}
+var gopBinFiles = []string{"gop", "xgo"}
 var installer = "cmd/make.go"
 var versionFile = "VERSION"
 var mainVersionFile = "env/version.go"

@@ -3,7 +3,7 @@ package foo_test
 import (
 	"testing"
 
-	"github.com/goplus/gop/tutorial/14-Using-goplus-in-Go/foo"
+	"github.com/goplus/xgo/tutorial/14-Using-goplus-in-Go/foo"
 )
 
 func TestReverseMap(t *testing.T) {

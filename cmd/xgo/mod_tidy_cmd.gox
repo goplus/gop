@@ -14,7 +14,7 @@
  */
 
 import (
-	self "github.com/goplus/gop/cmd/internal/mod"
+	self "github.com/goplus/xgo/cmd/internal/mod"
 )
 
 use "tidy [flags]"

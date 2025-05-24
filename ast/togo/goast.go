@@ -22,8 +22,8 @@ import (
 	"log"
 	"reflect"
 
-	gopast "github.com/goplus/gop/ast"
-	goptoken "github.com/goplus/gop/token"
+	gopast "github.com/goplus/xgo/ast"
+	goptoken "github.com/goplus/xgo/token"
 )
 
 // ----------------------------------------------------------------------------

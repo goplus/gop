@@ -19,12 +19,12 @@ package goptest
 import (
 	"go/token"
 
-	"github.com/goplus/gop/ast/gopq"
-	"github.com/goplus/gop/parser/fsx/memfs"
+	"github.com/goplus/xgo/ast/gopq"
+	"github.com/goplus/xgo/parser/fsx/memfs"
 )
 
 const (
-	GopPackage = "github.com/goplus/gop/ast/gopq"
+	GopPackage = "github.com/goplus/xgo/ast/gopq"
 )
 
 // -----------------------------------------------------------------------------

@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/token"
 )
 
 type byPos []*CommentGroup

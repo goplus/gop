@@ -32,15 +32,15 @@ func TestPanic(t *testing.T) {
 		buildVersion = "v1.2"
 		initEnv()
 	})
-	t.Run("GOPROOT panic", func(t *testing.T) {
+	t.Run("XGOROOT panic", func(t *testing.T) {
 		defer func() {
 			if e := recover(); e == nil {
-				t.Fatal("GOPROOT: no panic?")
+				t.Fatal("XGOROOT: no panic?")
 			}
 		}()
 		defaultGopRoot = ""
-		os.Setenv(envGOPROOT, "")
-		GOPROOT()
+		os.Setenv(envXGOROOT, "")
+		XGOROOT()
 	})
 }
 

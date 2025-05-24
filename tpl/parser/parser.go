@@ -17,10 +17,10 @@
 package parser
 
 import (
-	"github.com/goplus/gop/parser/iox"
-	"github.com/goplus/gop/tpl/ast"
-	"github.com/goplus/gop/tpl/scanner"
-	"github.com/goplus/gop/tpl/token"
+	"github.com/goplus/xgo/parser/iox"
+	"github.com/goplus/xgo/tpl/ast"
+	"github.com/goplus/xgo/tpl/scanner"
+	"github.com/goplus/xgo/tpl/token"
 )
 
 // -----------------------------------------------------------------------------

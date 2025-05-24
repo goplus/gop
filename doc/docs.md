@@ -54,7 +54,7 @@ $ brew install goplus
 ### from source code
 
 ```bash
-git clone https://github.com/goplus/gop.git
+git clone https://github.com/goplus/xgo.git
 cd gop
 
 # On mac/linux run:
@@ -775,7 +775,7 @@ Compared to corresponding Go code, It is clear and more readable.
 
 And the most interesting thing is, the return error contains the full error stack. When we got an error, it is very easy to position what the root cause is.
 
-How these `ErrWrap expressions` work? See [Error Handling](https://github.com/goplus/gop/wiki/Error-Handling) for more information.
+How these `ErrWrap expressions` work? See [Error Handling](https://github.com/goplus/xgo/wiki/Error-Handling) for more information.
 
 <h5 align="right"><a href="#table-of-contents">⬆ back to toc</a></h5>
 
@@ -1110,7 +1110,7 @@ By default `xgo watch` does not convert test files (normally ending with `_test.
 
 ## Calling C from XGo
 
-Here is [an example to show how XGo interacts with C](https://github.com/goplus/gop/tree/main/demo/_llgo/hellollgo).
+Here is [an example to show how XGo interacts with C](https://github.com/goplus/xgo/tree/main/demo/_llgo/hellollgo).
 
 ```go
 import "c"

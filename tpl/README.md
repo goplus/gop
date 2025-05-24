@@ -160,6 +160,6 @@ This calculator handles basic arithmetic operations with proper operator precede
 
 XGo TPL offers a powerful yet intuitive alternative to regular expressions for text processing. By combining grammar-based parsing with seamless XGo integration, it enables developers to create clear, maintainable text processing solutions.
 
-For more examples of TPL in action, check out the XGo demos starting with `tpl-` at [https://github.com/goplus/gop/tree/main/demo](https://github.com/goplus/gop/tree/main/demo). These examples showcase how to implement calculators, parse text to generate ASTs, and even implement entire languages in just a few hundred lines of code.
+For more examples of TPL in action, check out the XGo demos starting with `tpl-` at [https://github.com/goplus/xgo/tree/main/demo](https://github.com/goplus/xgo/tree/main/demo). These examples showcase how to implement calculators, parse text to generate ASTs, and even implement entire languages in just a few hundred lines of code.
 
 Whether you're parsing structured text, building domain-specific languages, or implementing complex text transformations, XGo TPL provides a robust and readable approach that surpasses traditional regular expressions.

@@ -20,7 +20,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/goplus/gop/x/gocmd"
+	"github.com/goplus/xgo/x/gocmd"
 	"github.com/qiniu/x/errors"
 )
 
@@ -131,8 +131,8 @@ func restoreDirAndMod(old string, mod os.FileMode) {
 
 // If no go.mod and used XGo, use GOPROOT as buildDir.
 func getBuildDir(conf *Config) string {
-	if conf != nil && conf.GopDeps != nil && *conf.GopDeps != 0 {
-		return conf.Gop.Root
+	if conf != nil && conf.XGoDeps != nil && *conf.XGoDeps != 0 {
+		return conf.XGo.Root
 	}
 	return ""
 }

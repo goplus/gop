@@ -21,14 +21,14 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/goplus/gop/x/gopenv"
 	"github.com/goplus/mod/env"
+	"github.com/goplus/xgo/x/gopenv"
 )
 
-type GopEnv = env.Gop
+type XGoEnv = env.XGo
 
 type Config struct {
-	Gop   *GopEnv
+	XGo   *XGoEnv
 	GoCmd string
 	Flags []string
 	Run   func(cmd *exec.Cmd) error
@@ -46,7 +46,7 @@ func doWithArgs(dir, op string, conf *Config, args ...string) (err error) {
 	}
 	exargs := make([]string, 1, 16)
 	exargs[0] = op
-	exargs = appendLdflags(exargs, conf.Gop)
+	exargs = appendLdflags(exargs, conf.XGo)
 	exargs = append(exargs, conf.Flags...)
 	exargs = append(exargs, args...)
 	cmd := exec.Command(goCmd, exargs...)
@@ -68,20 +68,20 @@ func runCmd(cmd *exec.Cmd) (err error) {
 // -----------------------------------------------------------------------------
 
 const (
-	ldFlagVersion   = "-X \"github.com/goplus/gop/env.buildVersion=%s\""
-	ldFlagBuildDate = "-X \"github.com/goplus/gop/env.buildDate=%s\""
-	ldFlagGopRoot   = "-X \"github.com/goplus/gop/env.defaultGopRoot=%s\""
+	ldFlagVersion   = "-X \"github.com/goplus/xgo/env.buildVersion=%s\""
+	ldFlagBuildDate = "-X \"github.com/goplus/xgo/env.buildDate=%s\""
+	ldFlagGopRoot   = "-X \"github.com/goplus/xgo/env.defaultGopRoot=%s\""
 )
 
 const (
 	ldFlagAll = ldFlagVersion + " " + ldFlagBuildDate + " " + ldFlagGopRoot
 )
 
-func loadFlags(env *GopEnv) string {
+func loadFlags(env *XGoEnv) string {
 	return fmt.Sprintf(ldFlagAll, env.Version, env.BuildDate, env.Root)
 }
 
-func appendLdflags(exargs []string, env *GopEnv) []string {
+func appendLdflags(exargs []string, env *XGoEnv) []string {
 	if env == nil {
 		env = gopenv.Get()
 	}

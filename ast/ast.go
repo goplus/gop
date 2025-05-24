@@ -21,7 +21,7 @@ package ast
 import (
 	"go/ast"
 
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/token"
 )
 
 // ----------------------------------------------------------------------------

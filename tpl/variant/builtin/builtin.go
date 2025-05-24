@@ -19,7 +19,7 @@ package buitin
 import (
 	"reflect"
 
-	"github.com/goplus/gop/tpl/variant"
+	"github.com/goplus/xgo/tpl/variant"
 )
 
 // -----------------------------------------------------------------------------

@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/x/gopmod"
+	"github.com/goplus/xgo/cmd/internal/base"
+	"github.com/goplus/xgo/x/gopmod"
 )
 
 // -----------------------------------------------------------------------------

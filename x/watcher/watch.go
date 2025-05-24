@@ -18,7 +18,7 @@
 package watcher
 
 import (
-	"github.com/goplus/gop/x/fsnotify"
+	"github.com/goplus/xgo/x/fsnotify"
 )
 
 var (

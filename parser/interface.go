@@ -22,9 +22,9 @@ import (
 	goparser "go/parser"
 	"go/scanner"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/parser/iox"
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/parser/iox"
+	"github.com/goplus/xgo/token"
 )
 
 // A Mode value is a set of flags (or 0).

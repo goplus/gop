@@ -22,8 +22,8 @@ package parser
 import (
 	"testing"
 
-	"github.com/goplus/gop/parser/parsertest"
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/parser/parsertest"
+	"github.com/goplus/xgo/token"
 )
 
 var testStdCode = `package bar; import "io"

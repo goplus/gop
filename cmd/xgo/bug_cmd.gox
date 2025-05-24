@@ -14,7 +14,7 @@
  */
 
 import (
-	self "github.com/goplus/gop/cmd/internal/bug"
+	self "github.com/goplus/xgo/cmd/internal/bug"
 )
 
 use "bug"

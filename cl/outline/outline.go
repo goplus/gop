@@ -22,10 +22,10 @@ import (
 
 	"github.com/goplus/gogen"
 	"github.com/goplus/gogen/typeutil"
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/token"
 	"github.com/goplus/mod/modfile"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/cl"
+	"github.com/goplus/xgo/token"
 )
 
 // -----------------------------------------------------------------------------

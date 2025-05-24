@@ -22,8 +22,8 @@ import (
 	"go/token"
 	"testing"
 
-	gopast "github.com/goplus/gop/ast"
-	"github.com/goplus/gop/parser"
+	gopast "github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/parser"
 )
 
 func testAST(t *testing.T, from, to string) {

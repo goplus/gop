@@ -33,11 +33,11 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/scanner"
-	"github.com/goplus/gop/token"
-	tplast "github.com/goplus/gop/tpl/ast"
-	tpl "github.com/goplus/gop/tpl/parser"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/scanner"
+	"github.com/goplus/xgo/token"
+	tplast "github.com/goplus/xgo/tpl/ast"
+	tpl "github.com/goplus/xgo/tpl/parser"
 	"github.com/qiniu/x/log"
 )
 

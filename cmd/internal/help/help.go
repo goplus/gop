@@ -28,7 +28,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/xgo/cmd/internal/base"
 )
 
 // Help implements the 'help' command.

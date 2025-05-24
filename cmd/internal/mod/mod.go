@@ -20,7 +20,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/xgo/cmd/internal/base"
 )
 
 var Cmd = &base.Command{

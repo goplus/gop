@@ -25,10 +25,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/goplus/gop/cl/outline"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/x/gopenv"
-	"github.com/goplus/mod/gopmod"
+	"github.com/goplus/mod/xgomod"
+	"github.com/goplus/xgo/cl/outline"
+	"github.com/goplus/xgo/parser"
+	"github.com/goplus/xgo/x/gopenv"
 	"github.com/qiniu/x/errors"
 )
 
@@ -81,11 +81,11 @@ func Outline(dir string, conf *Config) (out outline.Package, err error) {
 
 	imp := conf.Importer
 	if imp == nil {
-		gop := conf.Gop
-		if gop == nil {
-			gop = gopenv.Get()
+		xgo := conf.XGo
+		if xgo == nil {
+			xgo = gopenv.Get()
 		}
-		imp = NewImporter(mod, gop, fset)
+		imp = NewImporter(mod, xgo, fset)
 	}
 
 	for name, pkg := range pkgs {
@@ -141,7 +141,7 @@ func OutlinePkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (ou
 	if err != nil {
 		return
 	}
-	if pkg.Type == gopmod.PkgtExtern {
+	if pkg.Type == xgomod.PkgtExtern {
 		modFile := chmodModfile(pkg.ModDir)
 		defer os.Chmod(modFile, modReadonly)
 	}

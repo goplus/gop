@@ -23,9 +23,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/goplus/gop/tool"
-	"github.com/goplus/gop/x/gopprojs"
-	"github.com/goplus/gop/x/jsonrpc2"
+	"github.com/goplus/xgo/tool"
+	"github.com/goplus/xgo/x/gopprojs"
+	"github.com/goplus/xgo/x/jsonrpc2"
 )
 
 // -----------------------------------------------------------------------------

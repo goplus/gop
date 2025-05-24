@@ -1,6 +1,6 @@
 package main
 
-import "github.com/goplus/gop/cl/internal/spx"
+import "github.com/goplus/xgo/cl/internal/spx"
 
 type bar struct {
 	spx.Sprite

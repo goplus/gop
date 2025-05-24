@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/goplus/gop/tpl/token"
-	"github.com/goplus/gop/tpl/types"
+	"github.com/goplus/xgo/tpl/token"
+	"github.com/goplus/xgo/tpl/types"
 )
 
 var (

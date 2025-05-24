@@ -21,7 +21,7 @@ import (
 	"log"
 	"reflect"
 
-	"github.com/goplus/gop/ast"
+	"github.com/goplus/xgo/ast"
 )
 
 // -----------------------------------------------------------------------------

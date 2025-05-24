@@ -17,7 +17,7 @@
 package ast
 
 import (
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/token"
 )
 
 // -----------------------------------------------------------------------------
@@ -60,7 +60,7 @@ func (*OverloadFuncDecl) declNode() {}
 // -----------------------------------------------------------------------------
 
 // A DomainTextLit node represents a domain-specific text literal.
-// https://github.com/goplus/gop/issues/2143
+// https://github.com/goplus/xgo/issues/2143
 //
 //	domainTag`...`
 //	domainTag`> arg1, arg2, ...

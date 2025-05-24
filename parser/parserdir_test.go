@@ -25,13 +25,13 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/parser/fsx"
-	"github.com/goplus/gop/parser/fsx/memfs"
-	"github.com/goplus/gop/parser/iox"
-	"github.com/goplus/gop/parser/parsertest"
-	"github.com/goplus/gop/scanner"
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/parser/fsx"
+	"github.com/goplus/xgo/parser/fsx/memfs"
+	"github.com/goplus/xgo/parser/iox"
+	"github.com/goplus/xgo/parser/parsertest"
+	"github.com/goplus/xgo/scanner"
+	"github.com/goplus/xgo/token"
 	"github.com/qiniu/x/log"
 )
 

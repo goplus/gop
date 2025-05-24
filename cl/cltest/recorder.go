@@ -19,7 +19,7 @@ package cltest
 import (
 	"go/types"
 
-	"github.com/goplus/gop/ast"
+	"github.com/goplus/xgo/ast"
 )
 
 type gopRecorder struct {

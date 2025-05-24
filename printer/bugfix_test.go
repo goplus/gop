@@ -8,9 +8,9 @@ import (
 	goprinter "go/printer"
 	gotoken "go/token"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/printer"
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/printer"
+	"github.com/goplus/xgo/token"
 )
 
 func goIdents(name string) []*goast.Ident {

@@ -15,8 +15,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/goplus/gop/x/jsonrpc2"
-	"github.com/goplus/gop/x/jsonrpc2/internal/stack/stacktest"
+	"github.com/goplus/xgo/x/jsonrpc2"
+	"github.com/goplus/xgo/x/jsonrpc2/internal/stack/stacktest"
 )
 
 var callTests = []invoker{

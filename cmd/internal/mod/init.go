@@ -22,10 +22,10 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/env"
-	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modload"
+	"github.com/goplus/mod/xgomod"
+	"github.com/goplus/xgo/cmd/internal/base"
+	"github.com/goplus/xgo/env"
 )
 
 // gop mod init
@@ -89,7 +89,7 @@ func goMainVer() string {
 }
 
 func llgoLibVer() string {
-	if modGop, e1 := gopmod.LoadFrom(filepath.Join(env.GOPROOT(), "go.mod"), ""); e1 == nil {
+	if modGop, e1 := xgomod.LoadFrom(filepath.Join(env.XGOROOT(), "go.mod"), ""); e1 == nil {
 		if pkg, e2 := modGop.Lookup("github.com/goplus/lib"); e2 == nil {
 			return pkg.Real.Version
 		}

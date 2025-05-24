@@ -2,7 +2,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"gop/env"
+	"xgo/env"
 	"runtime"
 )
 
@@ -48,7 +48,7 @@ func .toMethodType(t *ast.FuncType, ex *exargs, at string) (mt *ast.FuncType, re
 var (
 	fset    = token.newFileSet
 	pkgs    = map[string]*ast.Package{}
-	root    = env.GOPROOT()
+	root    = env.XGOROOT()
 	goroot  = runtime.GOROOT()
 	pkgDirs = {
 		"":        "${goroot}/src/builtin",

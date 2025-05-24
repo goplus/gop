@@ -27,7 +27,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/goplus/gop/x/jsonrpc2/stdio"
+	"github.com/goplus/xgo/x/jsonrpc2/stdio"
 )
 
 func fatal(err error) {

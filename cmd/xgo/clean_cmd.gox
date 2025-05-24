@@ -14,7 +14,7 @@
  */
 
 import (
-	self "github.com/goplus/gop/cmd/internal/clean"
+	self "github.com/goplus/xgo/cmd/internal/clean"
 )
 
 use "clean [flags] <gopSrcDir>"

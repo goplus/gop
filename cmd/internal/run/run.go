@@ -23,11 +23,11 @@ import (
 	"reflect"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/tool"
-	"github.com/goplus/gop/x/gocmd"
-	"github.com/goplus/gop/x/gopprojs"
+	"github.com/goplus/xgo/cl"
+	"github.com/goplus/xgo/cmd/internal/base"
+	"github.com/goplus/xgo/tool"
+	"github.com/goplus/xgo/x/gocmd"
+	"github.com/goplus/xgo/x/gopprojs"
 	"github.com/qiniu/x/log"
 )
 
@@ -87,7 +87,7 @@ func runCmd(cmd *base.Command, args []string) {
 	defer conf.UpdateCache()
 
 	if !conf.Mod.HasModfile() { // if no go.mod, check GopDeps
-		conf.GopDeps = new(int)
+		conf.XGoDeps = new(int)
 	}
 	confCmd := conf.NewGoCmdConf()
 	confCmd.Flags = pass.Args

@@ -19,8 +19,8 @@ package typesutil
 import (
 	"go/types"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/token"
 )
 
 // CheckExpr type checks the expression expr as if it had appeared at position

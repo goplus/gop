@@ -24,8 +24,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/goplus/gop/tpl/token"
-	"github.com/goplus/gop/tpl/types"
+	"github.com/goplus/xgo/tpl/token"
+	"github.com/goplus/xgo/tpl/types"
 )
 
 // An ErrorHandler may be provided to Scanner.Init. If a syntax error is

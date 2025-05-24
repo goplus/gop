@@ -22,10 +22,10 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cl/cltest"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/parser/fsx/memfs"
+	"github.com/goplus/xgo/cl"
+	"github.com/goplus/xgo/cl/cltest"
+	"github.com/goplus/xgo/parser"
+	"github.com/goplus/xgo/parser/fsx/memfs"
 )
 
 func TestTypeParams(t *testing.T) {
@@ -746,7 +746,7 @@ func main() {
 }
 
 func TestGenericFuncAlias(t *testing.T) {
-	gopClTest(t, `import "github.com/goplus/gop/cl/internal/overload/foo"
+	gopClTest(t, `import "github.com/goplus/xgo/cl/internal/overload/foo"
 foo.test(100)
 foo.test("hello",100)
 foo.test__1(100)
@@ -755,7 +755,7 @@ foo.test__2(1, true)
 foo.test__2[int, string](1, "hello")
 `, `package main
 
-import "github.com/goplus/gop/cl/internal/overload/foo"
+import "github.com/goplus/xgo/cl/internal/overload/foo"
 
 func main() {
 	foo.Test__1(100)
@@ -770,7 +770,7 @@ func main() {
 
 func TestGoptLambdaFunc(t *testing.T) {
 	gopClTest(t, `
-import "github.com/goplus/gop/cl/internal/overload/bar"
+import "github.com/goplus/xgo/cl/internal/overload/bar"
 
 type Message struct {
 	info string
@@ -788,7 +788,7 @@ p.onCmd int, Message, 100, (n,msg) => {
 
 import (
 	"fmt"
-	"github.com/goplus/gop/cl/internal/overload/bar"
+	"github.com/goplus/xgo/cl/internal/overload/bar"
 )
 
 type Message struct {
@@ -811,7 +811,7 @@ func main() {
 
 func TestGoptLambdaError(t *testing.T) {
 	codeErrorTest(t, `bar.xgo:8:9: 100 not type`, `
-import "github.com/goplus/gop/cl/internal/overload/bar"
+import "github.com/goplus/xgo/cl/internal/overload/bar"
 
 type Message struct {
 	info string
@@ -832,7 +832,7 @@ p.onCmd 100, Message, 100, (n, msg) => {
 		msg = "bar.xgo:8:1: string does not satisfy ~int (string missing in ~int)"
 	}
 	codeErrorTest(t, msg, `
-import "github.com/goplus/gop/cl/internal/overload/bar"
+import "github.com/goplus/xgo/cl/internal/overload/bar"
 
 type Message struct {
 	info string

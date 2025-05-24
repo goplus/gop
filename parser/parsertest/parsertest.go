@@ -27,9 +27,9 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/token"
-	tpltoken "github.com/goplus/gop/tpl/token"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/token"
+	tpltoken "github.com/goplus/xgo/tpl/token"
 	"github.com/qiniu/x/test"
 )
 
