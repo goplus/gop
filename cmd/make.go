@@ -81,7 +81,7 @@ var initCommandExecuteEnv = os.Environ()
 var commandExecuteEnv = initCommandExecuteEnv
 
 // Always put `gop` command as the first item, as it will be referenced by below code.
-var gopBinFiles = []string{"gop", "gopfmt"}
+var gopBinFiles = []string{"gop", "xgo"}
 
 const (
 	inWindows = (runtime.GOOS == "windows")
