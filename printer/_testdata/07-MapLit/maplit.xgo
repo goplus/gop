@@ -1,10 +1,10 @@
 x := {"Hello": 1, "xsw": 3.4} // map[string]float64
 println("x:", x)
 
-y := {"Hello": 1, "xsw": "XGo"} // map[string]interface{}
+y := {"Hello": 1, "xsw": "XGo"} // map[string]any
 println("y:", y)
 
 println({"Hello": 1, "xsw": 3}) // map[string]int
-println({1: 1.4, 3: "XGo"})     // map[int]interface{}
+println({1: 1.4, 3: "XGo"})     // map[int]any
 
-println("empty map:", {}) // map[string]interface{}
+println("empty map:", {}) // map[string]any
