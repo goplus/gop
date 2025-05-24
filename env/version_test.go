@@ -38,7 +38,7 @@ func TestPanic(t *testing.T) {
 				t.Fatal("XGOROOT: no panic?")
 			}
 		}()
-		defaultGopRoot = ""
+		defaultXGoRoot = ""
 		os.Setenv(envXGOROOT, "")
 		XGOROOT()
 	})

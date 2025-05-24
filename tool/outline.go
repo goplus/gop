@@ -28,7 +28,7 @@ import (
 	"github.com/goplus/mod/xgomod"
 	"github.com/goplus/xgo/cl/outline"
 	"github.com/goplus/xgo/parser"
-	"github.com/goplus/xgo/x/gopenv"
+	"github.com/goplus/xgo/x/xgoenv"
 	"github.com/qiniu/x/errors"
 )
 
@@ -83,7 +83,7 @@ func Outline(dir string, conf *Config) (out outline.Package, err error) {
 	if imp == nil {
 		xgo := conf.XGo
 		if xgo == nil {
-			xgo = gopenv.Get()
+			xgo = xgoenv.Get()
 		}
 		imp = NewImporter(mod, xgo, fset)
 	}

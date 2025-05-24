@@ -31,7 +31,7 @@ import (
 	"github.com/goplus/xgo/parser"
 	"github.com/goplus/xgo/token"
 	"github.com/goplus/xgo/x/gocmd"
-	"github.com/goplus/xgo/x/gopenv"
+	"github.com/goplus/xgo/x/xgoenv"
 	"github.com/qiniu/x/errors"
 )
 
@@ -150,7 +150,7 @@ func NewDefaultConf(dir string, flags ConfFlags, tags ...string) (conf *Config, 
 	if err != nil {
 		return
 	}
-	xgo := gopenv.Get()
+	xgo := xgoenv.Get()
 	fset := token.NewFileSet()
 	imp := NewImporter(mod, xgo, fset)
 	if len(tags) > 0 {
@@ -263,7 +263,7 @@ func LoadDir(dir string, conf *Config, genTestPkg bool, promptGenGo ...bool) (ou
 
 	xgo := conf.XGo
 	if xgo == nil {
-		xgo = gopenv.Get()
+		xgo = xgoenv.Get()
 	}
 	imp := conf.Importer
 	if imp == nil {
@@ -384,7 +384,7 @@ func LoadFiles(dir string, files []string, conf *Config) (out *gogen.Package, er
 	}
 	xgo := conf.XGo
 	if xgo == nil {
-		xgo = gopenv.Get()
+		xgo = xgoenv.Get()
 	}
 	for _, pkg := range pkgs {
 		imp := conf.Importer

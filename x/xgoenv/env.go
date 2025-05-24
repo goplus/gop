@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package gopenv
+package xgoenv
 
 import (
 	modenv "github.com/goplus/mod/env"

@@ -111,7 +111,7 @@ winget:
     tags:
       - golang
       - go
-      - gop
+      - xgo
       - goplus
       - programming
       - language
@@ -120,9 +120,9 @@ winget:
       - data science
       - engineering
       - education
-    short_description: The Go+ Programming Language
+    short_description: The XGo Programming Language
     description: |
-      The Go+ programming language is designed for engineering, STEM education, and data science.
+      The XGo programming language is designed for engineering, STEM education, and data science.
       - For engineering: working in the simplest language that can be mastered by children.
       - For STEM education: studying an engineering language that can be used for work in the future.
       - For data science: communicating with engineers in the same language.
@@ -155,7 +155,7 @@ nfpms:
     maintainer: Li Jie <cpunion@gmail.com>
     license: Apache-2.0
     description: |
-      The Go+ programming language is designed for engineering, STEM education, and data science.
+      The XGo programming language is designed for engineering, STEM education, and data science.
       - For engineering: working in the simplest language that can be mastered by children.
       - For STEM education: studying an engineering language that can be used for work in the future.
       - For data science: communicating with engineers in the same language.
@@ -237,10 +237,10 @@ nfpms:
 snapcrafts:
   - id: gop
     name: gop
-    title: The Go+ Programming Language
-    summary: The Go+ Programming Language
+    title: The XGo Programming Language
+    summary: The XGo Programming Language
     description: |
-      The Go+ programming language is designed for engineering, STEM education, and data science.
+      The XGo programming language is designed for engineering, STEM education, and data science.
       - For engineering: working in the simplest language that can be mastered by children.
       - For STEM education: studying an engineering language that can be used for work in the future.
       - For data science: communicating with engineers in the same language.
@@ -310,7 +310,7 @@ snapcrafts:
         command: "gop"
         aliases: ["gop"]
         environment:
-          GOPROOT: "$SNAP"
+          XGOROOT: "$SNAP"
 
 checksum:
   name_template: "{{ .ProjectName }}{{ .Version }}.checksums.txt"

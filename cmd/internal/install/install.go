@@ -29,7 +29,7 @@ import (
 	"github.com/goplus/xgo/cmd/internal/base"
 	"github.com/goplus/xgo/tool"
 	"github.com/goplus/xgo/x/gocmd"
-	"github.com/goplus/xgo/x/gopprojs"
+	"github.com/goplus/xgo/x/xgoprojs"
 )
 
 // gop install
@@ -59,9 +59,9 @@ func runCmd(cmd *base.Command, args []string) {
 		pattern = []string{"."}
 	}
 
-	projs, err := gopprojs.ParseAll(pattern...)
+	projs, err := xgoprojs.ParseAll(pattern...)
 	if err != nil {
-		log.Panicln("gopprojs.ParseAll:", err)
+		log.Panicln("xgoprojs.ParseAll:", err)
 	}
 
 	if *flagDebug {
@@ -84,18 +84,18 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 }
 
-func install(proj gopprojs.Proj, conf *tool.Config, install *gocmd.InstallConfig) {
+func install(proj xgoprojs.Proj, conf *tool.Config, install *gocmd.InstallConfig) {
 	const flags = tool.GenFlagPrompt
 	var obj string
 	var err error
 	switch v := proj.(type) {
-	case *gopprojs.DirProj:
+	case *xgoprojs.DirProj:
 		obj = v.Dir
 		err = tool.InstallDir(obj, conf, install, flags)
-	case *gopprojs.PkgPathProj:
+	case *xgoprojs.PkgPathProj:
 		obj = v.Path
 		err = tool.InstallPkgPath("", v.Path, conf, install, flags)
-	case *gopprojs.FilesProj:
+	case *xgoprojs.FilesProj:
 		err = tool.InstallFiles(v.Files, conf, install)
 	default:
 		log.Panicln("`gop install` doesn't support", reflect.TypeOf(v))

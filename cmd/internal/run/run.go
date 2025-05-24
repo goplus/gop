@@ -27,7 +27,7 @@ import (
 	"github.com/goplus/xgo/cmd/internal/base"
 	"github.com/goplus/xgo/tool"
 	"github.com/goplus/xgo/x/gocmd"
-	"github.com/goplus/xgo/x/gopprojs"
+	"github.com/goplus/xgo/x/xgoprojs"
 	"github.com/qiniu/x/log"
 )
 
@@ -60,7 +60,7 @@ func runCmd(cmd *base.Command, args []string) {
 		cmd.Usage(os.Stderr)
 	}
 
-	proj, args, err := gopprojs.ParseOne(flag.Args()...)
+	proj, args, err := xgoprojs.ParseOne(flag.Args()...)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -94,18 +94,18 @@ func runCmd(cmd *base.Command, args []string) {
 	run(proj, args, !noChdir, conf, confCmd)
 }
 
-func run(proj gopprojs.Proj, args []string, chDir bool, conf *tool.Config, run *gocmd.RunConfig) {
+func run(proj xgoprojs.Proj, args []string, chDir bool, conf *tool.Config, run *gocmd.RunConfig) {
 	const flags = 0
 	var obj string
 	var err error
 	switch v := proj.(type) {
-	case *gopprojs.DirProj:
+	case *xgoprojs.DirProj:
 		obj = v.Dir
 		err = tool.RunDir(obj, args, conf, run, flags)
-	case *gopprojs.PkgPathProj:
+	case *xgoprojs.PkgPathProj:
 		obj = v.Path
 		err = tool.RunPkgPath(v.Path, args, chDir, conf, run, flags)
-	case *gopprojs.FilesProj:
+	case *xgoprojs.FilesProj:
 		err = tool.RunFiles("", v.Files, args, conf, run)
 	default:
 		log.Panicln("`gop run` doesn't support", reflect.TypeOf(v))

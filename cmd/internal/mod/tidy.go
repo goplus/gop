@@ -22,7 +22,7 @@ import (
 
 	"github.com/goplus/xgo/cmd/internal/base"
 	"github.com/goplus/xgo/tool"
-	"github.com/goplus/xgo/x/gopenv"
+	"github.com/goplus/xgo/x/xgoenv"
 )
 
 // gop mod tidy
@@ -36,7 +36,7 @@ func init() {
 }
 
 func runTidy(cmd *base.Command, args []string) {
-	err := tool.Tidy(".", gopenv.Get())
+	err := tool.Tidy(".", xgoenv.Get())
 	if err != nil {
 		if tool.NotFound(err) {
 			fmt.Fprintln(os.Stderr, "go.mod not found")

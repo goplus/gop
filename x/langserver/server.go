@@ -24,8 +24,8 @@ import (
 	"time"
 
 	"github.com/goplus/xgo/tool"
-	"github.com/goplus/xgo/x/gopprojs"
 	"github.com/goplus/xgo/x/jsonrpc2"
+	"github.com/goplus/xgo/x/xgoprojs"
 )
 
 // -----------------------------------------------------------------------------
@@ -134,7 +134,7 @@ func (p *handler) Handle(ctx context.Context, req *jsonrpc2.Request) (result any
 }
 
 func GenGo(pattern ...string) (err error) {
-	projs, err := gopprojs.ParseAll(pattern...)
+	projs, err := xgoprojs.ParseAll(pattern...)
 	if err != nil {
 		return
 	}
@@ -144,9 +144,9 @@ func GenGo(pattern ...string) (err error) {
 	}
 	for _, proj := range projs {
 		switch v := proj.(type) {
-		case *gopprojs.DirProj:
+		case *xgoprojs.DirProj:
 			tool.GenGoEx(v.Dir, conf, true, 0)
-		case *gopprojs.PkgPathProj:
+		case *xgoprojs.PkgPathProj:
 			if v.Path == "builtin" {
 				continue
 			}
