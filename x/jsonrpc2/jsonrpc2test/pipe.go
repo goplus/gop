@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2023 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import (
 	"io"
 	"net"
 
-	"github.com/goplus/gop/x/jsonrpc2"
+	"github.com/goplus/xgo/x/jsonrpc2"
 )
 
 // NetPipeListener returns a new Listener that listens using net.Pipe.

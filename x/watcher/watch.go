@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2023 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-// Package watcher monitors code changes in a Go+ workspace.
+// Package watcher monitors code changes in a XGo workspace.
 package watcher
 
 import (
-	"github.com/goplus/gop/x/fsnotify"
+	"github.com/goplus/xgo/x/fsnotify"
 )
 
 var (

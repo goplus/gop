@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2023 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,12 @@ import (
 
 	"github.com/goplus/gogen"
 	"github.com/goplus/gogen/packages"
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/parser/fsx/memfs"
-	"github.com/goplus/gop/token"
 	"github.com/goplus/mod/modfile"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/cl"
+	"github.com/goplus/xgo/parser"
+	"github.com/goplus/xgo/parser/fsx/memfs"
+	"github.com/goplus/xgo/token"
 )
 
 type Class = cl.Class

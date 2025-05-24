@@ -1,6 +1,6 @@
 package demo
 
-file mytest.gop
+file mytest.xgo
 ast.GenDecl:
   Tok: import
   Specs:

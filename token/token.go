@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// Package token defines constants representing the lexical tokens of the Go+
+// Package token defines constants representing the lexical tokens of the XGo
 // programming language and basic operations on tokens (printing, predicates).
 package token
 
@@ -25,7 +25,7 @@ import (
 	xtoken "github.com/goplus/gogen/token"
 )
 
-// Token is the set of lexical tokens of the Go+ programming language.
+// Token is the set of lexical tokens of the XGo programming language.
 type Token int
 
 // The list of tokens.

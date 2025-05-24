@@ -1,6 +1,6 @@
 package main
 
-file errwrap.gop
+file errwrap.xgo
 noEntrypoint
 ast.GenDecl:
   Tok: import

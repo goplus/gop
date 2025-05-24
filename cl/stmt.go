@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import (
 	"go/types"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/token"
 )
 
 func fileLineFile(relBaseDir, absFile string) string {
@@ -902,8 +902,9 @@ func compileBranchStmt(ctx *blockCtx, v *ast.BranchStmt) {
 			return
 		}
 		compileCallExpr(ctx, &ast.CallExpr{
-			Fun:  &ast.Ident{NamePos: v.TokPos, Name: "goto", Obj: &ast.Object{Data: label}},
-			Args: []ast.Expr{label},
+			Fun:        &ast.Ident{NamePos: v.TokPos, Name: "goto", Obj: &ast.Object{Data: label}},
+			Args:       []ast.Expr{label},
+			NoParenEnd: label.End(),
 		}, clIdentGoto)
 	case token.BREAK:
 		ctx.cb.Break(getLabel(ctx, label))

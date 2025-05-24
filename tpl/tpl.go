@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2025 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +22,14 @@ import (
 	"os"
 	"reflect"
 
-	"github.com/goplus/gop/parser/iox"
-	"github.com/goplus/gop/tpl/ast"
-	"github.com/goplus/gop/tpl/cl"
-	"github.com/goplus/gop/tpl/matcher"
-	"github.com/goplus/gop/tpl/parser"
-	"github.com/goplus/gop/tpl/scanner"
-	"github.com/goplus/gop/tpl/token"
-	"github.com/goplus/gop/tpl/types"
+	"github.com/goplus/xgo/parser/iox"
+	"github.com/goplus/xgo/tpl/ast"
+	"github.com/goplus/xgo/tpl/cl"
+	"github.com/goplus/xgo/tpl/matcher"
+	"github.com/goplus/xgo/tpl/parser"
+	"github.com/goplus/xgo/tpl/scanner"
+	"github.com/goplus/xgo/tpl/token"
+	"github.com/goplus/xgo/tpl/types"
 	"github.com/qiniu/x/errors"
 )
 

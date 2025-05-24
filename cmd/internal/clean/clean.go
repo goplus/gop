@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021-2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/goplus/gop/cmd/internal/base"
+	"github.com/goplus/xgo/cmd/internal/base"
 )
 
 const (
@@ -46,7 +46,7 @@ func cleanAGFiles(dir string, execAct bool) {
 		}
 		if fi.IsDir() {
 			pkgDir := filepath.Join(dir, fname)
-			if fname == ".gop" {
+			if fname == ".xgo" || fname == ".gop" {
 				removeGopDir(pkgDir, execAct)
 			} else {
 				cleanAGFiles(pkgDir, execAct)
@@ -80,7 +80,7 @@ func removeGopDir(dir string, execAct bool) {
 	}
 	for _, fi := range fis {
 		fname := fi.Name()
-		if strings.HasSuffix(fname, ".gop.go") {
+		if strings.HasSuffix(fname, ".xgo.go") || strings.HasSuffix(fname, ".gop.go") {
 			genfile := filepath.Join(dir, fname)
 			fmt.Printf("Cleaning %s ...\n", genfile)
 			if execAct {
@@ -98,7 +98,7 @@ func removeGopDir(dir string, execAct bool) {
 // Cmd - gop clean
 var Cmd = &base.Command{
 	UsageLine: "gop clean [flags] <gopSrcDir>",
-	Short:     "Clean all Go+ auto generated files",
+	Short:     "Clean all XGo auto generated files",
 }
 
 var (

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	MainVersion = "1.4"
+	MainVersion = "1.5"
 )
 
 // buildVersion is the GoPlus tree's version string at build time.
@@ -53,7 +53,7 @@ func initEnvByGop() {
 		if ret, err := gopEnv(); err == nil {
 			parts := strings.SplitN(strings.TrimRight(ret, "\n"), "\n", 3)
 			if len(parts) == 3 {
-				buildVersion, buildDate, defaultGopRoot = parts[0], parts[1], parts[2]
+				buildVersion, buildDate, defaultXGoRoot = parts[0], parts[1], parts[2]
 			}
 		}
 	}

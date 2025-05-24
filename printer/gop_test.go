@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/format"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/printer"
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/format"
+	"github.com/goplus/xgo/parser"
+	"github.com/goplus/xgo/printer"
+	"github.com/goplus/xgo/token"
 )
 
 func init() {
@@ -176,7 +176,7 @@ func TestFromTestdata(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		if !info.IsDir() && filepath.Ext(path) == ".gop" {
+		if !info.IsDir() && filepath.Ext(path) == ".xgo" {
 			testFrom(t, path, sel, 0)
 		}
 		return nil
@@ -196,7 +196,7 @@ func TestFromParse(t *testing.T) {
 		}
 		name := info.Name()
 		ext := filepath.Ext(name)
-		if !info.IsDir() && (ext == ".gop" || ext == ".gox") {
+		if !info.IsDir() && (ext == ".xgo" || ext == ".gox") {
 			testFrom(t, path, sel, 0)
 		}
 		return nil

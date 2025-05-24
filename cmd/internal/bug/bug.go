@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021-2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@ import (
 
 	urlpkg "net/url"
 
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/env"
+	"github.com/goplus/xgo/cmd/internal/base"
+	"github.com/goplus/xgo/env"
 )
 
 // -----------------------------------------------------------------------------
@@ -58,7 +58,7 @@ func runCmd(_ *base.Command, args []string) {
 	buf.WriteString(bugFooter)
 
 	body := buf.String()
-	url := "https://github.com/goplus/gop/issues/new?body=" + urlpkg.QueryEscape(body)
+	url := "https://github.com/goplus/xgo/issues/new?body=" + urlpkg.QueryEscape(body)
 	if !open(url) {
 		fmt.Print("Please file a new issue at golang.org/issue/new using this template:\n\n")
 		fmt.Print(body)
@@ -75,7 +75,7 @@ const bugFooter = `### What did you do?
 <!--
 If possible, provide a recipe for reproducing the error.
 A complete runnable program is good.
-A link on play.goplus.org is best.
+A link on play.xgo.dev is best.
 -->
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import (
 	"testing"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cl/cltest"
+	"github.com/goplus/xgo/cl"
+	"github.com/goplus/xgo/cl/cltest"
 )
 
 const (
@@ -37,7 +37,7 @@ var (
 )
 
 func init() {
-	cltest.Gop.Root = gopRootDir
+	cltest.XGo.Root = gopRootDir
 	conf := cltest.Conf
 	gblConfLine = &cl.Config{
 		Fset:          conf.Fset,
@@ -312,7 +312,7 @@ func init() {
 func TestSlogan(t *testing.T) {
 	gopClTest(t, `
 fields := ["engineering", "STEM education", "data science"]
-println "The Go+ Language for", fields.join(", ")
+println "The XGo Language for", fields.join(", ")
 `, `package main
 
 import (
@@ -322,7 +322,7 @@ import (
 
 func main() {
 	fields := []string{"engineering", "STEM education", "data science"}
-	fmt.Println("The Go+ Language for", strings.Join(fields, ", "))
+	fmt.Println("The XGo Language for", strings.Join(fields, ", "))
 }
 `)
 }
@@ -710,7 +710,7 @@ func main() {
 		var _gop_err error
 		_gop_ret, _gop_ret2, _gop_err = t()
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "t()", "/foo/bar.gop", 9, "main.main")
+			_gop_err = errors.NewFrame(_gop_err, "t()", "/foo/bar.xgo", 9, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -742,7 +742,7 @@ func main() {
 		var _gop_err error
 		_gop_err = t()
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "t()", "/foo/bar.gop", 9, "main.main")
+			_gop_err = errors.NewFrame(_gop_err, "t()", "/foo/bar.xgo", 9, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -1223,7 +1223,7 @@ type BigInt struct {
 }
 
 func TestAutoProperty(t *testing.T) {
-	gopClTest(t, `import "github.com/goplus/gop/ast/goptest"
+	gopClTest(t, `import "github.com/goplus/xgo/ast/goptest"
 
 func foo(script string) {
 	doc := goptest.New(script)!
@@ -1235,8 +1235,8 @@ func foo(script string) {
 
 import (
 	"fmt"
-	"github.com/goplus/gop/ast/gopq"
-	"github.com/goplus/gop/ast/goptest"
+	"github.com/goplus/xgo/ast/gopq"
+	"github.com/goplus/xgo/ast/goptest"
 	"github.com/qiniu/x/errors"
 )
 
@@ -1245,7 +1245,7 @@ func foo(script string) {
 		var _gop_err error
 		_gop_ret, _gop_err = goptest.New(script)
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "goptest.New(script)", "/foo/bar.gop", 4, "main.foo")
+			_gop_err = errors.NewFrame(_gop_err, "goptest.New(script)", "/foo/bar.xgo", 4, "main.foo")
 			panic(_gop_err)
 		}
 		return
@@ -1269,8 +1269,8 @@ func foo(script string) {
 
 import (
 	"fmt"
-	"github.com/goplus/gop/ast/gopq"
-	"github.com/goplus/gop/ast/goptest"
+	"github.com/goplus/xgo/ast/gopq"
+	"github.com/goplus/xgo/ast/goptest"
 	"github.com/qiniu/x/errors"
 )
 
@@ -1279,7 +1279,7 @@ func foo(script string) {
 		var _gop_err error
 		_gop_ret, _gop_err = goptest.New(script)
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "goptest.New(script)", "/foo/bar.gop", 4, "main.foo")
+			_gop_err = errors.NewFrame(_gop_err, "goptest.New(script)", "/foo/bar.xgo", 4, "main.foo")
 			panic(_gop_err)
 		}
 		return
@@ -1310,7 +1310,7 @@ func add(x string, y string) (int, error) {
 		var _gop_err error
 		_autoGo_1, _gop_err = strconv.Atoi(x)
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "strconv.Atoi(x)", "/foo/bar.gop", 5, "main.add")
+			_gop_err = errors.NewFrame(_gop_err, "strconv.Atoi(x)", "/foo/bar.xgo", 5, "main.add")
 			return 0, _gop_err
 		}
 		goto _autoGo_2
@@ -1321,7 +1321,7 @@ func add(x string, y string) (int, error) {
 		var _gop_err error
 		_autoGo_3, _gop_err = strconv.Atoi(y)
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "strconv.Atoi(y)", "/foo/bar.gop", 5, "main.add")
+			_gop_err = errors.NewFrame(_gop_err, "strconv.Atoi(y)", "/foo/bar.xgo", 5, "main.add")
 			return 0, _gop_err
 		}
 		goto _autoGo_4
@@ -1377,7 +1377,7 @@ var ret int = func() (_gop_ret int) {
 	var _gop_err error
 	_gop_ret, _gop_err = fmt.Println("Hi")
 	if _gop_err != nil {
-		_gop_err = errors.NewFrame(_gop_err, "println(\"Hi\")", "/foo/bar.gop", 2, "main.main")
+		_gop_err = errors.NewFrame(_gop_err, "println(\"Hi\")", "/foo/bar.xgo", 2, "main.main")
 		panic(_gop_err)
 	}
 	return
@@ -1404,7 +1404,7 @@ func main() {
 		var _gop_err error
 		_gop_err = mkdir("foo")
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "mkdir \"foo\"", "/foo/bar.gop", 6, "main.main")
+			_gop_err = errors.NewFrame(_gop_err, "mkdir \"foo\"", "/foo/bar.xgo", 6, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -1432,7 +1432,7 @@ func main() {
 		var _gop_err error
 		_gop_ret, _gop_err = foo()
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "foo()", "/foo/bar.gop", 6, "main.main")
+			_gop_err = errors.NewFrame(_gop_err, "foo()", "/foo/bar.xgo", 6, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -1471,7 +1471,7 @@ var x, y uint128
 var z uint128 = x + y
 `, `package main
 
-import "github.com/qiniu/x/gop/ng"
+import "github.com/qiniu/x/xgo/ng"
 
 var x, y ng.Uint128
 var z ng.Uint128 = (ng.Uint128).Gop_Add__1(x, y)
@@ -1484,7 +1484,7 @@ var x, y int128
 var z int128 = x + y
 `, `package main
 
-import "github.com/qiniu/x/gop/ng"
+import "github.com/qiniu/x/xgo/ng"
 
 var x, y ng.Int128
 var z ng.Int128 = (ng.Int128).Gop_Add__1(x, y)
@@ -1497,7 +1497,7 @@ var x, y bigint
 var z bigint = x + y
 `, `package main
 
-import "github.com/qiniu/x/gop/ng"
+import "github.com/qiniu/x/xgo/ng"
 
 var x, y ng.Bigint
 var z ng.Bigint = (ng.Bigint).Gop_Add(x, y)
@@ -1510,7 +1510,7 @@ var x = 1r
 `, `package main
 
 import (
-	"github.com/qiniu/x/gop/ng"
+	"github.com/qiniu/x/xgo/ng"
 	"math/big"
 )
 
@@ -1523,7 +1523,7 @@ func TestUint128Lit(t *testing.T) {
 var x uint128 = 1
 `, `package main
 
-import "github.com/qiniu/x/gop/ng"
+import "github.com/qiniu/x/xgo/ng"
 
 var x ng.Uint128 = ng.Uint128_Init__0(1)
 `)
@@ -1534,7 +1534,7 @@ func TestInt128Lit(t *testing.T) {
 var x int128 = 1
 `, `package main
 
-import "github.com/qiniu/x/gop/ng"
+import "github.com/qiniu/x/xgo/ng"
 
 var x ng.Int128 = ng.Int128_Init__0(1)
 `)
@@ -1546,7 +1546,7 @@ var x = 1/2r
 `, `package main
 
 import (
-	"github.com/qiniu/x/gop/ng"
+	"github.com/qiniu/x/xgo/ng"
 	"math/big"
 )
 
@@ -1560,7 +1560,7 @@ var x = 3 + 1/2r
 `, `package main
 
 import (
-	"github.com/qiniu/x/gop/ng"
+	"github.com/qiniu/x/xgo/ng"
 	"math/big"
 )
 
@@ -1577,7 +1577,7 @@ var z = 100 + y
 `, `package main
 
 import (
-	"github.com/qiniu/x/gop/ng"
+	"github.com/qiniu/x/xgo/ng"
 	"math/big"
 )
 
@@ -1690,7 +1690,7 @@ var x bigint
 x += 3
 `, `package main
 
-import "github.com/qiniu/x/gop/ng"
+import "github.com/qiniu/x/xgo/ng"
 
 var x ng.Bigint
 
@@ -1707,7 +1707,7 @@ x *= 2
 `, `package main
 
 import (
-	"github.com/qiniu/x/gop/ng"
+	"github.com/qiniu/x/xgo/ng"
 	"math/big"
 )
 
@@ -1725,7 +1725,7 @@ x *= 2r
 `, `package main
 
 import (
-	"github.com/qiniu/x/gop/ng"
+	"github.com/qiniu/x/xgo/ng"
 	"math/big"
 )
 
@@ -1739,16 +1739,16 @@ func main() {
 func TestCompositeLit(t *testing.T) {
 	gopClTest(t, `
 x := []float64{1, 3.4, 5}
-y := map[string]int{"Hello": 1, "Go+": 5}
+y := map[string]int{"Hello": 1, "XGo": 5}
 z := [...]int{1, 3, 5}
-a := {"Hello": 1, "Go+": 5.1}
+a := {"Hello": 1, "XGo": 5.1}
 `, `package main
 
 func main() {
 	x := []float64{1, 3.4, 5}
-	y := map[string]int{"Hello": 1, "Go+": 5}
+	y := map[string]int{"Hello": 1, "XGo": 5}
 	z := [...]int{1, 3, 5}
-	a := map[string]float64{"Hello": 1, "Go+": 5.1}
+	a := map[string]float64{"Hello": 1, "XGo": 5.1}
 }
 `)
 }
@@ -2016,14 +2016,14 @@ func main() {
 func TestDeferGo(t *testing.T) {
 	gopClTest(t, `
 go println("Hi")
-defer println("Go+")
+defer println("XGo")
 `, `package main
 
 import "fmt"
 
 func main() {
 	go fmt.Println("Hi")
-	defer fmt.Println("Go+")
+	defer fmt.Println("XGo")
 }
 `)
 }
@@ -2252,7 +2252,7 @@ type foo struct {
 }
 
 func newFoo() *foo {
-	return &foo{key: [3, 7], val: ["Hi", "Go+"]}
+	return &foo{key: [3, 7], val: ["Hi", "XGo"]}
 }
 
 func (p *foo) Gop_Enum() *fooIter {
@@ -2286,7 +2286,7 @@ func (p *foo) Gop_Enum() *fooIter {
 	return &fooIter{data: p}
 }
 func newFoo() *foo {
-	return &foo{key: []int{3, 7}, val: []string{"Hi", "Go+"}}
+	return &foo{key: []int{3, 7}, val: []string{"Hi", "XGo"}}
 }
 func main() {
 	for _gop_it := newFoo().Gop_Enum(); ; {
@@ -2349,13 +2349,13 @@ func main() {
 
 func TestMapComprehensionCond(t *testing.T) {
 	gopClTest(t, `
-z := {v: k for k, v <- {"Hello": 1, "Hi": 3, "xsw": 5, "Go+": 7}, v > 3}
+z := {v: k for k, v <- {"Hello": 1, "Hi": 3, "xsw": 5, "XGo": 7}, v > 3}
 `, `package main
 
 func main() {
 	z := func() (_gop_ret map[int]string) {
 		_gop_ret = map[int]string{}
-		for k, v := range map[string]int{"Hello": 1, "Hi": 3, "xsw": 5, "Go+": 7} {
+		for k, v := range map[string]int{"Hello": 1, "Hi": 3, "xsw": 5, "XGo": 7} {
 			if v > 3 {
 				_gop_ret[v] = k
 			}
@@ -2368,13 +2368,13 @@ func main() {
 
 func TestMapComprehensionCond2(t *testing.T) {
 	gopClTest(t, `
-z := {t: k for k, v <- {"Hello": 1, "Hi": 3, "xsw": 5, "Go+": 7}, t := v; t > 3}
+z := {t: k for k, v <- {"Hello": 1, "Hi": 3, "xsw": 5, "XGo": 7}, t := v; t > 3}
 `, `package main
 
 func main() {
 	z := func() (_gop_ret map[int]string) {
 		_gop_ret = map[int]string{}
-		for k, v := range map[string]int{"Hello": 1, "Hi": 3, "xsw": 5, "Go+": 7} {
+		for k, v := range map[string]int{"Hello": 1, "Hi": 3, "xsw": 5, "XGo": 7} {
 			if t := v; t > 3 {
 				_gop_ret[t] = k
 			}
@@ -2511,7 +2511,7 @@ a := [1, 3, 5, 7, 9]
 b := a[:3]
 c := a[1:]
 d := a[1:2:3]
-e := "Hello, Go+"[7:]
+e := "Hello, XGo"[7:]
 `, `package main
 
 func main() {
@@ -2519,22 +2519,22 @@ func main() {
 	b := a[:3]
 	c := a[1:]
 	d := a[1:2:3]
-	e := "Hello, Go+"[7:]
+	e := "Hello, XGo"[7:]
 }
 `)
 }
 
 func TestIndexGetTwoValue(t *testing.T) {
 	gopClTest(t, `
-a := {"Hello": 1, "Hi": 3, "xsw": 5, "Go+": 7}
+a := {"Hello": 1, "Hi": 3, "xsw": 5, "XGo": 7}
 x, ok := a["Hi"]
-y := a["Go+"]
+y := a["XGo"]
 `, `package main
 
 func main() {
-	a := map[string]int{"Hello": 1, "Hi": 3, "xsw": 5, "Go+": 7}
+	a := map[string]int{"Hello": 1, "Hi": 3, "xsw": 5, "XGo": 7}
 	x, ok := a["Hi"]
-	y := a["Go+"]
+	y := a["XGo"]
 }
 `)
 }
@@ -2760,7 +2760,7 @@ func TestLocalImport(t *testing.T) {
 var a = spx.TestIntValue
 `, `package main
 
-import "github.com/goplus/gop/cl/internal/spx"
+import "github.com/goplus/xgo/cl/internal/spx"
 
 var a = spx.TestIntValue
 `)
@@ -2792,14 +2792,14 @@ func main() {
 
 func TestAnonymousImport(t *testing.T) {
 	gopClTest(t, `println("Hello")
-printf("Hello Go+\n")
+printf("Hello XGo\n")
 `, `package main
 
 import "fmt"
 
 func main() {
 	fmt.Println("Hello")
-	fmt.Printf("Hello Go+\n")
+	fmt.Printf("Hello XGo\n")
 }
 `)
 }
@@ -3338,7 +3338,7 @@ func TestFuncAsParam(t *testing.T) {
 	gopClTest(t, `import "fmt"
 
 func bar(foo func(string, ...interface{}) (int, error)) {
-	foo("Hello, %v!\n", "Go+")
+	foo("Hello, %v!\n", "XGo")
 }
 
 bar(fmt.Printf)
@@ -3347,7 +3347,7 @@ bar(fmt.Printf)
 import "fmt"
 
 func bar(foo func(string, ...interface{}) (int, error)) {
-	foo("Hello, %v!\n", "Go+")
+	foo("Hello, %v!\n", "XGo")
 }
 func main() {
 	bar(fmt.Printf)
@@ -3371,12 +3371,12 @@ func printf(format string, args ...interface{}) (n int, err error) {
 }
 
 func bar(foo func(string, ...interface{}) (int, error)) {
-	foo("Hello, %v!\n", "Go+")
+	foo("Hello, %v!\n", "XGo")
 }
 
 bar(printf)
 fmt.Println(foo("Hello, world???"))
-fmt.Println(printf("Hello, %v\n", "Go+"))
+fmt.Println(printf("Hello, %v\n", "XGo"))
 `, `package main
 
 import (
@@ -3392,12 +3392,12 @@ func printf(format string, args ...interface{}) (n int, err error) {
 	return
 }
 func bar(foo func(string, ...interface{}) (int, error)) {
-	foo("Hello, %v!\n", "Go+")
+	foo("Hello, %v!\n", "XGo")
 }
 func main() {
 	bar(printf)
 	fmt.Println(foo("Hello, world???"))
-	fmt.Println(printf("Hello, %v\n", "Go+"))
+	fmt.Println(printf("Hello, %v\n", "XGo"))
 }
 `)
 }
@@ -3522,7 +3522,7 @@ func TestImportGopPkg(t *testing.T) {
 	defer autogen.Unlock()
 
 	removeAutogenFiles()
-	gopClTest(t, `import "github.com/goplus/gop/cl/internal/gop-in-go/foo"
+	gopClTest(t, `import "github.com/goplus/xgo/cl/internal/gop-in-go/foo"
 
 rmap := foo.ReverseMap(map[string]int{"Hi": 1, "Hello": 2})
 println(rmap)
@@ -3530,7 +3530,7 @@ println(rmap)
 
 import (
 	"fmt"
-	"github.com/goplus/gop/cl/internal/gop-in-go/foo"
+	"github.com/goplus/xgo/cl/internal/gop-in-go/foo"
 )
 
 func main() {
@@ -3846,24 +3846,24 @@ type Point struct {
 	x int
 	y int
 }
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 func (pt *Point) Test() {
-//line /foo/bar.gop:8:1
+//line /foo/bar.xgo:8:1
 	fmt.Println(pt.x, pt.y)
 }
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 // testPoint is test point
 func testPoint() {
-//line /foo/bar.gop:13:1
+//line /foo/bar.xgo:13:1
 	var pt Point
-//line /foo/bar.gop:14:1
+//line /foo/bar.xgo:14:1
 	pt.Test()
 }
-//line /foo/bar.gop:17
+//line /foo/bar.xgo:17
 func main() {
-//line /foo/bar.gop:17:1
+//line /foo/bar.xgo:17:1
 	fmt.Println("hello")
-//line /foo/bar.gop:18:1
+//line /foo/bar.xgo:18:1
 	testPoint()
 }
 `)
@@ -3900,24 +3900,24 @@ type Point struct {
 	x int
 	y int
 }
-//line ../bar.gop:7:1
+//line ../bar.xgo:7:1
 func (pt *Point) Test() {
-//line ../bar.gop:8:1
+//line ../bar.xgo:8:1
 	fmt.Println(pt.x, pt.y)
 }
-//line ../bar.gop:11:1
+//line ../bar.xgo:11:1
 // testPoint is test point
 func testPoint() {
-//line ../bar.gop:13:1
+//line ../bar.xgo:13:1
 	var pt Point
-//line ../bar.gop:14:1
+//line ../bar.xgo:14:1
 	pt.Test()
 }
-//line ../bar.gop:17
+//line ../bar.xgo:17
 func main() {
-//line ../bar.gop:17:1
+//line ../bar.xgo:17:1
 	fmt.Println("hello")
-//line ../bar.gop:18:1
+//line ../bar.xgo:18:1
 	testPoint()
 }
 `
@@ -3997,18 +3997,18 @@ println c
 import "fmt"
 // doc a line2
 var a int
-//line /foo/bar.gop:4
+//line /foo/bar.xgo:4
 func main() {
-//line /foo/bar.gop:4:1
+//line /foo/bar.xgo:4:1
 	fmt.Println(a)
-//line /foo/bar.gop:6:1
+//line /foo/bar.xgo:6:1
 	// doc b line6
 	var b int
-//line /foo/bar.gop:8:1
+//line /foo/bar.xgo:8:1
 	fmt.Println(b)
-//line /foo/bar.gop:10:1
+//line /foo/bar.xgo:10:1
 	var c int
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 	fmt.Println(c)
 }
 `)
@@ -4029,21 +4029,21 @@ func demo() {
 `, `package main
 
 import "fmt"
-//line /foo/bar.gop:2:1
+//line /foo/bar.xgo:2:1
 func demo() {
-//line /foo/bar.gop:3:1
+//line /foo/bar.xgo:3:1
 	// doc a line3
 	var a int
-//line /foo/bar.gop:5:1
+//line /foo/bar.xgo:5:1
 	fmt.Println(a)
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 	// doc b line7
 	var b int
-//line /foo/bar.gop:9:1
+//line /foo/bar.xgo:9:1
 	fmt.Println(b)
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 	var c int
-//line /foo/bar.gop:12:1
+//line /foo/bar.xgo:12:1
 	fmt.Println(c)
 }
 `)
@@ -4307,7 +4307,7 @@ func main() {
 		var _gop_err error
 		_gop_ret, _gop_err = foo()
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "foo", "/foo/bar.gop", 8, "main.main")
+			_gop_err = errors.NewFrame(_gop_err, "foo", "/foo/bar.xgo", 8, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -4316,7 +4316,7 @@ func main() {
 		var _gop_err error
 		_gop_ret, _gop_err = foo(1)
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "foo(1)", "/foo/bar.gop", 9, "main.main")
+			_gop_err = errors.NewFrame(_gop_err, "foo(1)", "/foo/bar.xgo", 9, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -4325,7 +4325,7 @@ func main() {
 		var _gop_err error
 		_gop_ret, _gop_err = foo()
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "foo", "/foo/bar.gop", 10, "main.main")
+			_gop_err = errors.NewFrame(_gop_err, "foo", "/foo/bar.xgo", 10, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -4334,7 +4334,7 @@ func main() {
 		var _gop_err error
 		_gop_ret, _gop_err = Bar()
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "bar", "/foo/bar.gop", 11, "main.main")
+			_gop_err = errors.NewFrame(_gop_err, "bar", "/foo/bar.xgo", 11, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -4370,103 +4370,103 @@ import (
 	"github.com/qiniu/x/errors"
 	"strconv"
 )
-//line /foo/bar.gop:6:1
+//line /foo/bar.xgo:6:1
 func add(x string, y string) (int, error) {
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 	var _autoGo_1 int
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 	{
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 		var _gop_err error
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 		_autoGo_1, _gop_err = strconv.Atoi(x)
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 		if _gop_err != nil {
-//line /foo/bar.gop:7:1
-			_gop_err = errors.NewFrame(_gop_err, "strconv.atoi(x)", "/foo/bar.gop", 7, "main.add")
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
+			_gop_err = errors.NewFrame(_gop_err, "strconv.atoi(x)", "/foo/bar.xgo", 7, "main.add")
+//line /foo/bar.xgo:7:1
 			return 0, _gop_err
 		}
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 		goto _autoGo_2
 	_autoGo_2:
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 	}
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 	var _autoGo_3 int
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 	{
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 		var _gop_err error
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 		_autoGo_3, _gop_err = strconv.Atoi(y)
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 		if _gop_err != nil {
-//line /foo/bar.gop:7:1
-			_gop_err = errors.NewFrame(_gop_err, "strconv.atoi(y)", "/foo/bar.gop", 7, "main.add")
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
+			_gop_err = errors.NewFrame(_gop_err, "strconv.atoi(y)", "/foo/bar.xgo", 7, "main.add")
+//line /foo/bar.xgo:7:1
 			return 0, _gop_err
 		}
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 		goto _autoGo_4
 	_autoGo_4:
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 	}
-//line /foo/bar.gop:7:1
+//line /foo/bar.xgo:7:1
 	return _autoGo_1 + _autoGo_3, nil
 }
-//line /foo/bar.gop:10:1
+//line /foo/bar.xgo:10:1
 func addSafe(x string, y string) int {
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 	return func() (_gop_ret int) {
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 		var _gop_err error
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 		_gop_ret, _gop_err = strconv.Atoi(x)
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 		if _gop_err != nil {
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 			return 0
 		}
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 		return
 	}() + func() (_gop_ret int) {
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 		var _gop_err error
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 		_gop_ret, _gop_err = strconv.Atoi(y)
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 		if _gop_err != nil {
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 			return 0
 		}
-//line /foo/bar.gop:11:1
+//line /foo/bar.xgo:11:1
 		return
 	}()
 }
-//line /foo/bar.gop:14
+//line /foo/bar.xgo:14
 func main() {
-//line /foo/bar.gop:14:1
+//line /foo/bar.xgo:14:1
 	fmt.Println(func() (_gop_ret int) {
-//line /foo/bar.gop:14:1
+//line /foo/bar.xgo:14:1
 		var _gop_err error
-//line /foo/bar.gop:14:1
+//line /foo/bar.xgo:14:1
 		_gop_ret, _gop_err = add("100", "23")
-//line /foo/bar.gop:14:1
+//line /foo/bar.xgo:14:1
 		if _gop_err != nil {
-//line /foo/bar.gop:14:1
-			_gop_err = errors.NewFrame(_gop_err, "add(\"100\", \"23\")", "/foo/bar.gop", 14, "main.main")
-//line /foo/bar.gop:14:1
+//line /foo/bar.xgo:14:1
+			_gop_err = errors.NewFrame(_gop_err, "add(\"100\", \"23\")", "/foo/bar.xgo", 14, "main.main")
+//line /foo/bar.xgo:14:1
 			panic(_gop_err)
 		}
-//line /foo/bar.gop:14:1
+//line /foo/bar.xgo:14:1
 		return
 	}())
-//line /foo/bar.gop:16:1
+//line /foo/bar.xgo:16:1
 	sum, err := add("10", "abc")
-//line /foo/bar.gop:17:1
+//line /foo/bar.xgo:17:1
 	fmt.Println(sum, err)
-//line /foo/bar.gop:19:1
+//line /foo/bar.xgo:19:1
 	fmt.Println(addSafe("10", "abc"))
 }
 `)

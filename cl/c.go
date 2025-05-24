@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2022 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,9 @@ const (
 	pathLibcpp = "github.com/goplus/lib/cpp"
 )
 
-func simplifyGopPackage(pkgPath string) string {
-	if strings.HasPrefix(pkgPath, "gop/") {
-		return "github.com/goplus/" + pkgPath
+func simplifyXgoPackage(pkgPath string) string {
+	if strings.HasPrefix(pkgPath, "xgo/") || strings.HasPrefix(pkgPath, "gop/") {
+		return "github.com/goplus/xgo/" + pkgPath[4:]
 	}
 	return pkgPath
 }
@@ -51,7 +51,7 @@ func simplifyPkgPath(pkgPath string) string {
 		if strings.HasPrefix(pkgPath, "cpp/") {
 			return pathLibcpp + pkgPath[3:]
 		}
-		return simplifyGopPackage(pkgPath)
+		return simplifyXgoPackage(pkgPath)
 	}
 }
 

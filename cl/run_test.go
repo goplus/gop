@@ -11,11 +11,11 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cl/cltest"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/parser/fsx/memfs"
-	"github.com/goplus/gop/scanner"
+	"github.com/goplus/xgo/cl"
+	"github.com/goplus/xgo/cl/cltest"
+	"github.com/goplus/xgo/parser"
+	"github.com/goplus/xgo/parser/fsx/memfs"
+	"github.com/goplus/xgo/scanner"
 )
 
 var (
@@ -27,7 +27,7 @@ func init() {
 	home, err := os.Getwd()
 	check(err)
 
-	tmpDir = home + "/.gop/tmp/"
+	tmpDir = home + "/.xgo/tmp/"
 	err = os.MkdirAll(tmpDir, 0755)
 	check(err)
 }
@@ -84,7 +84,7 @@ func genGo(t *testing.T, conf *cl.Config, gopcode string) []byte {
 	cl.SetDisableRecover(true)
 	defer cl.SetDisableRecover(false)
 
-	fs := memfs.SingleFile("/foo", "bar.gop", gopcode)
+	fs := memfs.SingleFile("/foo", "bar.xgo", gopcode)
 	pkgs, err := parser.ParseFSDir(cltest.Conf.Fset, fs, "/foo", parser.Config{Mode: parser.ParseComments})
 	if err != nil {
 		scanner.PrintError(os.Stderr, err)

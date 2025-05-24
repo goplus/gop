@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,29 +26,29 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/format"
-	"github.com/goplus/gop/tool"
+	"github.com/goplus/xgo/cmd/internal/base"
+	"github.com/goplus/xgo/format"
+	"github.com/goplus/xgo/tool"
 
 	goformat "go/format"
 	"go/parser"
 	"go/token"
 
-	xformat "github.com/goplus/gop/x/format"
+	xformat "github.com/goplus/xgo/x/format"
 )
 
 // Cmd - gop fmt
 var Cmd = &base.Command{
 	UsageLine: "gop fmt [flags] path ...",
-	Short:     "Format Go+ packages",
+	Short:     "Format XGo packages",
 }
 
 var (
 	flag        = &Cmd.Flag
-	flagTest    = flag.Bool("t", false, "test if Go+ files are formatted or not.")
+	flagTest    = flag.Bool("t", false, "test if XGo files are formatted or not.")
 	flagNotExec = flag.Bool("n", false, "prints commands that would be executed.")
-	flagMoveGo  = flag.Bool("mvgo", false, "move .go files to .gop files (only available in `--smart` mode).")
-	flagSmart   = flag.Bool("smart", false, "convert Go code style into Go+ style.")
+	flagMoveGo  = flag.Bool("mvgo", false, "move .go files to .xgo files (only available in `--smart` mode).")
+	flagSmart   = flag.Bool("smart", false, "convert Go code style into XGo style.")
 )
 
 func init() {
@@ -99,7 +99,7 @@ func gopfmt(path string, class, smart, mvgo bool) (err error) {
 		return nil
 	}
 	if mvgo {
-		newPath := strings.TrimSuffix(path, ".go") + ".gop"
+		newPath := strings.TrimSuffix(path, ".go") + ".xgo"
 		if err = os.WriteFile(newPath, target, 0666); err != nil {
 			return
 		}
@@ -149,7 +149,7 @@ func (w *walker) walk(path string, d fs.DirEntry, err error) error {
 			if mod, err := tool.LoadMod(path); err == nil {
 				fn = func(ext string) (ok bool, class bool) {
 					switch ext {
-					case ".go", ".gop":
+					case ".go", ".xgo", ".gop":
 						ok = true
 					case ".gox", ".spx", ".gmx":
 						ok, class = true, true
@@ -162,7 +162,7 @@ func (w *walker) walk(path string, d fs.DirEntry, err error) error {
 			} else {
 				fn = func(ext string) (ok bool, class bool) {
 					switch ext {
-					case ".go", ".gop":
+					case ".go", ".xgo", ".gop":
 						ok = true
 					case ".gox", ".spx", ".gmx":
 						ok, class = true, true
@@ -178,7 +178,7 @@ func (w *walker) walk(path string, d fs.DirEntry, err error) error {
 		if ok, class := fn(ext); ok && (!mvgo || ext == ".go") {
 			procCnt++
 			if *flagNotExec {
-				fmt.Println("gop fmt", path)
+				fmt.Println("xgo fmt", path)
 			} else {
 				err = gopfmt(path, class, smart && (mvgo || ext != ".go"), mvgo)
 				if err != nil {
@@ -223,7 +223,7 @@ func runCmd(cmd *base.Command, args []string) {
 		rootDir = path
 		filepath.WalkDir(path, walker.walk)
 		if procCnt == 0 {
-			fmt.Println("no Go+ files in", path)
+			fmt.Println("no XGo files in", path)
 		}
 	}
 }

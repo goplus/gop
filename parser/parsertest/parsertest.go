@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/token"
-	tpltoken "github.com/goplus/gop/tpl/token"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/token"
+	tpltoken "github.com/goplus/xgo/tpl/token"
 	"github.com/qiniu/x/test"
 )
 
@@ -54,7 +54,7 @@ var (
 	tplToken    = reflect.TypeOf(tpltoken.Token(0))
 )
 
-// FprintNode prints a Go+ AST node.
+// FprintNode prints a XGo AST node.
 func FprintNode(w io.Writer, lead string, v any, prefix, indent string) {
 	val := reflect.ValueOf(v)
 	switch val.Kind() {
@@ -120,7 +120,7 @@ func FprintNode(w io.Writer, lead string, v any, prefix, indent string) {
 	}
 }
 
-// Fprint prints a Go+ package.
+// Fprint prints a XGo package.
 func Fprint(w io.Writer, pkg *ast.Package) {
 	fmt.Fprintf(w, "package %s\n", pkg.Name)
 	paths := sortedKeys(pkg.Files)
@@ -134,7 +134,7 @@ func Fprint(w io.Writer, pkg *ast.Package) {
 	}
 }
 
-// Expect asserts a Go+ AST package equals output or not.
+// Expect asserts a XGo AST package equals output or not.
 func Expect(t *testing.T, pkg *ast.Package, expected string) {
 	b := bytes.NewBuffer(nil)
 	Fprint(b, pkg)
@@ -153,7 +153,7 @@ func ExpectEx(t *testing.T, outfile string, pkg *ast.Package, expected []byte) {
 	}
 }
 
-// ExpectNode asserts a Go+ AST node equals output or not.
+// ExpectNode asserts a XGo AST node equals output or not.
 func ExpectNode(t *testing.T, node any, expected string) {
 	b := bytes.NewBuffer(nil)
 	FprintNode(b, "", node, "", "  ")

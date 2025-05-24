@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2022 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modcache"
 	"github.com/goplus/mod/modfetch"
+	"github.com/goplus/mod/xgomod"
 	"github.com/qiniu/x/errors"
 )
 
@@ -48,12 +48,12 @@ const (
 
 // -----------------------------------------------------------------------------
 
-// GenGo generates gop_autogen.go for a Go+ package directory.
+// GenGo generates gop_autogen.go for a XGo package directory.
 func GenGo(dir string, conf *Config, genTestPkg bool) (string, bool, error) {
 	return GenGoEx(dir, conf, genTestPkg, 0)
 }
 
-// GenGoEx generates gop_autogen.go for a Go+ package directory.
+// GenGoEx generates gop_autogen.go for a XGo package directory.
 func GenGoEx(dir string, conf *Config, genTestPkg bool, flags GenFlags) (string, bool, error) {
 	recursively := strings.HasSuffix(dir, "/...")
 	if recursively {
@@ -135,8 +135,8 @@ func genGoEntry(list *errors.List, path string, d fs.DirEntry, conf *Config, fla
 		if d.IsDir() {
 			return filepath.SkipDir
 		}
-	} else if !d.IsDir() && strings.HasSuffix(fname, ".gop") {
-		if e := genGoSingleFile(path, conf, flags); e != nil && notIgnNotated(e, conf) {
+	} else if !d.IsDir() && (strings.HasSuffix(fname, ".xgo") || strings.HasSuffix(fname, ".gop")) {
+		if e := genGoSingleFile(path, 4, conf, flags); e != nil && notIgnNotated(e, conf) {
 			if flags&GenFlagPrintError != 0 {
 				fmt.Fprintln(os.Stderr, e)
 			}
@@ -146,9 +146,9 @@ func genGoEntry(list *errors.List, path string, d fs.DirEntry, conf *Config, fla
 	return nil
 }
 
-func genGoSingleFile(file string, conf *Config, flags GenFlags) (err error) {
+func genGoSingleFile(file string, extn int, conf *Config, flags GenFlags) (err error) {
 	dir, fname := filepath.Split(file)
-	autogen := dir + strings.TrimSuffix(fname, ".gop") + "_autogen.go"
+	autogen := dir + fname[:len(fname)-extn] + "_autogen.go"
 	if (flags & GenFlagPrompt) != 0 {
 		fmt.Fprintln(os.Stderr, "GenGo", file, "...")
 	}
@@ -168,7 +168,7 @@ func genGoSingleFile(file string, conf *Config, flags GenFlags) (err error) {
 func genGoIn(dir string, conf *Config, genTestPkg bool, flags GenFlags, gen ...*bool) (err error) {
 	out, test, err := LoadDir(dir, conf, genTestPkg, (flags&GenFlagPrompt) != 0)
 	if err != nil {
-		if NotFound(err) { // no Go+ source files
+		if NotFound(err) { // no XGo source files
 			return nil
 		}
 		return errors.NewWith(err, `LoadDir(dir, conf, genTestPkg)`, -5, "tool.LoadDir", dir, conf, genTestPkg)
@@ -211,7 +211,7 @@ const (
 	modReadonly = 0555
 )
 
-// GenGoPkgPath generates gop_autogen.go for a Go+ package.
+// GenGoPkgPath generates gop_autogen.go for a XGo package.
 func GenGoPkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (localDir string, recursively bool, err error) {
 	return GenGoPkgPathEx(workDir, pkgPath, conf, allowExtern, 0)
 }
@@ -229,7 +229,7 @@ func remotePkgPath(pkgPath string, conf *Config, recursively bool, flags GenFlag
 	return
 }
 
-// GenGoPkgPathEx generates gop_autogen.go for a Go+ package.
+// GenGoPkgPathEx generates gop_autogen.go for a XGo package.
 func GenGoPkgPathEx(workDir, pkgPath string, conf *Config, allowExtern bool, flags GenFlags) (localDir string, recursively bool, err error) {
 	recursively = strings.HasSuffix(pkgPath, "/...")
 	if recursively {
@@ -238,7 +238,7 @@ func GenGoPkgPathEx(workDir, pkgPath string, conf *Config, allowExtern bool, fla
 		return remotePkgPath(pkgPath, conf, false, flags)
 	}
 
-	mod, err := gopmod.Load(workDir)
+	mod, err := xgomod.Load(workDir)
 	if NotFound(err) && allowExtern {
 		return remotePkgPath(pkgPath, conf, recursively, flags)
 	} else if err != nil {
@@ -250,7 +250,7 @@ func GenGoPkgPathEx(workDir, pkgPath string, conf *Config, allowExtern bool, fla
 		return
 	}
 	localDir = pkg.Dir
-	if pkg.Type == gopmod.PkgtExtern {
+	if pkg.Type == xgomod.PkgtExtern {
 		os.Chmod(localDir, modWritable)
 		defer os.Chmod(localDir, modReadonly)
 	}
@@ -271,17 +271,17 @@ func remotePkgPathDo(pkgPath string, doSth func(pkgDir, modDir string), onErr fu
 
 // -----------------------------------------------------------------------------
 
-// GenGoFiles generates gop_autogen.go for specified Go+ files.
+// GenGoFiles generates xgo_autogen.go for specified XGo files.
 func GenGoFiles(autogen string, files []string, conf *Config) (outFiles []string, err error) {
 	if conf == nil {
 		conf = new(Config)
 	}
 	if autogen == "" {
-		autogen = "gop_autogen.go"
+		autogen = "xgo_autogen.go"
 		if len(files) == 1 {
 			file := files[0]
 			srcDir, fname := filepath.Split(file)
-			if hasMultiFiles(srcDir, ".gop") {
+			if hasMultiXgoFiles(srcDir) {
 				autogen = filepath.Join(srcDir, "gop_autogen_"+fname+".go")
 			}
 		}
@@ -299,13 +299,14 @@ func GenGoFiles(autogen string, files []string, conf *Config) (outFiles []string
 	return
 }
 
-func hasMultiFiles(srcDir string, ext string) bool {
+func hasMultiXgoFiles(srcDir string) bool {
 	var has bool
 	if f, err := os.Open(srcDir); err == nil {
 		defer f.Close()
 		fis, _ := f.ReadDir(-1)
 		for _, fi := range fis {
-			if !fi.IsDir() && filepath.Ext(fi.Name()) == ext {
+			ext := filepath.Ext(fi.Name())
+			if !fi.IsDir() && (ext == ".xgo" || ext == ".gop") {
 				if has {
 					return true
 				}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import (
 	"io/fs"
 	"testing"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/token"
 	fsx "github.com/qiniu/x/http/fs"
 )
 
@@ -84,7 +84,7 @@ func testErrCode(t *testing.T, code string, errExp, panicExp string) {
 	}()
 	t.Helper()
 	fset := token.NewFileSet()
-	_, err := Parse(fset, "/foo/bar.gop", code, 0)
+	_, err := Parse(fset, "/foo/bar.xgo", code, 0)
 	if err == nil || err.Error() != errExp {
 		t.Fatal("testErrCode error:", err)
 	}
@@ -93,7 +93,7 @@ func testErrCode(t *testing.T, code string, errExp, panicExp string) {
 func testShadowEntry(t *testing.T, code string, errExp string, decl *ast.FuncDecl) {
 	t.Helper()
 	fset := token.NewFileSet()
-	f, err := ParseEntry(fset, "/foo/bar.gop", code, Config{
+	f, err := ParseEntry(fset, "/foo/bar.xgo", code, Config{
 		Mode: ParseGoPlusClass | ParseComments | AllErrors,
 	})
 	if err != nil && err.Error() != errExp {
@@ -143,25 +143,25 @@ func testClassErrCode(t *testing.T, code string, errExp, panicExp string) {
 }
 
 func TestErrLabel(t *testing.T) {
-	testErrCode(t, `a.x:`, `/foo/bar.gop:1:4: illegal label declaration`, ``)
+	testErrCode(t, `a.x:`, `/foo/bar.xgo:1:4: illegal label declaration`, ``)
 }
 
 func TestErrTplLit(t *testing.T) {
-	testErrCode(t, "tpl`a =`", `/foo/bar.gop:1:8: expected ';', found 'EOF' (and 1 more errors)`, ``)
+	testErrCode(t, "tpl`a =`", `/foo/bar.xgo:1:8: expected ';', found 'EOF' (and 1 more errors)`, ``)
 }
 
 func TestErrTuple(t *testing.T) {
-	testErrCode(t, `println (1,2)*2`, `/foo/bar.gop:1:9: tuple is not supported`, ``)
-	testErrCode(t, `println 2*(1,2)`, `/foo/bar.gop:1:13: expected ')', found ','`, ``)
-	testErrCode(t, `func test() (int,int) { return (100,100)`, `/foo/bar.gop:1:32: tuple is not supported`, ``)
+	testErrCode(t, `println (1,2)*2`, `/foo/bar.xgo:1:9: tuple is not supported`, ``)
+	testErrCode(t, `println 2*(1,2)`, `/foo/bar.xgo:1:13: expected ')', found ','`, ``)
+	testErrCode(t, `func test() (int,int) { return (100,100)`, `/foo/bar.xgo:1:32: tuple is not supported`, ``)
 }
 
 func TestErrOperand(t *testing.T) {
-	testErrCode(t, `a :=`, `/foo/bar.gop:1:5: expected operand, found 'EOF'`, ``)
+	testErrCode(t, `a :=`, `/foo/bar.xgo:1:5: expected operand, found 'EOF'`, ``)
 }
 
 func TestErrMissingComma(t *testing.T) {
-	testErrCode(t, `func a(b int c)`, `/foo/bar.gop:1:14: missing ',' in parameter list`, ``)
+	testErrCode(t, `func a(b int c)`, `/foo/bar.xgo:1:14: missing ',' in parameter list`, ``)
 }
 
 func TestErrLambda(t *testing.T) {
@@ -170,29 +170,29 @@ func TestErrLambda(t *testing.T) {
 test "hello" => {
 	println "lambda",x
 }
-`, `/foo/bar.gop:3:6: expected 'IDENT', found "hello"`, ``)
+`, `/foo/bar.xgo:3:6: expected 'IDENT', found "hello"`, ``)
 	testErrCode(t, `func test(v string, f func( int)) {
 }
 test "hello", "x" => {
 	println "lambda",x
 }
-`, `/foo/bar.gop:3:15: expected 'IDENT', found "x"`, ``)
+`, `/foo/bar.xgo:3:15: expected 'IDENT', found "x"`, ``)
 	testErrCode(t, `func test(v string, f func( int)) {
 }
 test "hello", ("x") => {
 	println "lambda",x
 }
-`, `/foo/bar.gop:3:16: expected 'IDENT', found "x"`, ``)
+`, `/foo/bar.xgo:3:16: expected 'IDENT', found "x"`, ``)
 	testErrCode(t, `func test(v string, f func(int,int)) {
 }
 test "hello", (x, "y") => {
 	println "lambda",x,y
 }
-`, `/foo/bar.gop:3:19: expected 'IDENT', found "y"`, ``)
+`, `/foo/bar.xgo:3:19: expected 'IDENT', found "y"`, ``)
 	testErrCode(t, `onTouchStart "someone" => {
 	say "touched by someone"
 }
-`, `/foo/bar.gop:1:14: expected 'IDENT', found "someone"`, ``)
+`, `/foo/bar.xgo:1:14: expected 'IDENT', found "someone"`, ``)
 }
 
 func TestErrTooManyParseExpr(t *testing.T) {
@@ -227,21 +227,21 @@ func h() { var }
 func h() { var }
 func h() { var }
 func h() { var }
-`, `/foo/bar.gop:2:16: expected 'IDENT', found '}' (and 10 more errors)`, ``)
+`, `/foo/bar.xgo:2:16: expected 'IDENT', found '}' (and 10 more errors)`, ``)
 }
 
 func TestErrInFunc(t *testing.T) {
 	testErrCode(t, `func test() {
 	a,
-}`, `/foo/bar.gop:2:2: expected 1 expression (and 2 more errors)`, ``)
+}`, `/foo/bar.xgo:2:2: expected 1 expression (and 2 more errors)`, ``)
 	testErrCode(t, `func test() {
 	a.test, => {
 	}
-}`, `/foo/bar.gop:2:10: expected operand, found '=>' (and 1 more errors)`, ``)
+}`, `/foo/bar.xgo:2:10: expected operand, found '=>' (and 1 more errors)`, ``)
 	testErrCode(t, `func test() {
 		,
 	}
-}`, `/foo/bar.gop:2:3: expected statement, found ',' (and 1 more errors)`, ``)
+}`, `/foo/bar.xgo:2:3: expected statement, found ',' (and 1 more errors)`, ``)
 }
 
 // -----------------------------------------------------------------------------
@@ -285,36 +285,36 @@ const d
 
 func TestErrGlobal(t *testing.T) {
 	testErrCode(t, `func test() {}
-}`, `/foo/bar.gop:2:1: expected statement, found '}'`, ``)
+}`, `/foo/bar.xgo:2:1: expected statement, found '}'`, ``)
 }
 
 func TestErrCompositeLiteral(t *testing.T) {
 	testErrCode(t, `println (T[int]){a: 1, b: 2}
-`, `/foo/bar.gop:1:10: cannot parenthesize type in composite literal`, ``)
+`, `/foo/bar.xgo:1:10: cannot parenthesize type in composite literal`, ``)
 }
 
 func TestErrSelectorExpr(t *testing.T) {
 	testErrCode(t, `
 x.
 *p
-`, `/foo/bar.gop:3:1: expected selector or type assertion, found '*'`, ``)
+`, `/foo/bar.xgo:3:1: expected selector or type assertion, found '*'`, ``)
 }
 
 func TestErrStringLitEx(t *testing.T) {
 	testErrCode(t, `
 println "${ ... }"
-`, "/foo/bar.gop:2:13: expected operand, found '...'", ``)
+`, "/foo/bar.xgo:2:13: expected operand, found '...'", ``)
 	testErrCode(t, `
 println "${b"
-`, "/foo/bar.gop:2:11: invalid $ expression: ${ doesn't end with }", ``)
+`, "/foo/bar.xgo:2:11: invalid $ expression: ${ doesn't end with }", ``)
 	testErrCode(t, `
 println "$a${b}"
-`, "/foo/bar.gop:2:10: invalid $ expression: neither `${ ... }` nor `$$`", ``)
+`, "/foo/bar.xgo:2:10: invalid $ expression: neither `${ ... }` nor `$$`", ``)
 }
 
 func TestErrStringLiteral(t *testing.T) {
 	testErrCode(t, `run "
-`, `/foo/bar.gop:1:5: string literal not terminated`, ``)
+`, `/foo/bar.xgo:1:5: string literal not terminated`, ``)
 }
 
 func TestErrFieldDecl(t *testing.T) {
@@ -322,22 +322,22 @@ func TestErrFieldDecl(t *testing.T) {
 type T struct {
 	*(Foo)
 }
-`, `/foo/bar.gop:3:3: cannot parenthesize embedded type`, ``)
+`, `/foo/bar.xgo:3:3: cannot parenthesize embedded type`, ``)
 	testErrCode(t, `
 type T struct {
 	(Foo)
 }
-`, `/foo/bar.gop:3:2: cannot parenthesize embedded type`, ``)
+`, `/foo/bar.xgo:3:2: cannot parenthesize embedded type`, ``)
 	testErrCode(t, `
 type T struct {
 	(*Foo)
 }
-`, `/foo/bar.gop:3:2: cannot parenthesize embedded type`, ``)
+`, `/foo/bar.xgo:3:2: cannot parenthesize embedded type`, ``)
 }
 
 func TestParseFieldDecl(t *testing.T) {
 	var p parser
-	p.init(token.NewFileSet(), "/foo/bar.gop", []byte(`type T struct {
+	p.init(token.NewFileSet(), "/foo/bar.xgo", []byte(`type T struct {
 }
 `), 0)
 	p.parseFieldDecl(nil)
@@ -345,7 +345,7 @@ func TestParseFieldDecl(t *testing.T) {
 
 func TestCheckExpr(t *testing.T) {
 	var p parser
-	p.init(token.NewFileSet(), "/foo/bar.gop", []byte(``), 0)
+	p.init(token.NewFileSet(), "/foo/bar.xgo", []byte(``), 0)
 	p.checkExpr(&ast.Ellipsis{})
 	p.checkExpr(&ast.ElemEllipsis{})
 	p.checkExpr(&ast.StarExpr{})
@@ -358,19 +358,19 @@ func TestErrFuncDecl(t *testing.T) {
 	testErrCode(t, `func test()
 {
 }
-`, `/foo/bar.gop:2:1: unexpected semicolon or newline before {`, ``)
+`, `/foo/bar.xgo:2:1: unexpected semicolon or newline before {`, ``)
 	testErrCode(t, `func test() +1
-`, `/foo/bar.gop:1:13: expected ';', found '+'`, ``)
+`, `/foo/bar.xgo:1:13: expected ';', found '+'`, ``)
 	testErrCode(t, `
 func (a T) +{}
-`, `/foo/bar.gop:2:12: expected type, found '+'`, ``)
+`, `/foo/bar.xgo:2:12: expected type, found '+'`, ``)
 	testErrCode(t, `func +(a T, b T) {}
-`, `/foo/bar.gop:1:6: overload operator can only have one parameter`, ``)
+`, `/foo/bar.xgo:1:6: overload operator can only have one parameter`, ``)
 }
 
 func TestErrForIn(t *testing.T) {
 	testErrCode(t, `x := [a for a i b]
-`, `/foo/bar.gop:1:15: expected 'in', found i`, ``)
+`, `/foo/bar.xgo:1:15: expected 'in', found i`, ``)
 }
 
 func TestNumberUnitLit(t *testing.T) {
@@ -406,7 +406,7 @@ func reset() {
 onStart => {
 	reset()
 }
-`, `/foo/bar.gop:2:10: expected 'IDENT', found '=' (and 21 more errors)`, &ast.FuncDecl{
+`, `/foo/bar.xgo:2:10: expected 'IDENT', found '=' (and 21 more errors)`, &ast.FuncDecl{
 		Body: &ast.BlockStmt{
 			Lbrace: 119,
 			Rbrace: 121,

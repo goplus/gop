@@ -1,0 +1,220 @@
+/*
+ * Copyright (c) 2025 The XGo Authors (xgo.dev). All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package mini
+
+import (
+	"github.com/goplus/xgo/token"
+	"github.com/goplus/xgo/tpl"
+)
+
+var _off = tpl.showConflict(false)
+
+var Spec = tpl`
+
+SourceFile = ?PackageClause *(ImportDecl ";") *(TopLevelDecl ";") ?MainStmts
+
+PackageClause = "package" IDENT ";"
+
+ImportDecl = "import" (ImportSpec | "(" *(ImportSpec ";") ")")
+
+ImportSpec = ?(IDENT | ".") STRING
+
+TopLevelDecl = Declaration | FuncDecl
+
+Declaration = ConstDecl | VarDecl | TypeDecl
+
+ConstDecl = "const" (ConstSpec | "(" *(ConstSpec ";") ")")
+
+ConstSpec = IdentifierList ?Type ?("=" ExpressionList)
+
+IdentifierList = IDENT % ","
+
+LambdaExprList = LambdaExpr % ","
+
+ExpressionList = Expression % ","
+
+VarDecl = "var" (VarSpec | "(" *(VarSpec ";") ")")
+
+VarSpec = IdentifierList ("=" ExpressionList | Type ?("=" LambdaExprList))
+
+TypeDecl = "type" (TypeSpec | "(" *(TypeSpec ";") ")")
+
+TypeSpec = IDENT ?"=" Type
+
+FuncDecl = "func" IDENT Signature ?Block
+
+Signature = Parameters ?Result
+
+Parameters = "(" ?(ParameterList ?",") ")"
+
+ParameterList = IdentifierList ?(Type *("," IdentifierList Type) | *("," Type))
+
+Result = Parameters | NoParenType
+
+MainStmts = StatementList
+
+// -----------------------------------------------------------------
+
+Block = "{" StatementList "}"
+
+StatementList = *(Statement ";")
+
+Statement =
+	Declaration | ReturnStmt | BreakStmt | ContinueStmt | GotoStmt |
+	FallthroughStmt | IfStmt | SwitchStmt | ForStmt | DeferStmt | Block |
+	LabeledStmt | CommandStmt | SimpleStmt
+
+ReturnStmt = "return" ?LambdaExprList
+
+BreakStmt = "break" ?IDENT
+
+ContinueStmt = "continue" ?IDENT
+
+GotoStmt = "goto" IDENT
+
+FallthroughStmt = "fallthrough"
+
+IfStmt = "if" ?(SimpleStmt ";") Expression Block ?("else" (IfStmt | Block))
+
+SwitchStmt = "switch" ?(SimpleStmt ";") SwitchGuard "{" *CaseClause "}"
+
+SwitchGuard = ?(IDENT ":=") PrimaryExpr | ?Expression
+
+CaseClause = ("case" ExpressionList | "default") ":" StatementList
+
+ForStmt = "for" (IDENT ?("," IDENT) "in" RangeExpr | ?RangeExpr) Block
+
+DeferStmt = "defer" Expression
+
+LabeledStmt = IDENT ":" Statement
+
+SimpleStmt = SendStmt | ShortVarDecl | IncDecStmt | Assignment | ExpressionStmt | EmptyStmt
+
+SendStmt = IDENT ?("." IDENT) "<-" LambdaExprList ?"..."
+
+ShortVarDecl = IdentifierList ":=" ExpressionList
+
+IncDecStmt = Expression ("++" | "--")
+
+Assignment = ExpressionList (
+	"=" | "+=" | "-=" | "|=" | "^=" |
+	"*=" | "/=" | "%=" | "<<=" | ">>=" | "&=" | "&^=") LambdaExprList
+
+ExpressionStmt = Expression
+
+CommandStmt = IDENT ?("." IDENT) SPACE LambdaExprList ?"..."
+
+EmptyStmt = ""
+
+// -----------------------------------------------------------------
+
+NoParenType = TypeLit | TypeName
+
+Type = TypeLit | TypeName | "(" Type ")"
+
+TypeName = IDENT ?("." IDENT)
+
+TypeLit = PointerType | ArrayType | MapType | FuncType | StructType | InterfaceType
+
+PointerType = "*" Type
+
+ArrayType = "[" ?Expression "]" Type
+
+MapType = "map" "[" Type "]" Type
+
+FuncType = "func" Signature
+
+StructType = "struct" "{" *(FieldDecl ";") "}"
+
+FieldDecl = ("*" TypeName | FieldsOrNonPtrEmbeddedField) ?Tag
+
+FieldsOrNonPtrEmbeddedField = IDENT ("." IDENT | +("," IDENT) Type | ?Type)
+
+Tag = STRING
+
+InterfaceType = "interface" "{" *(InterfaceElem ";") "}"
+
+InterfaceElem = MethodElem | TypeName
+
+MethodElem = IDENT Signature
+
+// -----------------------------------------------------------------
+
+LambdaExpr = ("(" ?(IDENT % ",") ")" | ?IDENT) "=>" LambdaBody | Expression
+
+LambdaBody = Block | "(" LambdaExpr % "," ")" | LambdaExpr
+
+RangeExpr = rangeExprEnd | Expression ?rangeExprEnd
+
+rangeExprEnd = ":" Expression ?(":" ?Expression)
+
+Expression = cmpExpr % "&&" % "||"
+
+cmpExpr = mathExpr % ("==" | "!=" | "<" | "<=" | ">" | ">=")
+
+mathExpr = UnaryExpr % ("*" | "/" | "%" | "<<" | ">>" | "&" | "&^") % ("+" | "-" | "|" | "^")
+
+UnaryExpr = PrimaryExpr | ("-" | "!" | "^" | "*" | "&" | "+") UnaryExpr
+
+PrimaryExpr = Operand *(
+	CallOrConversion | SelectorOrTypeAssertion | IndexOrSlice | ErrWrap)
+
+Operand =
+	INT ?UNIT | FLOAT ?UNIT | STRING | CHAR | RAT | IMAG | "(" LambdaExpr ")" |
+	LiteralValue | CompositeLit | FunctionLit | Env | "c" ++ QSTRING | "py" ++ QSTRING |
+	ListCompositeLit | DomainTextLit | NamedCompositeLit | IDENT
+
+Env = "$" ("{" IDENT "}" | IDENT)
+
+DomainTextLit = IDENT ++ RAWSTRING
+
+NamedCompositeLit = TypeName ++ "{" ElementList "}"
+
+CompositeLit = (MapType | StructType) LiteralValue
+
+ListCompositeLit = LBRACK ?("..." | LambdaExpr % ",") (RBRACK ++ Type LiteralValue | RBRACK)
+
+LiteralValue = "{" ElementList "}"
+
+ElementList = ?(KeyedElement % "," ?",")
+
+KeyedElement = ?(Key ":") Element
+
+Key = LiteralValue | Expression
+
+Element = LiteralValue | LambdaExpr
+
+FunctionLit = "func" Signature Block
+
+CallOrConversion = "(" ?(LambdaExpr % ",") ?"..." ?"," ")"
+
+SelectorOrTypeAssertion = "." (IDENT | "(" Type ")")
+
+IndexOrSlice = "[" (":" ?Expression | Expression (":" ?Expression | ?",")) "]"
+
+ErrWrap = "!" | "?" ?(":" UnaryExpr)
+`!
+
+// -----------------------------------------------------------------
+
+func ParseFile(fset *token.FileSet, filename string, src any) (any, error) {
+	return Spec.Parse(filename, src, &tpl.Config{
+		Fset: fset,
+	})
+}
+
+// -----------------------------------------------------------------

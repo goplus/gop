@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021-2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,17 +24,17 @@ import (
 	"reflect"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/tool"
-	"github.com/goplus/gop/x/gocmd"
-	"github.com/goplus/gop/x/gopprojs"
+	"github.com/goplus/xgo/cl"
+	"github.com/goplus/xgo/cmd/internal/base"
+	"github.com/goplus/xgo/tool"
+	"github.com/goplus/xgo/x/gocmd"
+	"github.com/goplus/xgo/x/xgoprojs"
 )
 
 // gop test
 var Cmd = &base.Command{
 	UsageLine: "gop test [-debug] [packages]",
-	Short:     "Test Go+ packages",
+	Short:     "Test XGo packages",
 }
 
 var (
@@ -58,9 +58,9 @@ func runCmd(cmd *base.Command, args []string) {
 		pattern = []string{"."}
 	}
 
-	projs, err := gopprojs.ParseAll(pattern...)
+	projs, err := xgoprojs.ParseAll(pattern...)
 	if err != nil {
-		log.Panicln("gopprojs.ParseAll:", err)
+		log.Panicln("xgoprojs.ParseAll:", err)
 	}
 
 	if *flagDebug {
@@ -82,18 +82,18 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 }
 
-func test(proj gopprojs.Proj, conf *tool.Config, test *gocmd.TestConfig) {
+func test(proj xgoprojs.Proj, conf *tool.Config, test *gocmd.TestConfig) {
 	const flags = tool.GenFlagPrompt
 	var obj string
 	var err error
 	switch v := proj.(type) {
-	case *gopprojs.DirProj:
+	case *xgoprojs.DirProj:
 		obj = v.Dir
 		err = tool.TestDir(obj, conf, test, flags)
-	case *gopprojs.PkgPathProj:
+	case *xgoprojs.PkgPathProj:
 		obj = v.Path
 		err = tool.TestPkgPath("", v.Path, conf, test, flags)
-	case *gopprojs.FilesProj:
+	case *xgoprojs.FilesProj:
 		err = tool.TestFiles(v.Files, conf, test)
 	default:
 		log.Panicln("`gop test` doesn't support", reflect.TypeOf(v))

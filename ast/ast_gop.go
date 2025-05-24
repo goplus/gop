@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package ast
 
 import (
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/token"
 )
 
 // -----------------------------------------------------------------------------
@@ -60,7 +60,7 @@ func (*OverloadFuncDecl) declNode() {}
 // -----------------------------------------------------------------------------
 
 // A DomainTextLit node represents a domain-specific text literal.
-// https://github.com/goplus/gop/issues/2143
+// https://github.com/goplus/xgo/issues/2143
 //
 //	domainTag`...`
 //	domainTag`> arg1, arg2, ...
@@ -447,7 +447,7 @@ func (s *SendStmt) End() token.Pos {
 
 // -----------------------------------------------------------------------------
 
-// A File node represents a Go+ source file.
+// A File node represents a XGo source file.
 //
 // The Comments list contains all comments in the source file in order of
 // appearance, including the comments that are pointed to from other nodes

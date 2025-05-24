@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021-2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,17 +24,17 @@ import (
 	"reflect"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/tool"
-	"github.com/goplus/gop/x/gopprojs"
+	"github.com/goplus/xgo/cl"
+	"github.com/goplus/xgo/cmd/internal/base"
+	"github.com/goplus/xgo/tool"
+	"github.com/goplus/xgo/x/xgoprojs"
 	"github.com/qiniu/x/errors"
 )
 
 // gop go
 var Cmd = &base.Command{
 	UsageLine: "gop go [-v] [packages|files]",
-	Short:     "Convert Go+ code into Go code",
+	Short:     "Convert XGo code into Go code",
 }
 
 var (
@@ -61,9 +61,9 @@ func runCmd(cmd *base.Command, args []string) {
 		pattern = []string{"."}
 	}
 
-	projs, err := gopprojs.ParseAll(pattern...)
+	projs, err := xgoprojs.ParseAll(pattern...)
 	if err != nil {
-		log.Panicln("gopprojs.ParseAll:", err)
+		log.Panicln("xgoprojs.ParseAll:", err)
 	}
 
 	if *flagVerbose {
@@ -90,11 +90,11 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 	for _, proj := range projs {
 		switch v := proj.(type) {
-		case *gopprojs.DirProj:
+		case *xgoprojs.DirProj:
 			_, _, err = tool.GenGoEx(v.Dir, conf, true, flags)
-		case *gopprojs.PkgPathProj:
+		case *xgoprojs.PkgPathProj:
 			_, _, err = tool.GenGoPkgPathEx("", v.Path, conf, true, flags)
-		case *gopprojs.FilesProj:
+		case *xgoprojs.FilesProj:
 			_, err = tool.GenGoFiles("", v.Files, conf)
 		default:
 			log.Panicln("`gop go` doesn't support", reflect.TypeOf(v))

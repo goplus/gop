@@ -10,8 +10,8 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/x/typesutil/typeparams"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/x/typesutil/typeparams"
 )
 
 // ExprString returns the (possibly shortened) string representation for x.

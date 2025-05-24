@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,9 @@ import (
 	"strings"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/token"
 	"github.com/goplus/mod/modfile"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/token"
 	"github.com/qiniu/x/stringutil"
 )
 
@@ -231,7 +231,7 @@ func GetFileClassType(file *ast.File, filename string, lookupClass func(ext stri
 		} else if isTest {
 			classType = casePrefix + testNameSuffix(classType)
 		}
-	} else if strings.HasSuffix(filename, "_test.gop") {
+	} else if strings.HasSuffix(filename, "_test.xgo") || strings.HasSuffix(filename, "_test.gop") {
 		isTest = true
 	}
 	return
@@ -385,7 +385,7 @@ func getStringConst(spx gogen.PkgRef, name string) string {
 }
 
 func setBodyHandler(ctx *blockCtx) {
-	if proj := ctx.proj; proj != nil { // in a Go+ class file
+	if proj := ctx.proj; proj != nil { // in a XGo class file
 		if scheds := proj.getScheds(ctx.cb); scheds != nil {
 			ctx.cb.SetBodyHandler(func(body *goast.BlockStmt, kind int) {
 				idx := 0

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2024 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package cltest
 import (
 	"go/types"
 
-	"github.com/goplus/gop/ast"
+	"github.com/goplus/xgo/ast"
 )
 
 type gopRecorder struct {

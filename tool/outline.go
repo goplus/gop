@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2023 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/goplus/gop/cl/outline"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/x/gopenv"
-	"github.com/goplus/mod/gopmod"
+	"github.com/goplus/mod/xgomod"
+	"github.com/goplus/xgo/cl/outline"
+	"github.com/goplus/xgo/parser"
+	"github.com/goplus/xgo/x/xgoenv"
 	"github.com/qiniu/x/errors"
 )
 
@@ -81,11 +81,11 @@ func Outline(dir string, conf *Config) (out outline.Package, err error) {
 
 	imp := conf.Importer
 	if imp == nil {
-		gop := conf.Gop
-		if gop == nil {
-			gop = gopenv.Get()
+		xgo := conf.XGo
+		if xgo == nil {
+			xgo = xgoenv.Get()
 		}
-		imp = NewImporter(mod, gop, fset)
+		imp = NewImporter(mod, xgo, fset)
 	}
 
 	for name, pkg := range pkgs {
@@ -93,7 +93,7 @@ func Outline(dir string, conf *Config) (out outline.Package, err error) {
 			err = fmt.Errorf("%w: %s, %s", ErrMultiPackges, name, out.Pkg().Name())
 			return
 		}
-		if len(pkg.Files)+len(pkg.GoFiles) == 0 { // no Go/Go+ source files
+		if len(pkg.Files)+len(pkg.GoFiles) == 0 { // no Go/XGo source files
 			break
 		}
 		relPart, _ := filepath.Rel(mod.Root(), dir)
@@ -141,7 +141,7 @@ func OutlinePkgPath(workDir, pkgPath string, conf *Config, allowExtern bool) (ou
 	if err != nil {
 		return
 	}
-	if pkg.Type == gopmod.PkgtExtern {
+	if pkg.Type == xgomod.PkgtExtern {
 		modFile := chmodModfile(pkg.ModDir)
 		defer os.Chmod(modFile, modReadonly)
 	}

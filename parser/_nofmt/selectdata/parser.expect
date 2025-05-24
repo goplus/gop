@@ -1,6 +1,6 @@
 package main
 
-file select.gop
+file select.xgo
 noEntrypoint
 ast.FuncDecl:
   Name:

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,31 +25,31 @@ import (
 
 var (
 	// This is set by the linker.
-	defaultGopRoot string
+	defaultXGoRoot string
 )
 
-// GOPROOT returns the root of the Go+ tree. It uses the GOPROOT environment variable,
-// if set at process start, or else the root used during the Go+ build.
-func GOPROOT() string {
-	gopRoot, err := findGopRoot()
+// XGOROOT returns the root of the XGo tree. It uses the GOPROOT environment variable,
+// if set at process start, or else the root used during the XGo build.
+func XGOROOT() string {
+	gopRoot, err := findXgoRoot()
 	if err != nil {
-		log.Panicln("GOPROOT not found:", err)
+		log.Panicln("XGOROOT not found:", err)
 	}
 	return gopRoot
 }
 
 const (
-	envGOPROOT = "GOPROOT"
+	envXGOROOT = "XGOROOT"
 )
 
-func findGopRoot() (string, error) {
-	envGopRoot := os.Getenv(envGOPROOT)
-	if envGopRoot != "" {
-		// GOPROOT must valid
-		if isValidGopRoot(envGopRoot) {
-			return envGopRoot, nil
+func findXgoRoot() (string, error) {
+	envXgoRoot := os.Getenv(envXGOROOT)
+	if envXgoRoot != "" {
+		// XGOROOT must valid
+		if isValidXgoRoot(envXgoRoot) {
+			return envXgoRoot, nil
 		}
-		log.Panicf("\n%s (%s) is not valid\n", envGOPROOT, envGopRoot)
+		log.Panicf("\n%s (%s) is not valid\n", envXGOROOT, envXgoRoot)
 	}
 
 	// if parent directory is a valid gop root, use it
@@ -57,25 +57,21 @@ func findGopRoot() (string, error) {
 	if err == nil {
 		dir := filepath.Dir(exePath)
 		parentDir := filepath.Dir(dir)
-		if parentDir != dir && isValidGopRoot(parentDir) {
+		if parentDir != dir && isValidXgoRoot(parentDir) {
 			return parentDir, nil
 		}
 	}
 
-	// check defaultGopRoot, if it is valid, use it
-	if defaultGopRoot != "" && isValidGopRoot(defaultGopRoot) {
-		return defaultGopRoot, nil
+	// check defaultXGoRoot, if it is valid, use it
+	if defaultXGoRoot != "" && isValidXgoRoot(defaultXGoRoot) {
+		return defaultXGoRoot, nil
 	}
 
-	// Compatible with old GOPROOT
+	// Compatible with old XGOROOT
 	if home := HOME(); home != "" {
-		gopRoot := filepath.Join(home, "gop")
-		if isValidGopRoot(gopRoot) {
-			return gopRoot, nil
-		}
-		goplusRoot := filepath.Join(home, "goplus")
-		if isValidGopRoot(goplusRoot) {
-			return goplusRoot, nil
+		xgoRoot := filepath.Join(home, "xgo")
+		if isValidXgoRoot(xgoRoot) {
+			return xgoRoot, nil
 		}
 	}
 	return "", syscall.ENOENT
@@ -98,8 +94,8 @@ func executableRealPath() (path string, err error) {
 }
 
 func isFileExists(path string) bool {
-	st, err := os.Stat(path)
-	return err == nil && !st.IsDir()
+	_, err := os.Stat(path)
+	return err == nil
 }
 
 func isDirExists(path string) bool {
@@ -107,6 +103,6 @@ func isDirExists(path string) bool {
 	return err == nil && st.IsDir()
 }
 
-func isValidGopRoot(path string) bool {
-	return isDirExists(filepath.Join(path, "cmd/gop")) && isFileExists(filepath.Join(path, "go.mod"))
+func isValidXgoRoot(path string) bool {
+	return isDirExists(filepath.Join(path, "cmd/xgo")) && isFileExists(filepath.Join(path, "go.mod"))
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,15 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"go/build"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"time"
 
-	"github.com/goplus/gop/tool"
-	"github.com/goplus/gop/x/gocmd"
-	"github.com/goplus/gop/x/gopenv"
+	"github.com/goplus/xgo/tool"
+	"github.com/goplus/xgo/x/gocmd"
+	"github.com/goplus/xgo/x/xgoenv"
 )
 
 func fileIsDirty(srcMod time.Time, destFile string) bool {
@@ -42,9 +41,9 @@ func fileIsDirty(srcMod time.Time, destFile string) bool {
 }
 
 func runGoFile(dir, file, fname string) {
-	gopEnv := gopenv.Get()
-	conf := &tool.Config{Gop: gopEnv}
-	confCmd := &gocmd.BuildConfig{Gop: gopEnv}
+	xgo := xgoenv.Get()
+	conf := &tool.Config{XGo: xgo}
+	confCmd := &gocmd.BuildConfig{XGo: xgo}
 	fi, err := os.Stat(file)
 	if err != nil {
 		log.Panicln(err)
@@ -93,7 +92,7 @@ var (
 
 func gopTestRunGo(dir string) {
 	home, _ := os.UserHomeDir()
-	targetDir := home + "/.gop/run/"
+	targetDir := home + "/.xgo/run/"
 	os.MkdirAll(targetDir, 0777)
 	filepath.Walk(dir, func(file string, fi os.FileInfo, err error) error {
 		name := fi.Name()
@@ -110,7 +109,7 @@ func gopTestRunGo(dir string) {
 		if ext != ".go" {
 			return nil
 		}
-		data, err := ioutil.ReadFile(file)
+		data, err := os.ReadFile(file)
 		if err != nil {
 			log.Panicln(err)
 		}

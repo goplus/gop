@@ -1,5 +1,0 @@
-package pkg
-
-func Hello() {
-	println "Go+"
-}

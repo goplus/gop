@@ -1,6 +1,6 @@
 package main
 
-file embtype.gop
+file embtype.xgo
 ast.GenDecl:
   Tok: type
   Specs:

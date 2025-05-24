@@ -1,4 +1,4 @@
-This is an example to show how Go+ interacts with C.
+This is an example to show how XGo interacts with C.
 
 ```go
 import "c"
@@ -24,7 +24,7 @@ To run this demo, you need to set the `GOP_GOCMD` environment variable first.
 export GOP_GOCMD=llgo  # default is `go`
 ```
 
-Then execute `gop run .` to see the output of this example:
+Then execute `xgo run .` to see the output of this example:
 
 ```
 Hello, llgo!
@@ -33,4 +33,4 @@ Hi,    3.1
 
 ### Give a Star! ⭐
 
-If you like or are using Go+ to learn or start your projects, please give it a star. Thanks!
+If you like or are using XGo to learn or start your projects, please give it a star. Thanks!

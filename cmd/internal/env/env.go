@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,17 +25,17 @@ import (
 	"os/exec"
 	"sort"
 
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/env"
-	"github.com/goplus/gop/x/gocmd"
 	"github.com/goplus/mod"
 	"github.com/goplus/mod/modcache"
+	"github.com/goplus/xgo/cmd/internal/base"
+	"github.com/goplus/xgo/env"
+	"github.com/goplus/xgo/x/gocmd"
 )
 
 // Cmd - gop env
 var Cmd = &base.Command{
 	UsageLine: "gop env [-json] [var ...]",
-	Short:     "Prints Go+ environment information",
+	Short:     "Prints XGo environment information",
 }
 
 var (
@@ -64,22 +64,22 @@ func runCmd(_ *base.Command, args []string) {
 		log.Fatalln("run go env failed:", err)
 	}
 
-	var gopEnv map[string]any
-	if err := json.Unmarshal(stdout.Bytes(), &gopEnv); err != nil {
+	var xgoEnv map[string]any
+	if err := json.Unmarshal(stdout.Bytes(), &xgoEnv); err != nil {
 		log.Fatal("decode json of go env failed:", err)
 	}
 
-	gopEnv["BUILDDATE"] = env.BuildDate()
-	gopEnv["GOPVERSION"] = env.Version()
-	gopEnv["GOPROOT"] = env.GOPROOT()
-	gopEnv["GOP_GOCMD"] = gocmd.Name()
-	gopEnv["GOMODCACHE"] = modcache.GOMODCACHE
-	gopEnv["GOPMOD"], _ = mod.GOPMOD("")
-	gopEnv["HOME"] = env.HOME()
+	xgoEnv["BUILDDATE"] = env.BuildDate()
+	xgoEnv["XGOVERSION"] = env.Version()
+	xgoEnv["XGOROOT"] = env.XGOROOT()
+	xgoEnv["XGO_GOCMD"] = gocmd.Name()
+	xgoEnv["GOMODCACHE"] = modcache.GOMODCACHE
+	xgoEnv["GOXMOD"], _ = mod.GOXMOD("")
+	xgoEnv["HOME"] = env.HOME()
 
 	vars := flag.Args()
 
-	outputEnvVars(gopEnv, vars, *envJson)
+	outputEnvVars(xgoEnv, vars, *envJson)
 }
 
 func outputEnvVars(gopEnv map[string]any, vars []string, outputJson bool) {

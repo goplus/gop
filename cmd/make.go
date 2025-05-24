@@ -2,7 +2,7 @@
 // +build ignore
 
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ func getGopRoot() string {
 	pwd, _ := os.Getwd()
 
 	pathsToCheck := []Path{
-		{path: "cmd/gop", isDir: true},
+		{path: "cmd/xgo", isDir: true},
 		{path: "builtin", isDir: true},
 		{path: "go.mod", isDir: false},
 		{path: "go.sum", isDir: false},
@@ -81,7 +81,7 @@ var initCommandExecuteEnv = os.Environ()
 var commandExecuteEnv = initCommandExecuteEnv
 
 // Always put `gop` command as the first item, as it will be referenced by below code.
-var gopBinFiles = []string{"gop", "gopfmt"}
+var gopBinFiles = []string{"gop", "xgo"}
 
 const (
 	inWindows = (runtime.GOOS == "windows")
@@ -260,15 +260,15 @@ func getBuildVer() string {
 }
 
 func getGopBuildFlags() string {
-	defaultGopRoot := gopRoot
+	defaultXGoRoot := gopRoot
 	if gopRootFinal := os.Getenv("GOPROOT_FINAL"); gopRootFinal != "" {
-		defaultGopRoot = gopRootFinal
+		defaultXGoRoot = gopRootFinal
 	}
-	buildFlags := fmt.Sprintf("-X \"github.com/goplus/gop/env.defaultGopRoot=%s\"", defaultGopRoot)
-	buildFlags += fmt.Sprintf(" -X \"github.com/goplus/gop/env.buildDate=%s\"", getBuildDateTime())
+	buildFlags := fmt.Sprintf("-X \"github.com/goplus/xgo/env.defaultXGoRoot=%s\"", defaultXGoRoot)
+	buildFlags += fmt.Sprintf(" -X \"github.com/goplus/xgo/env.buildDate=%s\"", getBuildDateTime())
 
 	version := findGopVersion()
-	buildFlags += fmt.Sprintf(" -X \"github.com/goplus/gop/env.buildVersion=%s\"", version)
+	buildFlags += fmt.Sprintf(" -X \"github.com/goplus/xgo/env.buildVersion=%s\"", version)
 
 	return buildFlags
 }
@@ -302,7 +302,7 @@ func linkGoplusToLocalBin() string {
 	gopBinPath := detectGopBinPath()
 	goBinPath := detectGoBinPath()
 	if !checkPathExist(gopBinPath, true) {
-		log.Fatalf("Error: %s is not existed, you should build Go+ before linking.\n", gopBinPath)
+		log.Fatalf("Error: %s is not existed, you should build XGo before linking.\n", gopBinPath)
 	}
 	if !checkPathExist(goBinPath, true) {
 		if err := os.MkdirAll(goBinPath, 0755); err != nil {
@@ -314,7 +314,7 @@ func linkGoplusToLocalBin() string {
 	for _, file := range gopBinFiles {
 		sourceFile := filepath.Join(gopBinPath, file)
 		if !checkPathExist(sourceFile, false) {
-			log.Fatalf("Error: %s is not existed, you should build Go+ before linking.\n", sourceFile)
+			log.Fatalf("Error: %s is not existed, you should build XGo before linking.\n", sourceFile)
 		}
 		targetLink := filepath.Join(goBinPath, file)
 		if checkPathExist(targetLink, false) {
@@ -344,14 +344,14 @@ func buildGoplusTools(useGoProxy bool) {
 		)
 	}
 
-	// Install Go+ binary files under current ./bin directory.
+	// Install XGo binary files under current ./bin directory.
 	gopBinPath := detectGopBinPath()
 	if err := os.Mkdir(gopBinPath, 0755); err != nil && !os.IsExist(err) {
-		println("Error: Go+ can't create ./bin directory to put build assets.")
+		println("Error: XGo can't create ./bin directory to put build assets.")
 		log.Fatalln(err)
 	}
 
-	println("Building Go+ tools...\n")
+	println("Building XGo tools...\n")
 	os.Chdir(commandsDir)
 	buildOutput, err := execCommand("go", "build", "-o", gopBinPath, "-v", "-ldflags", buildFlags, "./...")
 	if err != nil {
@@ -367,15 +367,15 @@ func buildGoplusTools(useGoProxy bool) {
 
 func showHelpPostInstall(installPath string) {
 	println("\nNEXT STEP:")
-	println("\nWe just installed Go+ into the directory: ", installPath)
+	println("\nWe just installed XGo into the directory: ", installPath)
 	message := `
-To setup a better Go+ development environment,
+To setup a better XGo development environment,
 we recommend you add the above install directory into your PATH environment variable.
 	`
 	println(message)
 }
 
-// Install Go+ tools
+// Install XGo tools
 func install() {
 	installPath := linkGoplusToLocalBin()
 
@@ -393,7 +393,7 @@ func runTestcases() {
 	coverage := "-coverprofile=coverage.txt"
 	gopCommand := filepath.Join(detectGopBinPath(), gopBinFiles[0])
 	if !checkPathExist(gopCommand, false) {
-		println("Error: Go+ must be installed before running testcases.")
+		println("Error: XGo must be installed before running testcases.")
 		os.Exit(1)
 	}
 
@@ -432,7 +432,7 @@ func clean() {
 
 func cleanGopRunCache() {
 	homeDir, _ := os.UserHomeDir()
-	runCacheDir := filepath.Join(homeDir, ".gop", "run")
+	runCacheDir := filepath.Join(homeDir, ".xgo", "run")
 	files := []string{"go.mod", "go.sum"}
 	for _, file := range files {
 		fullPath := filepath.Join(runCacheDir, file)
@@ -445,9 +445,9 @@ func cleanGopRunCache() {
 }
 
 func uninstall() {
-	println("Uninstalling Go+ and related tools.")
+	println("Uninstalling XGo and related tools.")
 	clean()
-	println("Go+ and related tools uninstalled successfully.")
+	println("XGo and related tools uninstalled successfully.")
 }
 
 func isInChinaWindows() bool {
@@ -566,11 +566,11 @@ func runRegtests() {
 }
 
 func main() {
-	isInstall := flag.Bool("install", false, "Install Go+")
-	isBuild := flag.Bool("build", false, "Build Go+ tools")
+	isInstall := flag.Bool("install", false, "Install XGo")
+	isBuild := flag.Bool("build", false, "Build XGo tools")
 	isTest := flag.Bool("test", false, "Run testcases")
 	isRegtest := flag.Bool("regtest", false, "Run regtests")
-	isUninstall := flag.Bool("uninstall", false, "Uninstall Go+")
+	isUninstall := flag.Bool("uninstall", false, "Uninstall XGo")
 	isGoProxy := flag.Bool("proxy", false, "Set GOPROXY for people in China")
 	isAutoProxy := flag.Bool("autoproxy", false, "Check to set GOPROXY automatically")
 	noPush := flag.Bool("nopush", false, "Don't push to remote repo")

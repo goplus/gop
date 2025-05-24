@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,18 +24,18 @@ import (
 	"reflect"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/tool"
-	"github.com/goplus/gop/x/gocmd"
-	"github.com/goplus/gop/x/gopprojs"
 	"github.com/goplus/mod/modfetch"
+	"github.com/goplus/xgo/cl"
+	"github.com/goplus/xgo/cmd/internal/base"
+	"github.com/goplus/xgo/tool"
+	"github.com/goplus/xgo/x/gocmd"
+	"github.com/goplus/xgo/x/xgoprojs"
 )
 
 // gop install
 var Cmd = &base.Command{
 	UsageLine: "gop install [-debug] [packages]",
-	Short:     "Build Go+ files and install target to GOBIN",
+	Short:     "Build XGo files and install target to GOBIN",
 }
 
 var (
@@ -59,9 +59,9 @@ func runCmd(cmd *base.Command, args []string) {
 		pattern = []string{"."}
 	}
 
-	projs, err := gopprojs.ParseAll(pattern...)
+	projs, err := xgoprojs.ParseAll(pattern...)
 	if err != nil {
-		log.Panicln("gopprojs.ParseAll:", err)
+		log.Panicln("xgoprojs.ParseAll:", err)
 	}
 
 	if *flagDebug {
@@ -84,18 +84,18 @@ func runCmd(cmd *base.Command, args []string) {
 	}
 }
 
-func install(proj gopprojs.Proj, conf *tool.Config, install *gocmd.InstallConfig) {
+func install(proj xgoprojs.Proj, conf *tool.Config, install *gocmd.InstallConfig) {
 	const flags = tool.GenFlagPrompt
 	var obj string
 	var err error
 	switch v := proj.(type) {
-	case *gopprojs.DirProj:
+	case *xgoprojs.DirProj:
 		obj = v.Dir
 		err = tool.InstallDir(obj, conf, install, flags)
-	case *gopprojs.PkgPathProj:
+	case *xgoprojs.PkgPathProj:
 		obj = v.Path
 		err = tool.InstallPkgPath("", v.Path, conf, install, flags)
-	case *gopprojs.FilesProj:
+	case *xgoprojs.FilesProj:
 		err = tool.InstallFiles(v.Files, conf, install)
 	default:
 		log.Panicln("`gop install` doesn't support", reflect.TypeOf(v))

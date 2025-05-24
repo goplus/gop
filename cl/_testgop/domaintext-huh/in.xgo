@@ -1,0 +1,8 @@
+import "github.com/goplus/xgo/cl/internal/huh"
+
+form := huh`> "1", 2
+<form id="test">
+</form>
+`
+
+form.run

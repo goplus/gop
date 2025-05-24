@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2023 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,12 @@ import (
 	"strings"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cl/outline"
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/tool"
-	"github.com/goplus/gop/x/gopenv"
-	"github.com/goplus/gop/x/gopprojs"
+	"github.com/goplus/xgo/cl"
+	"github.com/goplus/xgo/cl/outline"
+	"github.com/goplus/xgo/cmd/internal/base"
+	"github.com/goplus/xgo/tool"
+	"github.com/goplus/xgo/x/xgoenv"
+	"github.com/goplus/xgo/x/xgoprojs"
 )
 
 // -----------------------------------------------------------------------------
@@ -64,9 +64,9 @@ func runCmd(cmd *base.Command, args []string) {
 		pattern = []string{"."}
 	}
 
-	proj, _, err := gopprojs.ParseOne(pattern...)
+	proj, _, err := xgoprojs.ParseOne(pattern...)
 	if err != nil {
-		log.Panicln("gopprojs.ParseOne:", err)
+		log.Panicln("xgoprojs.ParseOne:", err)
 	}
 
 	if *debug {
@@ -75,27 +75,27 @@ func runCmd(cmd *base.Command, args []string) {
 		cl.SetDisableRecover(true)
 	}
 
-	gopEnv := gopenv.Get()
-	conf := &tool.Config{Gop: gopEnv}
+	xgo := xgoenv.Get()
+	conf := &tool.Config{XGo: xgo}
 	outlinePkg(proj, conf)
 }
 
-func outlinePkg(proj gopprojs.Proj, conf *tool.Config) {
+func outlinePkg(proj xgoprojs.Proj, conf *tool.Config) {
 	var obj string
 	var out outline.Package
 	var err error
 	switch v := proj.(type) {
-	case *gopprojs.DirProj:
+	case *xgoprojs.DirProj:
 		obj = v.Dir
 		out, err = tool.Outline(obj, conf)
-	case *gopprojs.PkgPathProj:
+	case *xgoprojs.PkgPathProj:
 		obj = v.Path
 		out, err = tool.OutlinePkgPath("", obj, conf, true)
 	default:
 		log.Panicln("`gop doc` doesn't support", reflect.TypeOf(v))
 	}
 	if tool.NotFound(err) {
-		fmt.Fprintf(os.Stderr, "gop doc %v: not Go/Go+ files found\n", obj)
+		fmt.Fprintf(os.Stderr, "gop doc %v: not Go/XGo files found\n", obj)
 	} else if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	} else {

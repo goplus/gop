@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2023 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/goplus/mod/gopmod"
+	"github.com/goplus/mod/xgomod"
 )
 
 // -----------------------------------------------------------------------------------------
@@ -70,9 +70,9 @@ func (p *Changes) doLookupMod(name string) *module {
 	if !ok {
 		mod = new(module)
 		mod.exts = make([]string, 0, 8)
-		m, e := gopmod.Load(p.root + name)
+		m, e := xgomod.Load(p.root + name)
 		if e == nil {
-			m.ImportClasses(func(c *gopmod.Project) {
+			m.ImportClasses(func(c *xgomod.Project) {
 				mod.exts = append(mod.exts, c.Ext)
 				for _, w := range c.Works {
 					if w.Ext != c.Ext {
@@ -81,7 +81,7 @@ func (p *Changes) doLookupMod(name string) *module {
 				}
 			})
 		}
-		mod.exts = append(mod.exts, ".gop", ".go", ".gox", ".gmx")
+		mod.exts = append(mod.exts, ".xgo", ".gop", ".go", ".gox", ".gmx")
 		p.mods[name] = mod
 		if debugMod {
 			log.Println("Mod:", name, "Exts:", mod.exts)

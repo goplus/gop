@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@ import (
 	goast "go/ast"
 	goparser "go/parser"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/parser/fsx"
-	"github.com/goplus/gop/parser/iox"
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/parser/fsx"
+	"github.com/goplus/xgo/parser/iox"
+	"github.com/goplus/xgo/token"
 )
 
 const (
@@ -55,7 +55,7 @@ type FileSystem = fsx.FileSystem
 
 // -----------------------------------------------------------------------------
 
-// Parse parses a single Go+ source file. The filename specifies the Go+ source file.
+// Parse parses a single XGo source file. The filename specifies the XGo source file.
 // If the file couldn't be read, a nil map and the respective error are returned.
 func Parse(fset *token.FileSet, filename string, src any, mode Mode) (pkgs map[string]*ast.Package, err error) {
 	file, err := ParseFile(fset, filename, src, mode)
@@ -100,14 +100,13 @@ func ParseEntry(fset *token.FileSet, filename string, src any, conf Config) (f *
 	return ParseFSEntry(fset, fsx.Local, filename, src, conf)
 }
 
-// ParseFSDir calls ParseFile for all files with names ending in ".gop" in the
-// directory specified by path and returns a map of package name -> package
-// AST with all the packages found.
+// ParseFSDir calls ParseFile for all XGo files in the directory specified by
+// path and returns a map of package name -> package AST with all the packages
+// found.
 //
-// If filter != nil, only the files with fs.FileInfo entries passing through
-// the filter (and ending in ".gop") are considered. The mode bits are passed
-// to ParseFile unchanged. Position information is recorded in fset, which
-// must not be nil.
+// If filter != nil, only the XGo files with fs.FileInfo entries passing through
+// the filter are considered. The mode bits are passed to ParseFile unchanged.
+// Position information is recorded in fset, which must not be nil.
 //
 // If the directory couldn't be read, a nil map and the respective error are
 // returned. If a parse error occurred, a non-nil but incomplete map and the
@@ -133,7 +132,7 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, dir string, conf Config) (pk
 		ext := path.Ext(fname)
 		var isProj, isClass, isNormalGox, useGoParser bool
 		switch ext {
-		case ".gop":
+		case ".xgo", ".gop":
 		case ".go":
 			if strings.HasPrefix(fname, "gop_autogen") {
 				continue
@@ -145,7 +144,7 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, dir string, conf Config) (pk
 		default:
 			if isProj, isClass = conf.ClassKind(fname); isClass {
 				isNormalGox = false
-			} else if isNormalGox { // not found Go+ class by ext, but is a .gox file
+			} else if isNormalGox { // not found XGo class by ext, but is a .gox file
 				isClass = true
 			} else { // unknown fileKind
 				continue
@@ -190,14 +189,14 @@ func ParseFSDir(fset *token.FileSet, fs FileSystem, dir string, conf Config) (pk
 	return
 }
 
-// ParseFSEntry parses the source code of a single Go+ source file and returns the corresponding ast.File node.
+// ParseFSEntry parses the source code of a single XGo source file and returns the corresponding ast.File node.
 // Compared to ParseFSFile, ParseFSEntry detects fileKind by its filename.
 func ParseFSEntry(fset *token.FileSet, fs FileSystem, filename string, src any, conf Config) (f *ast.File, err error) {
 	fname := fs.Base(filename)
 	ext := path.Ext(fname)
 	var isProj, isClass, isNormalGox bool
 	switch ext {
-	case ".gop", ".go":
+	case ".xgo", ".gop", ".go":
 	case ".gox":
 		isNormalGox = true
 		fallthrough
@@ -207,7 +206,7 @@ func ParseFSEntry(fset *token.FileSet, fs FileSystem, filename string, src any, 
 		}
 		if isProj, isClass = conf.ClassKind(fname); isClass {
 			isNormalGox = false
-		} else if isNormalGox { // not found Go+ class by ext, but is a .gox file
+		} else if isNormalGox { // not found XGo class by ext, but is a .gox file
 			isClass = true
 		} else {
 			return nil, ErrUnknownFileKind
@@ -255,12 +254,12 @@ func defaultClassKind(fname string) (isProj bool, ok bool) {
 
 // -----------------------------------------------------------------------------
 
-// ParseFiles parses Go+ source files and returns the corresponding packages.
+// ParseFiles parses XGo source files and returns the corresponding packages.
 func ParseFiles(fset *token.FileSet, files []string, mode Mode) (map[string]*ast.Package, error) {
 	return ParseFSFiles(fset, fsx.Local, files, mode)
 }
 
-// ParseFSFiles parses Go+ source files and returns the corresponding packages.
+// ParseFSFiles parses XGo source files and returns the corresponding packages.
 func ParseFSFiles(fset *token.FileSet, fs FileSystem, files []string, mode Mode) (map[string]*ast.Package, error) {
 	ret := map[string]*ast.Package{}
 	fabs := (mode & SaveAbsFile) != 0
@@ -286,13 +285,13 @@ func ParseFSFiles(fset *token.FileSet, fs FileSystem, files []string, mode Mode)
 	return ret, nil
 }
 
-// ParseEntries parses Go+ source files and returns the corresponding packages.
+// ParseEntries parses XGo source files and returns the corresponding packages.
 // Compared to ParseFiles, ParseEntries detects fileKind by its filename.
 func ParseEntries(fset *token.FileSet, files []string, conf Config) (map[string]*ast.Package, error) {
 	return ParseFSEntries(fset, fsx.Local, files, conf)
 }
 
-// ParseFSEntries parses Go+ source files and returns the corresponding packages.
+// ParseFSEntries parses XGo source files and returns the corresponding packages.
 // Compared to ParseFSFiles, ParseFSEntries detects fileKind by its filename.
 func ParseFSEntries(fset *token.FileSet, fs FileSystem, files []string, conf Config) (map[string]*ast.Package, error) {
 	ret := map[string]*ast.Package{}
@@ -321,12 +320,12 @@ func ParseFSEntries(fset *token.FileSet, fs FileSystem, files []string, conf Con
 
 // -----------------------------------------------------------------------------
 
-// ParseFile parses the source code of a single Go+ source file and returns the corresponding ast.File node.
+// ParseFile parses the source code of a single XGo source file and returns the corresponding ast.File node.
 func ParseFile(fset *token.FileSet, filename string, src any, mode Mode) (f *ast.File, err error) {
 	return ParseFSFile(fset, fsx.Local, filename, src, mode)
 }
 
-// ParseFSFile parses the source code of a single Go+ source file and returns the corresponding ast.File node.
+// ParseFSFile parses the source code of a single XGo source file and returns the corresponding ast.File node.
 func ParseFSFile(fset *token.FileSet, fs FileSystem, filename string, src any, mode Mode) (f *ast.File, err error) {
 	code, err := readSourceFS(fs, filename, src)
 	if err != nil {

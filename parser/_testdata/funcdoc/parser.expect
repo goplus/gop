@@ -1,6 +1,6 @@
 package foo
 
-file funcdoc.gop
+file funcdoc.xgo
 ast.FuncDecl:
   Doc:
     ast.CommentGroup:

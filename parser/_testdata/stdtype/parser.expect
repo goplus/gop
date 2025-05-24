@@ -1,6 +1,6 @@
 package bar
 
-file stdtype.gop
+file stdtype.xgo
 noEntrypoint
 ast.GenDecl:
   Tok: import

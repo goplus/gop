@@ -1,0 +1,9 @@
+package main
+
+import (
+	ab "github.com/goplus/xgo/demo/xgo-sample/cpkag/b"
+)
+
+a()
+Ab()
+ab.Ab()

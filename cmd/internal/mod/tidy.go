@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/tool"
-	"github.com/goplus/gop/x/gopenv"
+	"github.com/goplus/xgo/cmd/internal/base"
+	"github.com/goplus/xgo/tool"
+	"github.com/goplus/xgo/x/xgoenv"
 )
 
 // gop mod tidy
@@ -36,7 +36,7 @@ func init() {
 }
 
 func runTidy(cmd *base.Command, args []string) {
-	err := tool.Tidy(".", gopenv.Get())
+	err := tool.Tidy(".", xgoenv.Get())
 	if err != nil {
 		if tool.NotFound(err) {
 			fmt.Fprintln(os.Stderr, "go.mod not found")

@@ -1,6 +1,6 @@
 package main
 
-file errwrap3.gop
+file errwrap3.xgo
 noEntrypoint
 ast.FuncDecl:
   Name:

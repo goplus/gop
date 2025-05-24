@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2025 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/goplus/gop/tpl/scanner/scannertest"
+	"github.com/goplus/xgo/tpl/scanner/scannertest"
 	"github.com/qiniu/x/test"
 )
 
@@ -47,7 +47,7 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 	}
 	t.Helper()
 	log.Println("Scanning", pkgDir)
-	in, err := os.ReadFile(pkgDir + "/in.gop")
+	in, err := os.ReadFile(pkgDir + "/in.xgo")
 	if err != nil {
 		t.Fatal("Scanning", pkgDir, "-", err)
 	}

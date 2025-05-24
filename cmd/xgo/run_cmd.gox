@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2025 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  */
 
 import (
-	self "github.com/goplus/gop/cmd/internal/run"
+	self "github.com/goplus/xgo/cmd/internal/run"
 )
 
 use "run [flags] package [arguments...]"
 
-short "Compile and run a Go+ program"
+short "Compile and run a XGo program"
 
 flagOff
 

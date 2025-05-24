@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,20 +19,20 @@ package goptest
 import (
 	"go/token"
 
-	"github.com/goplus/gop/ast/gopq"
-	"github.com/goplus/gop/parser/fsx/memfs"
+	"github.com/goplus/xgo/ast/gopq"
+	"github.com/goplus/xgo/parser/fsx/memfs"
 )
 
 const (
-	GopPackage = "github.com/goplus/gop/ast/gopq"
+	GopPackage = "github.com/goplus/xgo/ast/gopq"
 )
 
 // -----------------------------------------------------------------------------
 
-// New creates a nodeset object that represents a Go+ dom tree.
+// New creates a nodeset object that represents a XGo dom tree.
 func New(script string) (gopq.NodeSet, error) {
 	fset := token.NewFileSet()
-	fs := memfs.SingleFile("/foo", "bar.gop", script)
+	fs := memfs.SingleFile("/foo", "bar.xgo", script)
 	return gopq.FromFSDir(fset, fs, "/foo", nil, 0)
 }
 

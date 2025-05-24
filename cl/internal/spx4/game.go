@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package spx4
 
 const (
-	GopPackage = "github.com/goplus/gop/cl/internal/spx/pkg"
+	GopPackage = "github.com/goplus/xgo/cl/internal/spx/pkg"
 	Gop_sched  = "Sched,SchedNow"
 )
 
@@ -52,6 +52,10 @@ func (p *MyGame) Broadcast__1(msg string, wait bool) {
 }
 
 func (p *MyGame) Broadcast__2(msg string, data any, wait bool) {
+}
+
+func (p *MyGame) BackdropName() string {
+	return ""
 }
 
 func (p *MyGame) Play(media string, wait ...bool) {

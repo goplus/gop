@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2024 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,33 +32,33 @@ import (
 	goparser "go/parser"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/parser/fsx"
-	"github.com/goplus/gop/parser/fsx/memfs"
-	"github.com/goplus/gop/scanner"
-	"github.com/goplus/gop/token"
-	"github.com/goplus/gop/tool"
 	"github.com/goplus/mod"
 	"github.com/goplus/mod/env"
-	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modfile"
+	"github.com/goplus/mod/xgomod"
+	"github.com/goplus/xgo/cl"
+	"github.com/goplus/xgo/parser"
+	"github.com/goplus/xgo/parser/fsx"
+	"github.com/goplus/xgo/parser/fsx/memfs"
+	"github.com/goplus/xgo/scanner"
+	"github.com/goplus/xgo/token"
+	"github.com/goplus/xgo/tool"
 	"github.com/qiniu/x/test"
 )
 
 var (
-	GopRoot string
-	Gop     *env.Gop
+	XGoRoot string
+	XGo     *env.XGo
 	Conf    *cl.Config
 )
 
 func init() {
-	Gop = &env.Gop{Version: "1.0"}
+	XGo = &env.XGo{Version: "1.0"}
 	gogen.SetDebug(gogen.DbgFlagAll)
 	cl.SetDebug(cl.DbgFlagAll | cl.FlagNoMarkAutogen)
 	fset := token.NewFileSet()
-	imp := tool.NewImporter(nil, Gop, fset)
-	GopRoot, _, _ = mod.FindGoMod("")
+	imp := tool.NewImporter(nil, XGo, fset)
+	XGoRoot, _, _ = mod.FindGoMod("")
 	Conf = &cl.Config{
 		Fset:          fset,
 		Importer:      imp,
@@ -77,30 +77,30 @@ func LookupClass(ext string) (c *modfile.Project, ok bool) {
 		return &modfile.Project{
 			Ext: ".tgmx", Class: "*MyGame",
 			Works:    []*modfile.Class{{Ext: ".tspx", Class: "Sprite"}},
-			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx", "math"}}, true
+			PkgPaths: []string{"github.com/goplus/xgo/cl/internal/spx", "math"}}, true
 	case ".t2gmx", ".t2spx":
 		return &modfile.Project{
 			Ext: ".t2gmx", Class: "Game",
 			Works: []*modfile.Class{
 				{Ext: ".t2spx", Class: "Sprite"},
 			},
-			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
+			PkgPaths: []string{"github.com/goplus/xgo/cl/internal/spx2"}}, true
 	case ".t4gmx", ".t4spx":
 		return &modfile.Project{
 			Ext: ".t4gmx", Class: "*MyGame",
 			Works:    []*modfile.Class{{Ext: ".t4spx", Class: "Sprite"}},
-			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx4", "math"}}, true
+			PkgPaths: []string{"github.com/goplus/xgo/cl/internal/spx4", "math"}}, true
 	case "_spx.gox":
 		return &modfile.Project{
 			Ext: "_spx.gox", Class: "Game",
 			Works:    []*modfile.Class{{Ext: "_spx.gox", Class: "Sprite"}},
-			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx3", "math"},
-			Import:   []*modfile.Import{{Path: "github.com/goplus/gop/cl/internal/spx3/jwt"}}}, true
+			PkgPaths: []string{"github.com/goplus/xgo/cl/internal/spx3", "math"},
+			Import:   []*modfile.Import{{Path: "github.com/goplus/xgo/cl/internal/spx3/jwt"}}}, true
 	case "_xtest.gox":
 		return &modfile.Project{
 			Ext: "_xtest.gox", Class: "App",
 			Works:    []*modfile.Class{{Ext: "_xtest.gox", Class: "Case"}},
-			PkgPaths: []string{"github.com/goplus/gop/test", "testing"}}, true
+			PkgPaths: []string{"github.com/goplus/xgo/test", "testing"}}, true
 	case "_mcp.gox", "_tool.gox", "_prompt.gox":
 		return &modfile.Project{
 			Ext: "_mcp.gox", Class: "Game",
@@ -109,7 +109,7 @@ func LookupClass(ext string) (c *modfile.Project, ok bool) {
 				{Ext: "_prompt.gox", Class: "Prompt", Proto: "PromptProto", Embedded: true},
 				{Ext: "_res.gox", Class: "Resource", Proto: "ResourceProto"},
 			},
-			PkgPaths: []string{"github.com/goplus/gop/cl/internal/mcp"}}, true
+			PkgPaths: []string{"github.com/goplus/xgo/cl/internal/mcp"}}, true
 	}
 	return
 }
@@ -132,14 +132,14 @@ func DoWithFname(t *testing.T, gopcode, expected string, fname string) {
 }
 
 func DoExt(t *testing.T, conf *cl.Config, pkgname, gopcode, expected string) {
-	fs := memfs.SingleFile("/foo", "bar.gop", gopcode)
+	fs := memfs.SingleFile("/foo", "bar.xgo", gopcode)
 	DoFS(t, conf, fs, "/foo", nil, pkgname, expected)
 }
 
 func Mixed(t *testing.T, pkgname, gocode, gopcode, expected string, outline ...bool) {
 	conf := *Conf
 	conf.Outline = (outline != nil && outline[0])
-	fs := memfs.TwoFiles("/foo", "a.go", gocode, "b.gop", gopcode)
+	fs := memfs.TwoFiles("/foo", "a.go", gocode, "b.xgo", gopcode)
 	DoFS(t, &conf, fs, "/foo", nil, pkgname, expected)
 }
 
@@ -161,7 +161,7 @@ func DoFS(
 		t.Fatal("ParseFSDir:", err)
 	}
 	bar := pkgs[pkgname]
-	pkg, err := cl.NewPackage("github.com/goplus/gop/cl", bar, conf)
+	pkg, err := cl.NewPackage("github.com/goplus/xgo/cl", bar, conf)
 	if err != nil {
 		t.Fatal("NewPackage:", err)
 	}
@@ -211,19 +211,19 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 	out := pkgDir + "/out.go"
 	b, _ := os.ReadFile(out)
 	filter := func(fi fs.FileInfo) bool {
-		return fi.Name() == "in.gop"
+		return fi.Name() == "in.xgo"
 	}
 	conf := Conf
 	goMod := pkgDir + "/go.mod"
 	if _, err := os.Stat(goMod); err == nil {
-		if mod, err := gopmod.Load(pkgDir); err == nil {
+		if mod, err := xgomod.Load(pkgDir); err == nil {
 			confCopy := *Conf
-			confCopy.Importer = tool.NewImporter(mod, Gop, conf.Fset)
+			confCopy.Importer = tool.NewImporter(mod, XGo, conf.Fset)
 			conf = &confCopy
 		}
 	} else {
 		confCopy := *Conf
-		confCopy.RelativeBase = GopRoot
+		confCopy.RelativeBase = XGoRoot
 		conf = &confCopy
 	}
 	DoFS(t, conf, fsx.Local, pkgDir, filter, "main", b)

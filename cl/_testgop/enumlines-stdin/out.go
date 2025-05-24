@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/qiniu/x/gop/osx"
 	"os"
+
+	"github.com/qiniu/x/osx"
 )
 
 func main() {

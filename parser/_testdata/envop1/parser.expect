@@ -1,6 +1,6 @@
 package main
 
-file envop.gop
+file envop.xgo
 noEntrypoint
 ast.FuncDecl:
   Name:

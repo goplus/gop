@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2025 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/goplus/gop/scanner"
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/scanner"
+	"github.com/goplus/xgo/token"
 )
 
 func TestSeekAfter(t *testing.T) {

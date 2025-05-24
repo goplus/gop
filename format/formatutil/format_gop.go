@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2025 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 package formatutil
 
 import (
-	"github.com/goplus/gop/format"
-	"github.com/goplus/gop/scanner"
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/format"
+	"github.com/goplus/xgo/scanner"
+	"github.com/goplus/xgo/token"
 )
 
 // RearrangeFuncs rearranges functions in src.
@@ -178,7 +178,7 @@ func startWith(words []aWord, tok token.Token) bool {
 
 // SourceEx formats src in canonical gopfmt style and returns the result
 // or an (I/O or syntax) error. src is expected to be a syntactically
-// correct Go+ source file, or a list of Go+ declarations or statements.
+// correct XGo source file, or a list of XGo declarations or statements.
 //
 // If src is a partial source file, the leading and trailing space of src
 // is applied to the result (such that it has the same leading and trailing

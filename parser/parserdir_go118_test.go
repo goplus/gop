@@ -2,7 +2,7 @@
 // +build go1.18
 
 /*
- * Copyright (c) 2022 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2022 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ package parser
 import (
 	"testing"
 
-	"github.com/goplus/gop/parser/parsertest"
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/parser/parsertest"
+	"github.com/goplus/xgo/token"
 )
 
 var testStdCode = `package bar; import "io"
@@ -60,14 +60,14 @@ var testStdCode = `package bar; import "io"
 
 func TestStd(t *testing.T) {
 	fset := token.NewFileSet()
-	pkgs, err := Parse(fset, "/foo/bar.gop", testStdCode, ParseComments)
+	pkgs, err := Parse(fset, "/foo/bar.xgo", testStdCode, ParseComments)
 	if err != nil || len(pkgs) != 1 {
 		t.Fatal("Parse failed:", err, len(pkgs))
 	}
 	bar := pkgs["bar"]
 	parsertest.Expect(t, bar, `package bar
 
-file bar.gop
+file bar.xgo
 noEntrypoint
 ast.GenDecl:
   Tok: import

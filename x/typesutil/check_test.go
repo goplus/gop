@@ -10,11 +10,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/token"
-	"github.com/goplus/gop/x/typesutil"
-	"github.com/goplus/mod/gopmod"
+	"github.com/goplus/mod/xgomod"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/parser"
+	"github.com/goplus/xgo/token"
+	"github.com/goplus/xgo/x/typesutil"
 )
 
 func init() {
@@ -69,7 +69,7 @@ func checkInfo(fset *token.FileSet, files []*ast.File, gofiles []*goast.File) (*
 	chkOpts := &typesutil.Config{
 		Types: types.NewPackage("main", "main"),
 		Fset:  fset,
-		Mod:   gopmod.Default,
+		Mod:   xgomod.Default,
 	}
 	info := &typesutil.Info{
 		Types:      make(map[ast.Expr]types.TypeAndValue),
@@ -95,7 +95,7 @@ func checkInfo(fset *token.FileSet, files []*ast.File, gofiles []*goast.File) (*
 
 func TestCheckFiles(t *testing.T) {
 	fset := token.NewFileSet()
-	info, ginfo, err := checkFiles(fset, "main.gop", `
+	info, ginfo, err := checkFiles(fset, "main.xgo", `
 import "fmt"
 
 type Point struct {
@@ -168,7 +168,7 @@ func main() {
 
 func TestCheckError(t *testing.T) {
 	fset := token.NewFileSet()
-	_, _, err := checkFiles(fset, "main.gop", `
+	_, _, err := checkFiles(fset, "main.xgo", `
 type Point struct {
 	x int
 	y int
@@ -179,13 +179,13 @@ println(pt)
 	if err == nil {
 		t.Fatal("no error")
 	}
-	_, _, err = checkFiles(fset, "main.gop", `
+	_, _, err = checkFiles(fset, "main.xgo", `
 var i int = "hello"
 `, "", "", "", "")
 	if err == nil {
 		t.Fatal("no error")
 	}
-	_, _, err = checkFiles(fset, "main.gop", `
+	_, _, err = checkFiles(fset, "main.xgo", `
 var nums []int
 nums = append(nums, "NaN")
 `, "", "", "", "")
@@ -206,7 +206,7 @@ func TestBadFile(t *testing.T) {
 
 func TestCheckOverload(t *testing.T) {
 	fset := token.NewFileSet()
-	info, ginfo, err := checkFiles(fset, "main.gop", `
+	info, ginfo, err := checkFiles(fset, "main.xgo", `
 type foo struct {
 }
 

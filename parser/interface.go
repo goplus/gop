@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,9 @@ import (
 	goparser "go/parser"
 	"go/scanner"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/parser/iox"
-	"github.com/goplus/gop/token"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/parser/iox"
+	"github.com/goplus/xgo/token"
 )
 
 // A Mode value is a set of flags (or 0).
@@ -48,7 +48,7 @@ const (
 
 	// ParseGoAsGoPlus - parse Go files by gop/parser
 	ParseGoAsGoPlus Mode = 1 << 16
-	// ParserGoPlusClass - parse Go+ classfile by gop/parser
+	// ParserGoPlusClass - parse XGo classfile by gop/parser
 	ParseGoPlusClass Mode = 1 << 17
 	// SaveAbsFile - parse and save absolute path to pkg.Files
 	SaveAbsFile Mode = 1 << 18
@@ -121,7 +121,7 @@ func parseFile(fset *token.FileSet, filename string, src any, mode Mode) (f *ast
 
 // ParseExprFrom is a convenience function for parsing an expression.
 // The arguments have the same meaning as for ParseFile, but the source must
-// be a valid Go/Go+ (type or value) expression. Specifically, fset must not
+// be a valid Go/XGo (type or value) expression. Specifically, fset must not
 // be nil.
 //
 // If the source couldn't be read, the returned AST is nil and the error
@@ -164,7 +164,7 @@ func ParseExprFrom(fset *token.FileSet, filename string, src any, mode Mode) (ex
 
 // ParseExprEx is a convenience function for parsing an expression.
 // The arguments have the same meaning as for ParseFile, but the source must
-// be a valid Go/Go+ (type or value) expression. Specifically, fset must not
+// be a valid Go/XGo (type or value) expression. Specifically, fset must not
 // be nil.
 //
 // If the source couldn't be read, the returned AST is nil and the error

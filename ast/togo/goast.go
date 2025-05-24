@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2022 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import (
 	"log"
 	"reflect"
 
-	gopast "github.com/goplus/gop/ast"
-	goptoken "github.com/goplus/gop/token"
+	gopast "github.com/goplus/xgo/ast"
+	goptoken "github.com/goplus/xgo/token"
 )
 
 // ----------------------------------------------------------------------------

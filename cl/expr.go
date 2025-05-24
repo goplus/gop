@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,10 @@ import (
 	"syscall"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/printer"
-	"github.com/goplus/gop/token"
-	tpl "github.com/goplus/gop/tpl/ast"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/printer"
+	"github.com/goplus/xgo/token"
+	tpl "github.com/goplus/xgo/tpl/ast"
 )
 
 /*-----------------------------------------------------------------------------
@@ -101,7 +101,7 @@ func compileIdent(ctx *blockCtx, ident *ast.Ident, flags int) (pkg gogen.PkgRef,
 		}
 	}
 
-	if ctx.isClass { // in a Go+ class file
+	if ctx.isClass { // in a XGo class file
 		if recv = classRecv(cb); recv != nil {
 			cb.Val(recv)
 			chkFlag := flags
@@ -214,7 +214,7 @@ func compileMatrixLit(ctx *blockCtx, v *ast.MatrixLit) {
 
 func compileEnvExpr(ctx *blockCtx, v *ast.EnvExpr) {
 	cb := ctx.cb
-	if ctx.isClass { // in a Go+ class file
+	if ctx.isClass { // in a XGo class file
 		if recv := classRecv(cb); recv != nil {
 			if gopMember(cb, recv, "Gop_Env", v) == nil {
 				name := v.Name
@@ -664,6 +664,10 @@ func (p *fnType) initFuncs(base int, funcs []types.Object, typeAsParams bool) {
 }
 
 func compileCallExpr(ctx *blockCtx, v *ast.CallExpr, inFlags int) {
+	// If you need to confirm the callExpr format, you can turn on
+	// if !v.NoParenEnd.IsValid() && !v.Rparen.IsValid() {
+	// 	panic("unexpected invalid Rparen and NoParenEnd in CallExpr")
+	// }
 	var ifn *ast.Ident
 	switch fn := v.Fun.(type) {
 	case *ast.Ident:
@@ -1143,11 +1147,11 @@ func compileStringLitEx(ctx *blockCtx, cb *gogen.CodeBuilder, lit *ast.BasicLit)
 }
 
 const (
-	tplPkgPath = "github.com/goplus/gop/tpl"
+	tplPkgPath = "github.com/goplus/xgo/tpl"
 )
 
 // A DomainTextLit node represents a domain-specific text literal.
-// https://github.com/goplus/gop/issues/2143
+// https://github.com/goplus/xgo/issues/2143
 //
 //	domainTag`...`
 //	domainTag`> arg1, arg2, ...
@@ -1657,7 +1661,7 @@ func compileErrWrapExpr(ctx *blockCtx, v *ast.ErrWrapExpr, inFlags int) {
 	expr := v.X
 	switch expr.(type) {
 	case *ast.Ident, *ast.SelectorExpr:
-		expr = &ast.CallExpr{Fun: expr}
+		expr = &ast.CallExpr{Fun: expr, NoParenEnd: expr.End()}
 	}
 	compileExpr(ctx, expr, inFlags)
 	x := cb.InternalStack().Pop()

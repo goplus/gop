@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2023 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/goplus/gop/x/jsonrpc2/stdio"
+	"github.com/goplus/xgo/x/jsonrpc2/stdio"
 )
 
 func fatal(err error) {
@@ -96,14 +96,14 @@ func ServeAndDial(conf *ServeAndDialConfig, gopCmd string, args ...string) Clien
 	if err != nil {
 		onErr(err)
 	}
-	gopDir := home + "/.gop/"
+	gopDir := home + "/.xgo/"
 	err = os.MkdirAll(gopDir, 0755)
 	if err != nil {
 		onErr(err)
 	}
 
 	// logFile is where the LangServer application log saves to.
-	// default is ~/.gop/serve-{pid}.log
+	// default is ~/.xgo/serve-{pid}.log
 	logFile := logFileOf(gopDir, os.Getpid())
 
 	// clean too old logfiles, and kill old LangServer processes

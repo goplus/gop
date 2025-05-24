@@ -1,6 +1,6 @@
 package main
 
-import "github.com/goplus/gop/cl/internal/mcp"
+import "github.com/goplus/xgo/cl/internal/mcp"
 
 type foo struct {
 	mcp.Prompt

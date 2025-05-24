@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@ import (
 
 	"github.com/goplus/gogen"
 	"github.com/goplus/gogen/packages"
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/parser"
-	"github.com/goplus/gop/token"
 	"github.com/goplus/mod/modfile"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/parser"
+	"github.com/goplus/xgo/token"
 )
 
 var (
@@ -295,7 +295,9 @@ func TestFileClassType(t *testing.T) {
 	}
 	tests := []*testData{
 		{false, false, false, "abc.gop", "", false, false},
+		{false, false, false, "abc.xgo", "", false, false},
 		{false, false, false, "abc_test.gop", "", true, false},
+		{false, false, false, "abc_test.xgo", "", true, false},
 
 		{true, true, false, "abc.gox", "abc", false, true},
 		{true, true, false, "Abc.gox", "Abc", false, true},
@@ -562,7 +564,7 @@ func lookupClass(ext string) (c *modfile.Project, ok bool) {
 		return &modfile.Project{
 			Ext: ".t2gmx", Class: "Game",
 			Works:    []*modfile.Class{{Ext: ".t2spx", Class: "Sprite"}},
-			PkgPaths: []string{"github.com/goplus/gop/cl/internal/spx2"}}, true
+			PkgPaths: []string{"github.com/goplus/xgo/cl/internal/spx2"}}, true
 	}
 	return
 }
@@ -573,7 +575,7 @@ func lookupClassErr(ext string) (c *modfile.Project, ok bool) {
 		return &modfile.Project{
 			Ext: ".t2gmx", Class: "Game",
 			Works:    []*modfile.Class{{Ext: ".t2spx", Class: "Sprite"}},
-			PkgPaths: []string{"github.com/goplus/gop/cl/internal/libc"}}, true
+			PkgPaths: []string{"github.com/goplus/xgo/cl/internal/libc"}}, true
 	}
 	return
 }
@@ -582,10 +584,16 @@ func TestGetGoFile(t *testing.T) {
 	if f := genGoFile("a_test.gop", false); f != testingGoFile {
 		t.Fatal("TestGetGoFile:", f)
 	}
+	if f := genGoFile("a_test.xgo", false); f != testingGoFile {
+		t.Fatal("TestGetGoFile:", f)
+	}
 	if f := genGoFile("a_test.gox", true); f != testingGoFile {
 		t.Fatal("TestGetGoFile:", f)
 	}
 	if f := genGoFile("a.gop", false); f != defaultGoFile {
+		t.Fatal("TestGetGoFile:", f)
+	}
+	if f := genGoFile("a.xgo", false); f != defaultGoFile {
 		t.Fatal("TestGetGoFile:", f)
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2024 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -419,7 +419,7 @@ func main() {
 
 func TestOverload(t *testing.T) {
 	gopClTest(t, `
-import "github.com/goplus/gop/cl/internal/overload/foo"
+import "github.com/goplus/xgo/cl/internal/overload/foo"
 
 type Mesh struct {
 }
@@ -475,7 +475,7 @@ n.onKey ["a"], nil, key => {
 n.onKey 100, 200
 `, `package main
 
-import "github.com/goplus/gop/cl/internal/overload/foo"
+import "github.com/goplus/xgo/cl/internal/overload/foo"
 
 type Mesh struct {
 }
@@ -937,7 +937,7 @@ func TestOverloadNamed(t *testing.T) {
 	if gotypesalias {
 		excepted = `package main
 
-import "github.com/goplus/gop/cl/internal/overload/bar"
+import "github.com/goplus/xgo/cl/internal/overload/bar"
 
 var a bar.Var__0[int]
 var b bar.Var__1[bar.M]
@@ -950,7 +950,7 @@ func main() {
 	} else {
 		excepted = `package main
 
-import "github.com/goplus/gop/cl/internal/overload/bar"
+import "github.com/goplus/xgo/cl/internal/overload/bar"
 
 var a bar.Var__0[int]
 var b bar.Var__1[map[string]any]
@@ -962,7 +962,7 @@ func main() {
 `
 	}
 	gopClTest(t, `
-import "github.com/goplus/gop/cl/internal/overload/bar"
+import "github.com/goplus/xgo/cl/internal/overload/bar"
 
 var a bar.Var[int]
 var b bar.Var[bar.M]
@@ -1066,7 +1066,7 @@ for line <- open("foo.txt")! {
 import (
 	"fmt"
 	"github.com/qiniu/x/errors"
-	"github.com/qiniu/x/gop/osx"
+	"github.com/qiniu/x/osx"
 	"os"
 )
 
@@ -1075,7 +1075,7 @@ func main() {
 		var _gop_err error
 		_gop_ret, _gop_err = os.Open("foo.txt")
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "open(\"foo.txt\")", "/foo/bar.gop", 2, "main.main")
+			_gop_err = errors.NewFrame(_gop_err, "open(\"foo.txt\")", "/foo/bar.xgo", 2, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -1229,7 +1229,7 @@ func TestYaptest(t *testing.T) {
 	gopMixedClTest(t, "main", `package main
 
 import (
-	"github.com/goplus/gop/cl/internal/test"
+	"github.com/goplus/xgo/cl/internal/test"
 )
 
 type Class struct {
@@ -1241,7 +1241,7 @@ var a int
 c.match a, "b"
 `, `package main
 
-import "github.com/goplus/gop/cl/internal/test"
+import "github.com/goplus/xgo/cl/internal/test"
 
 var c Class
 var a int

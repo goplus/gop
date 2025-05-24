@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,15 +32,15 @@ func TestPanic(t *testing.T) {
 		buildVersion = "v1.2"
 		initEnv()
 	})
-	t.Run("GOPROOT panic", func(t *testing.T) {
+	t.Run("XGOROOT panic", func(t *testing.T) {
 		defer func() {
 			if e := recover(); e == nil {
-				t.Fatal("GOPROOT: no panic?")
+				t.Fatal("XGOROOT: no panic?")
 			}
 		}()
-		defaultGopRoot = ""
-		os.Setenv(envGOPROOT, "")
-		GOPROOT()
+		defaultXGoRoot = ""
+		os.Setenv(envXGOROOT, "")
+		XGOROOT()
 	})
 }
 

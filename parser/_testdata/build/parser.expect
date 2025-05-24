@@ -1,6 +1,6 @@
 package main
 
-file build.gop
+file build.xgo
 noEntrypoint
 ast.GenDecl:
   Tok: type

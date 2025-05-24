@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2022 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/parser/fsx"
-	"github.com/goplus/gop/x/build"
+	"github.com/goplus/xgo/cl"
+	"github.com/goplus/xgo/parser/fsx"
+	"github.com/goplus/xgo/x/build"
 )
 
 var (
@@ -43,12 +43,12 @@ func init() {
 	}
 	build.RegisterClassFileType(".tspx", "MyGame", []*build.Class{
 		{Ext: ".tspx", Class: "Sprite"},
-	}, "github.com/goplus/gop/cl/internal/spx")
+	}, "github.com/goplus/xgo/cl/internal/spx")
 	build.RegisterClassFileType("_yap.gox", "App", nil, "github.com/goplus/yap")
 }
 
 func gopClTest(t *testing.T, gopcode any, expected string) {
-	gopClTestEx(t, "main.gop", gopcode, expected)
+	gopClTestEx(t, "main.xgo", gopcode, expected)
 }
 
 func gopClTestEx(t *testing.T, filename string, gopcode any, expected string) {
@@ -82,22 +82,22 @@ func TestKind(t *testing.T) {
 
 func TestGop(t *testing.T) {
 	var src = `
-println "Go+"
+println "XGo"
 `
 	var expect = `package main
 
 import "fmt"
 
 func main() {
-	fmt.Println("Go+")
+	fmt.Println("XGo")
 }
 `
 	gopClTest(t, src, expect)
 	gopClTest(t, []byte(src), expect)
 	gopClTest(t, bytes.NewBufferString(src), expect)
-	gopClTestEx(t, `./_testdata/hello/main.gop`, nil, expect)
+	gopClTestEx(t, `./_testdata/hello/main.xgo`, nil, expect)
 
-	f, err := os.Open("./_testdata/hello/main.gop")
+	f, err := os.Open("./_testdata/hello/main.xgo")
 	if err != nil {
 		t.Fatal("open failed", err)
 	}
@@ -107,7 +107,7 @@ func main() {
 
 func TestGox(t *testing.T) {
 	gopClTestEx(t, "Rect.gox", `
-println "Go+"
+println "XGo"
 `, `package main
 
 import "fmt"
@@ -116,7 +116,7 @@ type Rect struct {
 }
 
 func (this *Rect) Main() {
-	fmt.Println("Go+")
+	fmt.Println("XGo")
 }
 func main() {
 	new(Rect).Main()
@@ -130,7 +130,7 @@ var (
 type Buffer struct {
 	buf []byte
 }
-println "Go+"
+println "XGo"
 `, `package main
 
 import "fmt"
@@ -144,7 +144,7 @@ type Rect struct {
 }
 
 func (this *Rect) Main() {
-	fmt.Println("Go+")
+	fmt.Println("XGo")
 }
 func main() {
 	new(Rect).Main()
@@ -158,7 +158,7 @@ var (
 type Buffer struct {
 	buf []byte
 }
-println "Go+"
+println "XGo"
 `, `package main
 
 import "fmt"
@@ -172,7 +172,7 @@ type Rect struct {
 }
 
 func (this *Rect) Main() {
-	fmt.Println("Go+")
+	fmt.Println("XGo")
 }
 func main() {
 	new(Rect).Main()
@@ -184,7 +184,7 @@ var (
 	*bytes.Buffer
 	v int
 )
-println "Go+"
+println "XGo"
 `, `package main
 
 import (
@@ -198,7 +198,7 @@ type Rect struct {
 }
 
 func (this *Rect) Main() {
-	fmt.Println("Go+")
+	fmt.Println("XGo")
 }
 func main() {
 	new(Rect).Main()
@@ -210,7 +210,7 @@ var (
 	bytes.Buffer
 	v int
 )
-println "Go+"
+println "XGo"
 `, `package main
 
 import (
@@ -224,7 +224,7 @@ type Rect struct {
 }
 
 func (this *Rect) Main() {
-	fmt.Println("Go+")
+	fmt.Println("XGo")
 }
 func main() {
 	new(Rect).Main()
@@ -240,7 +240,7 @@ println a+1/2r
 
 import (
 	"fmt"
-	"github.com/qiniu/x/gop/ng"
+	"github.com/qiniu/x/xgo/ng"
 	"math/big"
 )
 
@@ -264,7 +264,7 @@ for line <- lines(r) {
 
 import (
 	"fmt"
-	"github.com/qiniu/x/gop/osx"
+	"github.com/qiniu/x/osx"
 	"io"
 )
 
@@ -317,7 +317,7 @@ func add(x string, y string) (int, error) {
 		var _gop_err error
 		_autoGo_1, _gop_err = strconv.Atoi(x)
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "strconv.Atoi(x)", "main.gop", 7, "main.add")
+			_gop_err = errors.NewFrame(_gop_err, "strconv.Atoi(x)", "main.xgo", 7, "main.add")
 			return 0, _gop_err
 		}
 		goto _autoGo_2
@@ -328,7 +328,7 @@ func add(x string, y string) (int, error) {
 		var _gop_err error
 		_autoGo_3, _gop_err = strconv.Atoi(y)
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "strconv.Atoi(y)", "main.gop", 7, "main.add")
+			_gop_err = errors.NewFrame(_gop_err, "strconv.Atoi(y)", "main.xgo", 7, "main.add")
 			return 0, _gop_err
 		}
 		goto _autoGo_4
@@ -358,7 +358,7 @@ func main() {
 		var _gop_err error
 		_gop_ret, _gop_err = add("100", "23")
 		if _gop_err != nil {
-			_gop_err = errors.NewFrame(_gop_err, "add(\"100\", \"23\")", "main.gop", 14, "main.main")
+			_gop_err = errors.NewFrame(_gop_err, "add(\"100\", \"23\")", "main.xgo", 14, "main.main")
 			panic(_gop_err)
 		}
 		return
@@ -375,7 +375,7 @@ func TestSpx(t *testing.T) {
 
 import (
 	"fmt"
-	"github.com/goplus/gop/cl/internal/spx"
+	"github.com/goplus/xgo/cl/internal/spx"
 )
 
 type MyGame struct {
@@ -396,7 +396,7 @@ func main() {
 
 import (
 	"fmt"
-	"github.com/goplus/gop/cl/internal/spx"
+	"github.com/goplus/xgo/cl/internal/spx"
 )
 
 type Cat struct {
@@ -462,7 +462,7 @@ func TestFS(t *testing.T) {
 import "fmt"
 
 func main() {
-	fmt.Println("Go+")
+	fmt.Println("XGo")
 }
 `)
 	data, err := ctx.BuildFSDir(fsx.Local, "./_testdata/hello")
@@ -480,7 +480,7 @@ func TestAst(t *testing.T) {
 import "fmt"
 
 func main() {
-	fmt.Println("Go+")
+	fmt.Println("XGo")
 }
 `)
 	pkg, err := ctx.ParseFSDir(fsx.Local, "./_testdata/hello")
@@ -498,7 +498,7 @@ func main() {
 }
 
 func TestError(t *testing.T) {
-	_, err := ctx.BuildFile("main.gop", "bad code")
+	_, err := ctx.BuildFile("main.xgo", "bad code")
 	if err == nil {
 		t.Fatal("BuildFile: no error?")
 	}
@@ -510,15 +510,15 @@ func TestError(t *testing.T) {
 	if err == nil {
 		t.Fatal("BuildDir: no error?")
 	}
-	_, err = ctx.BuildFile("main.gop", "func main()")
+	_, err = ctx.BuildFile("main.xgo", "func main()")
 	if err == nil {
 		t.Fatal("BuildFile: no error?")
 	}
-	_, err = ctx.ParseFile("main.gop", 123)
+	_, err = ctx.ParseFile("main.xgo", 123)
 	if err == nil {
 		t.Fatal("ParseFile: no error?")
 	}
-	_, err = ctx.ParseFile("./demo/nofound/main.gop", nil)
+	_, err = ctx.ParseFile("./demo/nofound/main.xgo", nil)
 	if err == nil {
 		t.Fatal("ParseFile: no error?")
 	}
@@ -533,7 +533,7 @@ func (i *emptyImporter) Import(path string) (*types.Package, error) {
 
 func TestContext(t *testing.T) {
 	ctx := build.NewContext(&emptyImporter{}, nil)
-	_, err := ctx.BuildFile("main.gop", `import "fmt"; fmt.Println "Go+"`)
+	_, err := ctx.BuildFile("main.xgo", `import "fmt"; fmt.Println "XGo"`)
 	if err == nil {
 		t.Fatal("BuildFile: no error?")
 	}

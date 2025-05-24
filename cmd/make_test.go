@@ -14,7 +14,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/goplus/gop/env"
+	"github.com/goplus/xgo/env"
 )
 
 const (
@@ -23,7 +23,7 @@ const (
 
 var script = "all.bash"
 var gopRoot = ""
-var gopBinFiles = []string{"gop", "gopfmt"}
+var gopBinFiles = []string{"gop", "xgo"}
 var installer = "cmd/make.go"
 var versionFile = "VERSION"
 var mainVersionFile = "env/version.go"
@@ -98,7 +98,7 @@ func init() {
 
 func cleanGopRunCacheFiles(t *testing.T) {
 	homeDir, _ := os.UserHomeDir()
-	runCacheDir := filepath.Join(homeDir, ".gop", "run")
+	runCacheDir := filepath.Join(homeDir, ".xgo", "run")
 	files := []string{"go.mod", "go.sum"}
 	for _, file := range files {
 		fullPath := filepath.Join(runCacheDir, file)
@@ -305,7 +305,7 @@ func TestInstallInNonGitRepo(t *testing.T) {
 		output, err := cmd.CombinedOutput()
 		if err == nil || !strings.Contains(string(output), "Error") {
 			t.Log(string(output))
-			t.Fatal("Failed: build Go+ in a non-git repo and no VERSION file should be failed.")
+			t.Fatal("Failed: build XGo in a non-git repo and no VERSION file should be failed.")
 		}
 	})
 

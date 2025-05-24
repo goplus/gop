@@ -32,9 +32,12 @@ _cgo_export.*
 _testmain.go
 coverage.txt
 
+.xgo/
 .gop/
 gop_autogen*.go
+xgo_autogen*.go
 !cmd/xgo/gop_autogen*.go
+!cmd/xgo/xgo_autogen*.go
 go.json
 go.work*
 format.result

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2023 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ import (
 	"log"
 	"path/filepath"
 
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/tool"
-	"github.com/goplus/gop/x/fsnotify"
-	"github.com/goplus/gop/x/watcher"
+	"github.com/goplus/xgo/cmd/internal/base"
+	"github.com/goplus/xgo/tool"
+	"github.com/goplus/xgo/x/fsnotify"
+	"github.com/goplus/xgo/x/watcher"
 )
 
 // -----------------------------------------------------------------------------
@@ -31,7 +31,7 @@ import (
 // gop watch
 var Cmd = &base.Command{
 	UsageLine: "gop watch [-v -gentest] [dir]",
-	Short:     "Monitor code changes in a Go+ workspace to generate Go files",
+	Short:     "Monitor code changes in a XGo workspace to generate Go files",
 }
 
 var (

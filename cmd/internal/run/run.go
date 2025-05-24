@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,23 +23,23 @@ import (
 	"reflect"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop/cl"
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/tool"
-	"github.com/goplus/gop/x/gocmd"
-	"github.com/goplus/gop/x/gopprojs"
+	"github.com/goplus/xgo/cl"
+	"github.com/goplus/xgo/cmd/internal/base"
+	"github.com/goplus/xgo/tool"
+	"github.com/goplus/xgo/x/gocmd"
+	"github.com/goplus/xgo/x/xgoprojs"
 	"github.com/qiniu/x/log"
 )
 
 // gop run
 var Cmd = &base.Command{
 	UsageLine: "gop run [-nc -asm -quiet -debug -prof] package [arguments...]",
-	Short:     "Run a Go+ program",
+	Short:     "Run a XGo program",
 }
 
 var (
 	flag        = &Cmd.Flag
-	flagAsm     = flag.Bool("asm", false, "generates `asm` code of Go+ bytecode backend")
+	flagAsm     = flag.Bool("asm", false, "generates `asm` code of XGo bytecode backend")
 	flagDebug   = flag.Bool("debug", false, "print debug information")
 	flagQuiet   = flag.Bool("quiet", false, "don't generate any compiling stage log")
 	flagNoChdir = flag.Bool("nc", false, "don't change dir (only for `gop run pkgPath`)")
@@ -60,7 +60,7 @@ func runCmd(cmd *base.Command, args []string) {
 		cmd.Usage(os.Stderr)
 	}
 
-	proj, args, err := gopprojs.ParseOne(flag.Args()...)
+	proj, args, err := xgoprojs.ParseOne(flag.Args()...)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -87,25 +87,25 @@ func runCmd(cmd *base.Command, args []string) {
 	defer conf.UpdateCache()
 
 	if !conf.Mod.HasModfile() { // if no go.mod, check GopDeps
-		conf.GopDeps = new(int)
+		conf.XGoDeps = new(int)
 	}
 	confCmd := conf.NewGoCmdConf()
 	confCmd.Flags = pass.Args
 	run(proj, args, !noChdir, conf, confCmd)
 }
 
-func run(proj gopprojs.Proj, args []string, chDir bool, conf *tool.Config, run *gocmd.RunConfig) {
+func run(proj xgoprojs.Proj, args []string, chDir bool, conf *tool.Config, run *gocmd.RunConfig) {
 	const flags = 0
 	var obj string
 	var err error
 	switch v := proj.(type) {
-	case *gopprojs.DirProj:
+	case *xgoprojs.DirProj:
 		obj = v.Dir
 		err = tool.RunDir(obj, args, conf, run, flags)
-	case *gopprojs.PkgPathProj:
+	case *xgoprojs.PkgPathProj:
 		obj = v.Path
 		err = tool.RunPkgPath(v.Path, args, chDir, conf, run, flags)
-	case *gopprojs.FilesProj:
+	case *xgoprojs.FilesProj:
 		err = tool.RunFiles("", v.Files, args, conf, run)
 	default:
 		log.Panicln("`gop run` doesn't support", reflect.TypeOf(v))

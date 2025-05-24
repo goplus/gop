@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2025 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,12 @@ import (
 	"strings"
 	"testing"
 
-	gopp "github.com/goplus/gop/parser"
-	"github.com/goplus/gop/tpl/ast"
-	"github.com/goplus/gop/tpl/parser"
-	"github.com/goplus/gop/tpl/parser/parsertest"
-	"github.com/goplus/gop/tpl/scanner"
-	"github.com/goplus/gop/tpl/token"
+	gopp "github.com/goplus/xgo/parser"
+	"github.com/goplus/xgo/tpl/ast"
+	"github.com/goplus/xgo/tpl/parser"
+	"github.com/goplus/xgo/tpl/parser/parsertest"
+	"github.com/goplus/xgo/tpl/scanner"
+	"github.com/goplus/xgo/tpl/token"
 )
 
 func testFrom(t *testing.T, pkgDir, sel string) {
@@ -39,7 +39,7 @@ func testFrom(t *testing.T, pkgDir, sel string) {
 	t.Helper()
 	log.Println("Parsing", pkgDir)
 	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, pkgDir+"/in.gop", nil, &parser.Config{
+	f, err := parser.ParseFile(fset, pkgDir+"/in.xgo", nil, &parser.Config{
 		ParseRetProc: func(file *token.File, src []byte, offset int) (ast.Node, scanner.ErrorList) {
 			return gopp.ParseExprEx(file, src, offset, 0)
 		},

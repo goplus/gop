@@ -8,9 +8,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/goplus/gop/x/jsonrpc2"
-	"github.com/goplus/gop/x/jsonrpc2/jsonrpc2test"
-	"github.com/goplus/gop/x/jsonrpc2/jsonrpc2test/cases"
+	"github.com/goplus/xgo/x/jsonrpc2"
+	"github.com/goplus/xgo/x/jsonrpc2/jsonrpc2test"
+	"github.com/goplus/xgo/x/jsonrpc2/jsonrpc2test/cases"
 )
 
 func TestNetPipe(t *testing.T) {

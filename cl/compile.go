@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-// Package cl compiles Go+ syntax trees (ast).
+// Package cl compiles XGo syntax trees (ast).
 package cl
 
 import (
@@ -27,11 +27,11 @@ import (
 	"strings"
 
 	"github.com/goplus/gogen"
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/ast/fromgo"
-	"github.com/goplus/gop/cl/internal/typesalias"
-	"github.com/goplus/gop/token"
 	"github.com/goplus/mod/modfile"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/ast/fromgo"
+	"github.com/goplus/xgo/cl/internal/typesalias"
+	"github.com/goplus/xgo/token"
 	"github.com/qiniu/x/errors"
 )
 
@@ -171,7 +171,7 @@ type Recorder interface {
 type Project = modfile.Project
 type Class = modfile.Class
 
-// Config of loading Go+ packages.
+// Config of loading XGo packages.
 type Config struct {
 	// Types provides type information for the package (optional).
 	Types *types.Package
@@ -381,7 +381,7 @@ type blockCtx struct {
 
 	fileLine   bool
 	isClass    bool
-	isGopFile  bool // is Go+ file or not
+	isXgoFile  bool // is XGo file or not
 	typesAlias bool // support types alias
 }
 
@@ -400,7 +400,7 @@ func (p *blockCtx) pystr() gogen.Ref {
 }
 
 func (p *blockCtx) recorder() *goxRecorder {
-	if p.isGopFile {
+	if p.isXgoFile {
 		return p.rec
 	}
 	return nil
@@ -503,7 +503,7 @@ const (
 	testingGoFile  = "_test"
 )
 
-// NewPackage creates a Go+ package instance.
+// NewPackage creates a XGo package instance.
 func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Package, err error) {
 	relBaseDir := conf.RelativeBase
 	fset := conf.Fset
@@ -584,7 +584,7 @@ func NewPackage(pkgPath string, pkg *ast.Package, conf *Config) (p *gogen.Packag
 		ctx := &blockCtx{
 			pkg: p, pkgCtx: ctx, cb: p.CB(), relBaseDir: relBaseDir, fileScope: fileScope,
 			fileLine: fileLine, isClass: f.IsClass, rec: rec, imports: make(map[string]pkgImp),
-			isGopFile: true, typesAlias: ctx.featTypesAlias,
+			isXgoFile: true, typesAlias: ctx.featTypesAlias,
 		}
 		if rec := ctx.rec; rec != nil {
 			rec.Scope(f.File, fileScope)
@@ -723,10 +723,11 @@ func loadFile(ctx *pkgCtx, f *ast.File) {
 
 // gen testingGoFile for:
 //
+//	*_test.xgo
 //	*_test.gop
 //	*test.gox
 func genGoFile(file string, goxTestFile bool) string {
-	if goxTestFile || strings.HasSuffix(file, "_test.gop") {
+	if goxTestFile || strings.HasSuffix(file, "_test.xgo") || strings.HasSuffix(file, "_test.gop") {
 		return testingGoFile
 	}
 	return defaultGoFile
@@ -1040,7 +1041,7 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 					pos := tName.Pos()
 					ld := getTypeLoader(parent, syms, pos, name)
 					defs := ctx.pkg.NewTypeDefs()
-					if goFile != skippingGoFile { // is Go+ file
+					if goFile != skippingGoFile { // is XGo file
 						ld.typ = func() {
 							old, _ := p.SetCurFile(goFile, true)
 							defer p.RestoreCurFile(old)

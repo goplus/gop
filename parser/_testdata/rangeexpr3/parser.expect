@@ -1,6 +1,6 @@
 package main
 
-file rangeexpr.gop
+file rangeexpr.xgo
 noEntrypoint
 ast.FuncDecl:
   Name:

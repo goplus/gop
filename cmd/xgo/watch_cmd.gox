@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2025 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  */
 
 import (
-	self "github.com/goplus/gop/cmd/internal/watch"
+	self "github.com/goplus/xgo/cmd/internal/watch"
 )
 
 use "watch [flags] [dir]"
 
-short "Monitor code changes in a Go+ workspace to generate Go files"
+short "Monitor code changes in a XGo workspace to generate Go files"
 
 flagOff
 

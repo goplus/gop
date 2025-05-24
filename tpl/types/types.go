@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2025 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package types
 
 import (
-	"github.com/goplus/gop/tpl/token"
+	"github.com/goplus/xgo/tpl/token"
 )
 
 // A Token is a lexical unit returned by Scan.

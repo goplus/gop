@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2023 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,17 @@ package serve
 import (
 	"context"
 
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/x/jsonrpc2"
-	"github.com/goplus/gop/x/jsonrpc2/stdio"
-	"github.com/goplus/gop/x/langserver"
+	"github.com/goplus/xgo/cmd/internal/base"
+	"github.com/goplus/xgo/x/jsonrpc2"
+	"github.com/goplus/xgo/x/jsonrpc2/stdio"
+	"github.com/goplus/xgo/x/langserver"
 	"github.com/qiniu/x/log"
 )
 
 // gop serve
 var Cmd = &base.Command{
 	UsageLine: "gop serve [flags]",
-	Short:     "Serve as a Go+ LangServer",
+	Short:     "Serve as a XGo LangServer",
 }
 
 var (

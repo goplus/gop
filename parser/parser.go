@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-// Package parser implements a parser for Go+ source files. Input may be
+// Package parser implements a parser for XGo source files. Input may be
 // provided in a variety of forms (see the various Parse* functions); the
 // output is an abstract syntax tree (AST) representing the Go source. The
 // parser is invoked through one of the Parse* functions.
 //
 // The parser accepts a larger language than is syntactically permitted by
-// the Go+ spec, for simplicity, and for improved robustness in the presence
+// the XGo spec, for simplicity, and for improved robustness in the presence
 // of syntax errors. For instance, in method declarations, the receiver is
 // treated like an ordinary parameter list and thus may contain multiple
 // entries where the spec permits exactly one. Consequently, the corresponding
@@ -33,11 +33,11 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/goplus/gop/ast"
-	"github.com/goplus/gop/scanner"
-	"github.com/goplus/gop/token"
-	tplast "github.com/goplus/gop/tpl/ast"
-	tpl "github.com/goplus/gop/tpl/parser"
+	"github.com/goplus/xgo/ast"
+	"github.com/goplus/xgo/scanner"
+	"github.com/goplus/xgo/token"
+	tplast "github.com/goplus/xgo/tpl/ast"
+	tpl "github.com/goplus/xgo/tpl/parser"
 	"github.com/qiniu/x/log"
 )
 
@@ -277,7 +277,7 @@ func (p *parser) unget(pos token.Pos, tok token.Token, lit string) {
 
 // Advance to the next token.
 func (p *parser) next0() {
-	if p.old.pos != 0 { // Go+: support unget
+	if p.old.pos != 0 { // XGo: support unget
 		p.pos, p.tok, p.lit = p.old.pos, p.old.tok, p.old.lit
 		p.old.pos = 0
 		return
@@ -1874,7 +1874,7 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTup
 		}
 
 	case token.MAP:
-		oldpos, oldlit := p.pos, p.lit // Go+: save token to allow map() as a function
+		oldpos, oldlit := p.pos, p.lit // XGo: save token to allow map() as a function
 		p.next()
 		pos, tok := p.pos, p.tok
 		p.unget(oldpos, token.MAP, oldlit)
@@ -1884,7 +1884,7 @@ func (p *parser) parseOperand(lhs, allowTuple, allowCmd bool) (x ast.Expr, isTup
 		fallthrough
 	case token.GOTO, token.TYPE, token.BREAK, token.CONTINUE, token.FALLTHROUGH:
 		// token.RANGE, token.IMPORT, token.SELECT, token.INTERFACE:
-		// Go+: allow goto() as a function
+		// XGo: allow goto() as a function
 		p.tok = token.IDENT
 		x = p.parseIdent()
 		if !lhs {
@@ -2364,7 +2364,7 @@ L:
 			case token.LPAREN:
 				x = p.parseTypeAssertion(p.checkExpr(x))
 			case token.GOTO, token.BREAK, token.CONTINUE, token.FALLTHROUGH:
-				// Go+: allow goto() as a function
+				// XGo: allow goto() as a function
 				p.tok = token.IDENT
 				x = p.parseSelector(p.checkExprOrType(x))
 			default:
@@ -2773,7 +2773,7 @@ func (p *parser) parseSimpleStmt(mode int, allowCmd bool) ast.Stmt {
 	return ss
 }
 
-func (p *parser) parseBranchCmdStmt(iden *ast.Ident) ast.Stmt { // Go+: goto as command
+func (p *parser) parseBranchCmdStmt(iden *ast.Ident) ast.Stmt { // XGo: goto as command
 	x, _ := p.parsePrimaryExpr(iden, false, false, true)
 	return &ast.ExprStmt{X: x}
 }
@@ -2947,10 +2947,10 @@ func (p *parser) parseBranchStmt(tok token.Token) ast.Stmt {
 		defer un(trace(p, "BranchStmt"))
 	}
 
-	oldpos, oldlit := p.pos, p.lit // Go+: save token to allow goto() as a function
+	oldpos, oldlit := p.pos, p.lit // XGo: save token to allow goto() as a function
 	pos := p.expect(tok)
 	next := p.tok
-	if next != token.IDENT && next != token.SEMICOLON { // Go+: allow goto() as a function
+	if next != token.IDENT && next != token.SEMICOLON { // XGo: allow goto() as a function
 		p.unget(oldpos, token.IDENT, oldlit)
 		s := p.parseSimpleStmt(basic, true)
 		p.expectSemi()
@@ -2964,7 +2964,7 @@ func (p *parser) parseBranchStmt(tok token.Token) ast.Stmt {
 		n := len(p.targetStack) - 1
 		p.targetStack[n] = append(p.targetStack[n], label)
 	}
-	if p.tok != token.SEMICOLON { // Go+: goto command
+	if p.tok != token.SEMICOLON { // XGo: goto command
 		if label != nil {
 			p.unget(label.NamePos, token.IDENT, label.Name)
 		}

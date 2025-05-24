@@ -1,0 +1,11 @@
+import "xgo/tpl"
+
+cl := tpl`
+expr = INT % "," => {
+	return tpl.ListOp[int](self, v => {
+		return v.(*tpl.Token).Lit.int!
+	})
+}
+`!
+
+echo cl.parseExpr("1, 2, 3", nil)!

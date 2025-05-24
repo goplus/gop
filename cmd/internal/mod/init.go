@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 The GoPlus Authors (goplus.org). All rights reserved.
+ * Copyright (c) 2021 The XGo Authors (xgo.dev). All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,10 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/goplus/gop/cmd/internal/base"
-	"github.com/goplus/gop/env"
-	"github.com/goplus/mod/gopmod"
 	"github.com/goplus/mod/modload"
+	"github.com/goplus/mod/xgomod"
+	"github.com/goplus/xgo/cmd/internal/base"
+	"github.com/goplus/xgo/env"
 )
 
 // gop mod init
@@ -89,7 +89,7 @@ func goMainVer() string {
 }
 
 func llgoLibVer() string {
-	if modGop, e1 := gopmod.LoadFrom(filepath.Join(env.GOPROOT(), "go.mod"), ""); e1 == nil {
+	if modGop, e1 := xgomod.LoadFrom(filepath.Join(env.XGOROOT(), "go.mod"), ""); e1 == nil {
 		if pkg, e2 := modGop.Lookup("github.com/goplus/lib"); e2 == nil {
 			return pkg.Real.Version
 		}
