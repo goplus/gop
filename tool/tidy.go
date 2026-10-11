@@ -33,12 +33,13 @@ func Tidy(dir string, xgo *env.XGo) (err error) {
 
 	modRoot := modObj.Root()
 
-	// Remember the classfile dependencies (declared via `//gop:class` require
-	// directives) before running `go mod tidy`. The native `go mod tidy` only
-	// sees Go imports, so a classfile module that is referenced implicitly (via
-	// a classfile import, or not yet referenced by any source file) looks unused
-	// to it and gets dropped from go.mod. We re-add them afterwards so that
-	// `xgo mod tidy` behaves like running `xgo get` for classfile deps.
+	// Remember the classfile dependencies (declared via `//gop:class` or
+	// `//xgo:class` require directives) before running `go mod tidy`. The native
+	// `go mod tidy` only sees Go imports, so a classfile module that is referenced
+	// implicitly (via a classfile import, or not yet referenced by any source
+	// file) looks unused to it and gets dropped from go.mod. We re-add them
+	// afterwards so that `xgo mod tidy` behaves like running `xgo get` for
+	// classfile deps.
 	classMods := classfileRequires(modObj)
 
 	/*
@@ -115,9 +116,11 @@ func classfileRequires(modObj *xgomod.Module) []classfileRequire {
 }
 
 // keepClassfileRequires re-adds classfile module requires that `go mod tidy`
-// may have dropped, preserving the `//gop:class` marker so that the classfile
-// dependency declaration survives. It does nothing when every classfile require
-// is still present.
+// may have dropped, re-applying the `//xgo:class` marker (as `xgo get` does) so
+// that the classfile dependency declaration survives. A dropped require is
+// restored at the version recorded before `go mod tidy` ran, not re-resolved
+// against the module graph. It does nothing when every classfile require is
+// still present.
 func keepClassfileRequires(modRoot string, classMods []classfileRequire) (err error) {
 	if len(classMods) == 0 {
 		return nil
@@ -126,7 +129,7 @@ func keepClassfileRequires(modRoot string, classMods []classfileRequire) (err er
 	if err != nil {
 		return errors.NewWith(err, `xgomod.Load(modRoot)`, -2, "xgomod.Load", modRoot)
 	}
-	have := make(map[string]bool)
+	have := make(map[string]bool, len(modObj.File.Require))
 	for _, r := range modObj.File.Require {
 		have[r.Mod.Path] = true
 	}

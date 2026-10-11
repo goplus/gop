@@ -125,6 +125,9 @@ go 1.24
 	if len(reqs) != 1 || reqs[0].Path != "github.com/goplus/yap" {
 		t.Fatalf("reloaded classfile requires = %v, want github.com/goplus/yap", reqs)
 	}
+	if reqs[0].Version != "v0.8.1" {
+		t.Fatalf("reloaded version = %q, want v0.8.1", reqs[0].Version)
+	}
 }
 
 // TestKeepClassfileRequiresNoChange ensures that when the classfile require is
