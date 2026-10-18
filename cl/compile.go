@@ -1004,7 +1004,8 @@ func preloadXGoFile(p *gogen.Package, ctx *blockCtx, file string, f *ast.File, c
 				old, _ := p.SetCurFile(goFile, true)
 				defer p.RestoreCurFile(old)
 
-				decl := p.NewTypeDefs().NewType(classType)
+				decl := p.NewTypeDefs().NewType(classType, nil)
+				decl.EnsureNamed()    // NOTE(xsw): force type resolution early
 				ld.typInit = func() { // decycle
 					if debugLoad {
 						log.Println("==> Load > InitType", classType)
@@ -1288,13 +1289,14 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 						log.Println("==> Preload type", name)
 					}
 					ld := getTypeLoader(parent, syms, tName, name)
-					defs := ctx.pkg.NewTypeDefs()
+					pkg := ctx.pkg
+					defs := pkg.NewTypeDefs()
 					if goFile != skippingGoFile { // is XGo file
 						enumType, ok := t.Type.(*ast.EnumType)
 						if ok { // enum type
 							preloadConst(enumType.Specs, func() types.Type {
 								ld.load()
-								return ctx.pkg.Types.Scope().Lookup(name).Type()
+								return pkg.Types.Scope().Lookup(name).Type()
 							})
 						}
 						ld.typ = func() {
@@ -1304,23 +1306,22 @@ func preloadFile(p *gogen.Package, ctx *blockCtx, f *ast.File, goFile string, ge
 								if debugLoad {
 									log.Println("==> Load > AliasType", name)
 								}
-								typ := defs.AliasType(name, toType(ctx, t.Type), tName)
+								typ := defs.NewType(name, nil, tName).AliasType(pkg, toType(ctx, t.Type))
 								if rec := ctx.recorder(); rec != nil {
-									if obj, ok := typ.(interface{ Obj() *types.TypeName }); ok {
-										rec.Def(tName, obj.Obj())
-									}
+									rec.Def(tName, typ.Obj())
 								}
 								return
 							}
 							if debugLoad {
 								log.Println("==> Load > NewType", name)
 							}
-							decl := defs.NewType(name, tName)
+							decl := defs.NewType(name, nil, tName)
 							if t.Doc != nil {
 								defs.SetComments(t.Doc)
 							} else if d.Doc != nil {
 								defs.SetComments(d.Doc)
 							}
+							decl.EnsureNamed()    // NOTE(xsw): force type resolution early
 							ld.typInit = func() { // decycle
 								if debugLoad {
 									log.Println("==> Load > InitType", name)

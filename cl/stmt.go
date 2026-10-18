@@ -1030,21 +1030,23 @@ func compileType(ctx *blockCtx, t *ast.TypeSpec) {
 	if name == "_" {
 		return
 	}
+	pkg := ctx.pkg
+	cb := ctx.cb
+	typeDecl := cb.NewTypeDefs().NewType(name, nil)
 	if t.Assign != token.NoPos { // alias type
-		ctx.cb.AliasType(name, toType(ctx, t.Type))
+		typeDecl.AliasType(pkg, toType(ctx, t.Type))
 	} else {
-		cb := ctx.cb
+		typeDecl.EnsureNamed() // NOTE(xsw): force type resolution early (before toType)
 		enumType, isEnum := t.Type.(*ast.EnumType)
-		typeDecl := cb.NewType(name)
 		var underlying types.Type
 		if isEnum {
 			underlying = inferEnumUnderlyingType(ctx, enumType)
 		} else {
 			underlying = toType(ctx, t.Type)
 		}
-		typ := typeDecl.InitType(ctx.pkg, underlying)
+		typ := typeDecl.InitType(pkg, underlying)
 		if isEnum {
-			cdecl := ctx.pkg.NewConstDefs(cb.Scope())
+			cdecl := pkg.NewConstDefs(cb.Scope())
 			loadConstSpecs(ctx, cdecl, enumType.Specs, typ)
 		}
 	}
